@@ -24,13 +24,19 @@ export function formatDateTime(date: Date | string | null): string {
   })
 }
 
+/**
+ * 生成系统专属订单号
+ * 格式: HX + YYYYMMDD + 4位随机码
+ * 示例: HX20260320A3F2
+ * HX = 华夏/公司标识，一眼可识别为本系统订单
+ */
 export function generateOrderNo(): string {
   const now = new Date()
   const y = now.getFullYear()
   const m = String(now.getMonth() + 1).padStart(2, '0')
   const d = String(now.getDate()).padStart(2, '0')
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase()
-  return `VR${y}${m}${d}${rand}`
+  return `HX${y}${m}${d}${rand}`
 }
 
 export function sleep(ms: number): Promise<void> {

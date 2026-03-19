@@ -108,6 +108,8 @@ export class OrderService {
         sourceChannel: payload.sourceChannel ?? null,
         remark: payload.remark ?? null,
         companyId: user.companyId,
+        createdBy: user.userId,
+        externalOrderNo: payload.externalOrderNo ?? null,
         status: 'PENDING_CONNECTION',
       },
     })

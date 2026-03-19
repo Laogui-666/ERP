@@ -391,7 +391,8 @@ enum UserStatus {
 model Order {
   id              String      @id @default(cuid())
   companyId       String      @db.VarChar(30)
-  orderNo         String      @unique @db.VarChar(30)  // V20260319001
+  orderNo         String      @unique @db.VarChar(30) @map("order_no")  // HX20260320XXXX
+  externalOrderNo String?     @unique @db.VarChar(50) @map("external_order_no")  // 外部订单号
 
   // 客户信息
   customerName    String      @db.VarChar(50)
@@ -420,6 +421,7 @@ model Order {
   customerId      String?     @db.VarChar(30)
   collectorId     String?     @db.VarChar(30)
   operatorId      String?     @db.VarChar(30)
+  createdBy       String      @db.VarChar(30)   // 创建者（客服ID）
 
   // 预约信息
   appointmentDate DateTime?
@@ -508,6 +510,8 @@ model DocumentFile {
   ossKey          String   @db.Text          // OSS 存储路径
   ossUrl          String   @db.Text          // 预签名URL
   uploadedBy      String   @db.VarChar(30)   // 上传者ID
+  sortOrder       Int      @default(0)       // 排序序号（多文件场景）
+  label           String?  @db.VarChar(100)  // 自定义标签 "房产证1"
   createdAt       DateTime @default(now())
 
   requirement     DocumentRequirement @relation(fields: [requirementId], references: [id])
@@ -570,7 +574,7 @@ model Notification {
   companyId   String   @db.VarChar(30)
   userId      String   @db.VarChar(30)    // 接收者
   orderId     String?  @db.VarChar(30)
-  type        String   @db.VarChar(30)    // ORDER_NEW/STATUS_CHANGE/DOC_REVIEW/etc
+  type        NotificationType // ORDER_NEW/STATUS_CHANGE/DOC_REVIEWED/MATERIAL_FEEDBACK/APPOINTMENT_REMIND/SYSTEM
   title       String   @db.VarChar(200)
   content     String   @db.Text
   isRead      Boolean  @default(false)
@@ -1053,12 +1057,13 @@ OSS Bucket 结构:
 
 ```typescript
 const ALLOWED_FILE_TYPES = {
-  images: ['image/jpeg', 'image/png', 'image/webp'],
+  images: ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'],
   documents: ['application/pdf', 'application/msword',
-              'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              'text/plain'],
   spreadsheets: ['application/vnd.ms-excel',
                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-  archives: ['application/zip', 'application/x-rar-compressed'],
+  archives: ['application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed'],
 }
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB

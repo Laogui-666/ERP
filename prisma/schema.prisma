@@ -55,6 +55,17 @@ enum DocReqStatus {
   SUPPLEMENT  // 需补充
 }
 
+enum NotificationType {
+  ORDER_NEW          // 新订单到达（公共池）
+  ORDER_CREATED      // 订单已创建（通知客户）
+  STATUS_CHANGE      // 状态变更
+  DOC_REVIEWED       // 资料审核结果
+  MATERIAL_UPLOADED  // 签证材料已上传
+  MATERIAL_FEEDBACK  // 签证材料反馈
+  APPOINTMENT_REMIND // 预约提醒
+  SYSTEM             // 系统通知
+}
+
 // ==================== 公司/租户 ====================
 
 model Company {
@@ -123,6 +134,7 @@ model User {
   customerOrders  Order[] @relation("OrderCustomer")
   collectorOrders Order[] @relation("OrderCollector")
   operatorOrders  Order[] @relation("OrderOperator")
+  createdOrders   Order[] @relation("OrderCreator")
 
   orderLogs       OrderLog[]
   notifications   Notification[]
@@ -138,7 +150,8 @@ model User {
 model Order {
   id                String      @id @default(cuid())
   companyId         String      @map("company_id")
-  orderNo           String      @unique @db.VarChar(30) @map("order_no")
+  orderNo           String      @unique @db.VarChar(30) @map("order_no")  // 系统编号 HX20260320XXXX
+  externalOrderNo   String?     @unique @db.VarChar(50) @map("external_order_no")  // 外部订单号（网店/手动录入）
 
   // 客户信息
   customerName      String      @db.VarChar(50) @map("customer_name")
@@ -167,6 +180,7 @@ model Order {
   customerId        String?     @map("customer_id")
   collectorId       String?     @map("collector_id")
   operatorId        String?     @map("operator_id")
+  createdBy         String      @map("created_by")         // 创建者（客服ID）
 
   // 预约信息
   appointmentDate   DateTime?   @map("appointment_date")
@@ -183,6 +197,7 @@ model Order {
   customer          User?       @relation("OrderCustomer", fields: [customerId], references: [id])
   collector         User?       @relation("OrderCollector", fields: [collectorId], references: [id])
   operator          User?       @relation("OrderOperator", fields: [operatorId], references: [id])
+  creator           User        @relation("OrderCreator", fields: [createdBy], references: [id])
 
   documentRequirements DocumentRequirement[]
   visaMaterials        VisaMaterial[]
@@ -195,6 +210,7 @@ model Order {
   @@index([collectorId])
   @@index([operatorId])
   @@index([orderNo])
+  @@index([companyId, createdBy])
   @@map("erp_orders")
 }
 
@@ -233,6 +249,8 @@ model DocumentFile {
   ossKey          String   @db.Text @map("oss_key")
   ossUrl          String   @db.Text @map("oss_url")
   uploadedBy      String   @map("uploaded_by")
+  sortOrder       Int      @default(0) @map("sort_order")       // 排序序号
+  label           String?  @db.VarChar(100)                     // 自定义标签 "房产证1"
   createdAt       DateTime @default(now()) @map("created_at")
 
   requirement     DocumentRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
@@ -291,15 +309,15 @@ model OrderLog {
 // ==================== 通知 ====================
 
 model Notification {
-  id          String   @id @default(cuid())
-  companyId   String   @map("company_id")
-  userId      String   @map("user_id")
-  orderId     String?  @map("order_id")
-  type        String   @db.VarChar(30)
-  title       String   @db.VarChar(200)
-  content     String   @db.Text
-  isRead      Boolean  @default(false) @map("is_read")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id          String           @id @default(cuid())
+  companyId   String           @map("company_id")
+  userId      String           @map("user_id")
+  orderId     String?          @map("order_id")
+  type        NotificationType
+  title       String           @db.VarChar(200)
+  content     String           @db.Text
+  isRead      Boolean          @default(false) @map("is_read")
+  createdAt   DateTime         @default(now()) @map("created_at")
 
   user        User     @relation(fields: [userId], references: [id])
   order       Order?   @relation(fields: [orderId], references: [id])

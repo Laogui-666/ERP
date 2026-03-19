@@ -137,7 +137,7 @@ export function getDataScopeFilter(user: JwtPayload): Record<string, unknown> {
       return { companyId: user.companyId }
     case 'CUSTOMER_SERVICE':
       // 客服：只看到自己录入的订单
-      return { companyId: user.companyId, customerId: user.userId }
+      return { companyId: user.companyId, createdBy: user.userId }
     case 'VISA_ADMIN':
       return { companyId: user.companyId }
     case 'DOC_COLLECTOR':

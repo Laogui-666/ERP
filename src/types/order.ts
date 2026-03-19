@@ -44,6 +44,16 @@ export type DocReqStatus =
   | 'REJECTED'
   | 'SUPPLEMENT'
 
+export type NotificationType =
+  | 'ORDER_NEW'
+  | 'ORDER_CREATED'
+  | 'STATUS_CHANGE'
+  | 'DOC_REVIEWED'
+  | 'MATERIAL_UPLOADED'
+  | 'MATERIAL_FEEDBACK'
+  | 'APPOINTMENT_REMIND'
+  | 'SYSTEM'
+
 export const DOC_REQ_STATUS_LABELS: Record<DocReqStatus, string> = {
   PENDING: '待上传',
   UPLOADED: '已上传',
@@ -56,6 +66,7 @@ export const DOC_REQ_STATUS_LABELS: Record<DocReqStatus, string> = {
 export interface Order {
   id: string
   orderNo: string
+  externalOrderNo: string | null
   customerName: string
   customerPhone: string
   customerEmail: string | null
@@ -74,6 +85,7 @@ export interface Order {
   customerId: string | null
   collectorId: string | null
   operatorId: string | null
+  createdBy: string
   appointmentDate: string | null
   fingerprintRequired: boolean
   companyId: string
@@ -115,6 +127,8 @@ export interface DocumentFile {
   ossKey: string
   ossUrl: string
   uploadedBy: string
+  sortOrder: number
+  label: string | null
   createdAt: string
 }
 
@@ -158,6 +172,7 @@ export interface CreateOrderPayload {
   paymentMethod?: string
   sourceChannel?: string
   remark?: string
+  externalOrderNo?: string
 }
 
 export interface OrderQuery {

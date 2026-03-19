@@ -533,13 +533,15 @@ model OrderLog {
 **字段写法示例：**
 ```prisma
 model Order {
-  id            String    @id @default(cuid())
-  companyId     String    @map("company_id")           // ← 外键带 _id
-  orderNo       String    @unique @map("order_no")     // ← snake_case
-  customerName  String    @map("customer_name")        // ← camelCase → snake_case
-  status        OrderStatus @default(PENDING_CONNECTION)
-  createdAt     DateTime  @default(now()) @map("created_at")  // ← 必须有
-  updatedAt     DateTime  @updatedAt @map("updated_at")       // ← 必须有
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")           // ← 外键带 _id
+  orderNo         String    @unique @map("order_no")     // ← snake_case，系统编号 HX2026...
+  externalOrderNo String?   @unique @map("external_order_no")  // 外部订单号
+  customerName    String    @map("customer_name")        // ← camelCase → snake_case
+  status          OrderStatus @default(PENDING_CONNECTION)
+  createdBy       String    @map("created_by")           // 创建者（客服ID）
+  createdAt       DateTime  @default(now()) @map("created_at")  // ← 必须有
+  updatedAt       DateTime  @updatedAt @map("updated_at")       // ← 必须有
 
   @@map("erp_orders")
 }

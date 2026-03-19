@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { requirePermission, getDataScopeFilter } from '@/lib/rbac'
 import { AppError, createSuccessResponse } from '@/types/api'
+import { generateOrderNo } from '@/lib/utils'
 import { z } from 'zod'
 import type { Prisma } from '@prisma/client'
 
@@ -28,6 +29,7 @@ const createSchema = z.object({
   paymentMethod: z.string().max(30).optional(),
   sourceChannel: z.string().max(50).optional(),
   remark: z.string().optional(),
+  externalOrderNo: z.string().max(50).optional(),  // 外部订单号（网店同步/手动录入）
 })
 
 // GET /api/orders - 订单列表
@@ -117,15 +119,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const data = createSchema.parse(body)
 
-    // 生成订单号: V + YYYYMMDD + 3位序号
-    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-    const count = await prisma.order.count({
-      where: {
-        orderNo: { startsWith: `V${today}` },
-        companyId: user.companyId,
-      },
-    })
-    const orderNo = `V${today}${String(count + 1).padStart(3, '0')}`
+    // 生成系统专属订单号: MH + YYYYMMDD + 4位随机码（数据库 unique 约束兜底）
+    const orderNo = generateOrderNo()
 
     const order = await prisma.$transaction(async (tx) => {
       // 检查/创建客户账号
@@ -167,6 +162,8 @@ export async function POST(request: NextRequest) {
           sourceChannel: data.sourceChannel ?? null,
           remark: data.remark ?? null,
           customerId: customerUser.id,
+          createdBy: user.userId,
+          externalOrderNo: data.externalOrderNo ?? null,
           status: 'PENDING_CONNECTION',
         },
       })

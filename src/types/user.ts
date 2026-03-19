@@ -44,8 +44,8 @@ export interface UserProfile {
   companyId: string
   company?: { id: string; name: string }
   department?: { id: string; name: string; code: string } | null
+  status?: 'ACTIVE' | 'INACTIVE' | 'LOCKED'
   avatar: string | null
-  isActive: boolean
   lastLoginAt: string | null
   createdAt: string
   updatedAt: string

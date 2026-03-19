@@ -2,10 +2,11 @@
 
 # 架构实现方案
 
-> **文档版本**: V1.0  
+> **文档版本**: V1.1  
 > **生成日期**: 2026-03-19  
+> **最后更新**: 2026-03-20  
 > **技术栈**: Next.js 14 + React 18 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
-> **部署**: 阿里云 ECS + 阿里云 RDS + 阿里云 OSS
+> **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
 ---
 
@@ -306,7 +307,7 @@ model Company {
   orders      Order[]
   templates   VisaTemplate[]
 
-  @@map("companies")
+  @@map("erp_companies")
 }
 
 enum CompanyStatus {
@@ -330,7 +331,7 @@ model Department {
   users       User[]
 
   @@unique([companyId, code])
-  @@map("departments")
+  @@map("erp_departments")
 }
 
 // ==================== 用户 ====================
@@ -364,7 +365,7 @@ model User {
 
   @@index([companyId])
   @@index([companyId, role])
-  @@map("users")
+  @@map("erp_users")
 }
 
 enum UserRole {
@@ -447,7 +448,7 @@ model Order {
   @@index([collectorId])
   @@index([operatorId])
   @@index([orderNo])
-  @@map("orders")
+  @@map("erp_orders")
 }
 
 enum OrderStatus {
@@ -483,7 +484,7 @@ model DocumentRequirement {
 
   @@index([orderId])
   @@index([companyId])
-  @@map("document_requirements")
+  @@map("erp_document_requirements")
 }
 
 enum DocReqStatus {
@@ -513,7 +514,7 @@ model DocumentFile {
 
   @@index([requirementId])
   @@index([companyId])
-  @@map("document_files")
+  @@map("erp_document_files")
 }
 
 // ==================== 签证材料 ====================
@@ -536,7 +537,7 @@ model VisaMaterial {
 
   @@index([orderId])
   @@index([companyId])
-  @@map("visa_materials")
+  @@map("erp_visa_materials")
 }
 
 // ==================== 操作日志 ====================
@@ -559,7 +560,7 @@ model OrderLog {
   @@index([orderId])
   @@index([companyId])
   @@index([createdAt])
-  @@map("order_logs")
+  @@map("erp_order_logs")
 }
 
 // ==================== 通知 ====================
@@ -580,7 +581,7 @@ model Notification {
 
   @@index([userId, isRead])
   @@index([companyId])
-  @@map("notifications")
+  @@map("erp_notifications")
 }
 
 // ==================== 签证模板 ====================
@@ -601,7 +602,7 @@ model VisaTemplate {
 
   @@index([companyId])
   @@index([companyId, country, visaType])
-  @@map("visa_templates")
+  @@map("erp_visa_templates")
 }
 ```
 
@@ -1419,32 +1420,35 @@ server {
 ### 12.3 环境变量
 
 ```env
-# .env.example
+# .env.local（实际部署配置，不提交到 Git）
 
-# 数据库 (阿里云 RDS)
-DATABASE_URL="mysql://username:password@rm-xxx.mysql.rds.aliyuncs.com:3306/erp_db"
+# 应用
+NODE_ENV=development
+NEXT_PUBLIC_APP_URL=http://223.6.248.154:3002
+PORT=3002
 
-# JWT
-JWT_SECRET="your-secret-key-min-32-chars"
-JWT_REFRESH_SECRET="your-refresh-secret-key"
+# 数据库 (阿里云 RDS MySQL)
+DATABASE_URL="mysql://visa:密码@rm-bp159g3iw669447778o.mysql.rds.aliyuncs.com:3306/visa"
+
+# JWT 认证
+JWT_SECRET="<64位随机字符串>"
+JWT_REFRESH_SECRET="<64位随机字符串>"
 
 # 阿里云 OSS
 OSS_REGION="oss-cn-beijing"
-OSS_ACCESS_KEY_ID="your-access-key"
-OSS_ACCESS_KEY_SECRET="your-access-secret"
-OSS_BUCKET="your-bucket-name"
 OSS_ENDPOINT="https://oss-cn-beijing.aliyuncs.com"
+OSS_ACCESS_KEY_ID="<access_key>"
+OSS_ACCESS_KEY_SECRET="<access_secret>"
+OSS_BUCKET="hxvisa001"
 
-# SMS (预留)
-SMS_ACCESS_KEY_ID=""
-SMS_ACCESS_KEY_SECRET=""
-SMS_SIGN_NAME=""
-SMS_ENABLED="false"
+# Socket.io
+SOCKET_PORT=3002
 
-# App
-NEXT_PUBLIC_APP_URL="https://erp.yourdomain.com"
-NEXT_PUBLIC_SOCKET_URL="https://erp.yourdomain.com"
+# SMS (暂未启用)
+SMS_ENABLED=false
 ```
+
+> ⚠️ 密钥等敏感信息已脱敏，详见服务器 `.env.local` 文件
 
 ---
 

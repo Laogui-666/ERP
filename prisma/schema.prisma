@@ -74,7 +74,7 @@ model Company {
   orders      Order[]
   templates   VisaTemplate[]
 
-  @@map("companies")
+  @@map("erp_companies")
 }
 
 // ==================== 部门 ====================
@@ -96,7 +96,7 @@ model Department {
 
   @@unique([companyId, code])
   @@index([companyId])
-  @@map("departments")
+  @@map("erp_departments")
 }
 
 // ==================== 用户 ====================
@@ -130,7 +130,7 @@ model User {
   @@index([companyId])
   @@index([companyId, role])
   @@index([departmentId])
-  @@map("users")
+  @@map("erp_users")
 }
 
 // ==================== 订单 ====================
@@ -195,7 +195,7 @@ model Order {
   @@index([collectorId])
   @@index([operatorId])
   @@index([orderNo])
-  @@map("orders")
+  @@map("erp_orders")
 }
 
 // ==================== 资料需求 ====================
@@ -218,7 +218,7 @@ model DocumentRequirement {
 
   @@index([orderId])
   @@index([companyId])
-  @@map("document_requirements")
+  @@map("erp_document_requirements")
 }
 
 // ==================== 资料文件 ====================
@@ -239,7 +239,7 @@ model DocumentFile {
 
   @@index([requirementId])
   @@index([companyId])
-  @@map("document_files")
+  @@map("erp_document_files")
 }
 
 // ==================== 签证材料 ====================
@@ -262,7 +262,7 @@ model VisaMaterial {
 
   @@index([orderId])
   @@index([companyId])
-  @@map("visa_materials")
+  @@map("erp_visa_materials")
 }
 
 // ==================== 操作日志 ====================
@@ -285,7 +285,7 @@ model OrderLog {
   @@index([orderId])
   @@index([companyId])
   @@index([createdAt])
-  @@map("order_logs")
+  @@map("erp_order_logs")
 }
 
 // ==================== 通知 ====================
@@ -306,7 +306,7 @@ model Notification {
 
   @@index([userId, isRead])
   @@index([companyId])
-  @@map("notifications")
+  @@map("erp_notifications")
 }
 
 // ==================== 签证模板 ====================
@@ -327,5 +327,5 @@ model VisaTemplate {
 
   @@index([companyId])
   @@index([companyId, country, visaType])
-  @@map("visa_templates")
+  @@map("erp_visa_templates")
 }

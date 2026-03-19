@@ -486,18 +486,92 @@ npx prisma migrate deploy
 # 禁止直接修改数据库！所有变更必须通过 Prisma Migration
 ```
 
-### 6.2 Schema 变更规则
+### 6.2 数据库命名规范（强制）
+
+#### 表名规范
+
+| 规则 | 说明 | 示例 |
+|---|---|---|
+| **统一 `erp_` 前缀** | **所有表必须以 `erp_` 开头**，防止与其他项目表名冲突 | `erp_users`, `erp_orders` |
+| 复数形式 | 表名用复数 | `erp_companies` 而非 `erp_company` |
+| 小写蛇形 | 全小写 + 下划线分隔 | `erp_document_requirements` |
+| Prisma 中用 `@@map` | Model 用单数 PascalCase，`@@map` 映射到带前缀的表名 | 见下方示例 |
+
+**Prisma 写法示例：**
+```prisma
+model User {
+  // ... 字段定义 ...
+
+  @@map("erp_users")      // ← 实际表名必须带 erp_ 前缀
+}
+
+model DocumentRequirement {
+  // ... 字段定义 ...
+
+  @@map("erp_document_requirements")
+}
+
+model OrderLog {
+  // ... 字段定义 ...
+
+  @@map("erp_order_logs")
+}
+```
+
+> ⚠️ **每新建一个 Model，必须立即添加 `@@map("erp_xxx")`，否则表名无前缀，与旧项目冲突！**
+
+#### 字段名规范
+
+| 规则 | 说明 | 示例 |
+|---|---|---|
+| 小写蛇形 | 数据库字段名用 snake_case | `customer_name`, `order_no` |
+| Prisma 中用 `@map` | 字段用 camelCase，`@map` 映射到 snake_case | `customerName String @map("customer_name")` |
+| 外键加 `_id` 后缀 | 外键字段以 `_id` 结尾 | `company_id`, `collector_id` |
+| 时间字段 | 统一 `created_at` / `updated_at` | 必须有 `@map("created_at")` |
+
+**字段写法示例：**
+```prisma
+model Order {
+  id            String    @id @default(cuid())
+  companyId     String    @map("company_id")           // ← 外键带 _id
+  orderNo       String    @unique @map("order_no")     // ← snake_case
+  customerName  String    @map("customer_name")        // ← camelCase → snake_case
+  status        OrderStatus @default(PENDING_CONNECTION)
+  createdAt     DateTime  @default(now()) @map("created_at")  // ← 必须有
+  updatedAt     DateTime  @updatedAt @map("updated_at")       // ← 必须有
+
+  @@map("erp_orders")
+}
+```
+
+### 6.3 Schema 变更规则
 
 | 规则 | 说明 |
 |---|---|
+| **新增表必须带 `erp_` 前缀** | 每个 Model 末尾加 `@@map("erp_xxx")` |
+| **新增字段必须带 `@map`** | camelCase 字段用 `@map("snake_case")` 映射 |
 | 字段只增不删 | 需要废弃的字段标记 `@deprecated`，不物理删除 |
-| 表名复数小写蛇形 | `order_logs`, `document_files` |
 | 主键使用 `cuid()` | `@id @default(cuid())` |
 | 所有表包含 `companyId` | 多租户隔离必需 |
 | 时间字段使用 `DateTime` | `createdAt`, `updatedAt` 必须有 |
 | 外键使用 String 类型 | `@db.VarChar(30)` |
 | 大文本使用 `@db.Text` | 备注、URL 等长文本 |
 | 金额使用 `Decimal` | `@db.Decimal(10, 2)` |
+
+### 6.4 当前表清单
+
+| Prisma Model | 实际表名 | 说明 |
+|---|---|---|
+| `Company` | `erp_companies` | 租户/公司 |
+| `Department` | `erp_departments` | 部门 |
+| `User` | `erp_users` | 用户（9级角色） |
+| `Order` | `erp_orders` | 签证订单 |
+| `DocumentRequirement` | `erp_document_requirements` | 资料需求清单 |
+| `DocumentFile` | `erp_document_files` | 资料文件 |
+| `VisaMaterial` | `erp_visa_materials` | 签证材料（操作员产出） |
+| `OrderLog` | `erp_order_logs` | 操作日志 |
+| `Notification` | `erp_notifications` | 站内通知 |
+| `VisaTemplate` | `erp_visa_templates` | 签证模板库 |
 
 ### 6.3 种子数据
 

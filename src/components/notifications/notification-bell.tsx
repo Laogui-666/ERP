@@ -1,0 +1,84 @@
+'use client'
+
+import { useState } from 'react'
+import { useNotifications } from '@/hooks/use-notifications'
+import { formatDateTime } from '@/lib/utils'
+
+export function NotificationBell() {
+  const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead } = useNotifications()
+  const [isOpen, setIsOpen] = useState(false)
+
+  const handleToggle = () => {
+    if (!isOpen) {
+      void fetchNotifications()
+    }
+    setIsOpen(!isOpen)
+  }
+
+  return (
+    <div className="relative">
+      <button
+        onClick={handleToggle}
+        className="relative p-2 text-morandi-gray hover:text-morandi-cream transition-colors"
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+          />
+        </svg>
+        {unreadCount > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-80 glass-card p-0 shadow-2xl z-50 animate-fade-in-up">
+          <div className="flex items-center justify-between p-3 border-b border-white/10">
+            <span className="text-sm font-medium text-morandi-cream">通知</span>
+            {unreadCount > 0 && (
+              <button
+                onClick={() => { void markAllAsRead() }}
+                className="text-xs text-morandi-blue hover:text-morandi-blue-light"
+              >
+                全部已读
+              </button>
+            )}
+          </div>
+          <div className="max-h-80 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <div className="p-4 text-center text-sm text-morandi-gray">暂无通知</div>
+            ) : (
+              notifications.map((n) => (
+                <div
+                  key={n.id}
+                  className={`p-3 border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${
+                    !n.isRead ? 'bg-morandi-blue/5' : ''
+                  }`}
+                  onClick={() => { void markAsRead(n.id) }}
+                >
+                  <div className="flex items-start gap-2">
+                    {!n.isRead && (
+                      <span className="w-2 h-2 bg-morandi-blue rounded-full mt-1.5 shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-morandi-cream font-medium truncate">{n.title}</p>
+                      {n.content && (
+                        <p className="text-xs text-morandi-gray mt-0.5 line-clamp-2">{n.content}</p>
+                      )}
+                      <p className="text-xs text-morandi-gray mt-1">{formatDateTime(n.createdAt)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

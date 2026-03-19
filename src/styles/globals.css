@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* 莫兰迪冷色系 */
+  --color-bg-from: #1A1F2E;
+  --color-bg-to: #252B3B;
+  --color-primary: #7C8DA6;
+  --color-primary-dark: #5A6B82;
+  --color-primary-light: #A8B5C7;
+  --color-secondary: #8FA3A6;
+  --color-accent: #9B8EC4;
+
+  /* 状态色 */
+  --color-success: #7FA87A;
+  --color-warning: #C4A97D;
+  --color-error: #B87C7C;
+  --color-info: #7CA8B8;
+
+  /* 文字 */
+  --color-text-primary: #E8ECF1;
+  --color-text-secondary: #8E99A8;
+  --color-text-placeholder: #5A6478;
+
+  /* 玻璃效果 */
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-bg-hover: rgba(255, 255, 255, 0.10);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: 20px;
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+body {
+  background: linear-gradient(135deg, var(--color-bg-from), var(--color-bg-to));
+  color: var(--color-text-primary);
+  font-family: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* 背景装饰 */
+.bg-decoration {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bg-decoration::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(124, 141, 166, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.bg-decoration::after {
+  content: '';
+  position: absolute;
+  bottom: -10%;
+  left: -5%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(155, 142, 196, 0.06) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}

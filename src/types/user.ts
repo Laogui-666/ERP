@@ -42,6 +42,8 @@ export interface UserProfile {
   role: UserRole
   departmentId: string | null
   companyId: string
+  company?: { id: string; name: string }
+  department?: { id: string; name: string; code: string } | null
   avatar: string | null
   isActive: boolean
   lastLoginAt: string | null

@@ -6,12 +6,23 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🌱 Seeding database...')
 
+  // 0. 创建系统级公司（超级管理员归属）
+  const systemCompany = await prisma.company.upsert({
+    where: { id: 'system' },
+    update: {},
+    create: {
+      id: 'system',
+      name: '系统管理',
+      status: 'ACTIVE',
+    },
+  })
+  console.log('✅ System company created:', systemCompany.name)
+
   // 1. 创建系统级超级管理员
   const superAdmin = await prisma.user.upsert({
     where: { username: 'superadmin' },
     update: {},
     create: {
-      id: 'super_admin_001',
       companyId: 'system',
       username: 'superadmin',
       phone: '10000000000',
@@ -68,7 +79,6 @@ async function main() {
   ]
 
   for (const template of templates) {
-    // 使用系统级 company，实际使用时应迁移到各公司
     await prisma.visaTemplate.create({
       data: {
         companyId: 'system',

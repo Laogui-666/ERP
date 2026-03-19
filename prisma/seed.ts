@@ -71,7 +71,6 @@ async function main() {
     // 使用系统级 company，实际使用时应迁移到各公司
     await prisma.visaTemplate.create({
       data: {
-        id: undefined, // auto cuid
         companyId: 'system',
         name: template.name,
         country: template.country,

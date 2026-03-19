@@ -168,3 +168,18 @@ export interface OrderQuery {
   startDate?: string
   endDate?: string
 }
+
+export interface UpdateOrderPayload {
+  customerName?: string
+  customerPhone?: string
+  customerEmail?: string
+  passportNo?: string
+  targetCountry?: string
+  visaType?: string
+  visaCategory?: string
+  travelDate?: string
+  amount?: number
+  paymentMethod?: string
+  sourceChannel?: string
+  remark?: string
+}

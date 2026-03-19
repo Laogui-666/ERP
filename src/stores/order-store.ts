@@ -30,9 +30,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       if (query.page) params.set('page', String(query.page))
       if (query.pageSize) params.set('pageSize', String(query.pageSize))
       if (query.status) params.set('status', query.status)
-      if (query.priority) params.set('priority', query.priority)
       if (query.search) params.set('search', query.search)
-      if (query.assigneeId) params.set('assigneeId', query.assigneeId)
       if (query.startDate) params.set('startDate', query.startDate)
       if (query.endDate) params.set('endDate', query.endDate)
 

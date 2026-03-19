@@ -74,9 +74,9 @@ export async function POST(request: NextRequest) {
         passwordHash,
         realName: data.realName,
         phone: data.phone,
-        email: data.email,
+        email: data.email ?? null,
         role: data.role as any,
-        departmentId: data.departmentId,
+        departmentId: data.departmentId ?? null,
       },
     })
 

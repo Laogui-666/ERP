@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { AppError } from '@/types/api'
 import type { JwtPayload } from '@/lib/auth'
-import type { NotificationType } from '@prisma/client'
 
 export class NotificationService {
   async list(user: JwtPayload, query: { page?: number; pageSize?: number; unreadOnly?: boolean }) {
@@ -67,10 +66,10 @@ export class NotificationService {
 
   async create(data: {
     userId: string
-    type: NotificationType
+    type: string
     title: string
-    content?: string
-    link?: string
+    content: string
+    orderId?: string
     companyId: string
   }) {
     return prisma.notification.create({
@@ -78,8 +77,8 @@ export class NotificationService {
         userId: data.userId,
         type: data.type,
         title: data.title,
-        content: data.content ?? null,
-        link: data.link ?? null,
+        content: data.content,
+        orderId: data.orderId ?? null,
         companyId: data.companyId,
       },
     })

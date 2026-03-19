@@ -16,7 +16,12 @@ export function useOrders() {
   )
 
   const filterByStatus = useCallback(
-    (status?: OrderStatus) => fetchOrders({ ...query, status, page: 1 }),
+    (status: OrderStatus | undefined) => {
+      const next: OrderQuery = { ...query, page: 1 }
+      if (status) next.status = status
+      else delete next.status
+      fetchOrders(next)
+    },
     [fetchOrders, query],
   )
 
@@ -26,17 +31,17 @@ export function useOrders() {
   )
 
   const changeStatus = useCallback(
-    async (orderId: string, toStatus: OrderStatus, remark?: string) => {
+    async (orderId: string, toStatus: OrderStatus, detail?: string) => {
       const res = await fetch(`/api/orders/${orderId}/status`, {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: toStatus, remark }),
+        body: JSON.stringify({ toStatus, detail }),
       })
       const json = await res.json()
       if (!json.success) {
         throw new Error(json.error?.message ?? '状态变更失败')
       }
-      // Refresh current order if viewing
+      // 刷新当前查看的订单
       if (currentOrder?.id === orderId) {
         await fetchOrder(orderId)
       }

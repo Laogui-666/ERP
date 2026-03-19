@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         companyId: user.companyId,
         name: data.name,
         code: data.code,
-        parentId: data.parentId,
+        parentId: data.parentId ?? null,
         sortOrder: data.sortOrder ?? 0,
       },
     })

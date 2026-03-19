@@ -13,10 +13,10 @@ export class DocumentService {
     }
 
     return prisma.documentRequirement.findMany({
-      where: { orderId },
+      where: { orderId, companyId: user.companyId },
       orderBy: { sortOrder: 'asc' },
       include: {
-        documentFiles: true,
+        files: true,
       },
     })
   }
@@ -43,11 +43,11 @@ export class DocumentService {
     return prisma.documentRequirement.create({
       data: {
         orderId,
+        companyId: user.companyId,
         name: data.name,
         description: data.description ?? null,
         isRequired: data.isRequired ?? true,
         sortOrder: (maxSort?.sortOrder ?? -1) + 1,
-        companyId: user.companyId,
       },
     })
   }
@@ -55,13 +55,12 @@ export class DocumentService {
   async uploadDocument(
     orderId: string,
     data: {
-      requirementId?: string
+      requirementId: string
       fileName: string
-      fileUrl: string
-      fileSize?: number
+      fileSize: number
       fileType: string
-      mimeType?: string
-      remark?: string
+      ossKey: string
+      ossUrl: string
     },
     user: JwtPayload,
   ) {
@@ -73,33 +72,71 @@ export class DocumentService {
       throw new AppError('ORDER_NOT_FOUND', '订单不存在', 404)
     }
 
+    // 检查 requirement 是否属于该订单
+    const requirement = await prisma.documentRequirement.findFirst({
+      where: { id: data.requirementId, orderId, companyId: user.companyId },
+    })
+
+    if (!requirement) {
+      throw new AppError('REQUIREMENT_NOT_FOUND', '资料需求不存在', 404)
+    }
+
     const file = await prisma.documentFile.create({
       data: {
-        orderId,
-        requirementId: data.requirementId ?? null,
-        fileName: data.fileName,
-        fileUrl: data.fileUrl,
-        fileSize: data.fileSize ?? null,
-        fileType: data.fileType as 'PASSPORT' | 'PHOTO' | 'APPLICATION_FORM' | 'SUPPORTING_DOC' | 'VISA_MATERIAL' | 'OTHER',
-        mimeType: data.mimeType ?? null,
-        uploaderId: user.userId,
+        requirementId: data.requirementId,
         companyId: user.companyId,
-        remark: data.remark ?? null,
+        fileName: data.fileName,
+        fileSize: data.fileSize,
+        fileType: data.fileType,
+        ossKey: data.ossKey,
+        ossUrl: data.ossUrl,
+        uploadedBy: user.userId,
       },
     })
 
-    // Log
+    // 更新资料需求状态为已上传
+    await prisma.documentRequirement.update({
+      where: { id: data.requirementId },
+      data: { status: 'UPLOADED' },
+    })
+
+    // 写操作日志
     await prisma.orderLog.create({
       data: {
         orderId,
         userId: user.userId,
         action: '上传资料',
-        remark: `上传文件: ${data.fileName}`,
+        detail: `上传文件: ${data.fileName}`,
         companyId: user.companyId,
+        fromStatus: null,
+        toStatus: null,
       },
     })
 
     return file
+  }
+
+  async reviewRequirement(
+    requirementId: string,
+    data: { status: 'APPROVED' | 'REJECTED' | 'SUPPLEMENT'; rejectReason?: string },
+    user: JwtPayload,
+  ) {
+    const requirement = await prisma.documentRequirement.findFirst({
+      where: { id: requirementId, companyId: user.companyId },
+      include: { order: true },
+    })
+
+    if (!requirement) {
+      throw new AppError('REQUIREMENT_NOT_FOUND', '资料需求不存在', 404)
+    }
+
+    return prisma.documentRequirement.update({
+      where: { id: requirementId },
+      data: {
+        status: data.status,
+        rejectReason: data.rejectReason ?? null,
+      },
+    })
   }
 
   async deleteDocument(fileId: string, user: JwtPayload) {

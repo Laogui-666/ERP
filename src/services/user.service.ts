@@ -44,8 +44,8 @@ export class UserService {
           phone: true,
           email: true,
           role: true,
+          status: true,
           departmentId: true,
-          isActive: true,
           lastLoginAt: true,
           createdAt: true,
           updatedAt: true,
@@ -71,10 +71,10 @@ export class UserService {
         phone: true,
         email: true,
         role: true,
+        status: true,
         departmentId: true,
         companyId: true,
         avatar: true,
-        isActive: true,
         lastLoginAt: true,
         createdAt: true,
         updatedAt: true,
@@ -94,14 +94,14 @@ export class UserService {
       username: string
       password: string
       realName: string
-      phone?: string
+      phone: string
       email?: string
       role: UserRole
       departmentId?: string
     },
     user: JwtPayload,
   ) {
-    // Check duplicate
+    // 检查重复
     const existing = await prisma.user.findUnique({
       where: { username: data.username },
     })
@@ -110,14 +110,22 @@ export class UserService {
       throw new AppError('USERNAME_EXISTS', '用户名已存在', 400)
     }
 
-    const passwordHash = await hash(data.password, 10)
+    // 检查手机号重复
+    const existingPhone = await prisma.user.findUnique({
+      where: { phone: data.phone },
+    })
+    if (existingPhone) {
+      throw new AppError('PHONE_EXISTS', '手机号已注册', 400)
+    }
+
+    const passwordHash = await hash(data.password, 12)
 
     return prisma.user.create({
       data: {
         username: data.username,
         passwordHash,
         realName: data.realName,
-        phone: data.phone ?? null,
+        phone: data.phone,
         email: data.email ?? null,
         role: data.role,
         departmentId: data.departmentId ?? null,
@@ -130,8 +138,8 @@ export class UserService {
         phone: true,
         email: true,
         role: true,
+        status: true,
         departmentId: true,
-        isActive: true,
         createdAt: true,
       },
     })
@@ -145,7 +153,7 @@ export class UserService {
       email?: string
       role?: UserRole
       departmentId?: string
-      isActive?: boolean
+      status?: 'ACTIVE' | 'INACTIVE' | 'LOCKED'
     },
     user: JwtPayload,
   ) {
@@ -157,9 +165,17 @@ export class UserService {
       throw new AppError('USER_NOT_FOUND', '用户不存在', 404)
     }
 
+    const updateData: Record<string, unknown> = {}
+    if (data.realName !== undefined) updateData.realName = data.realName
+    if (data.phone !== undefined) updateData.phone = data.phone
+    if (data.email !== undefined) updateData.email = data.email ?? null
+    if (data.role !== undefined) updateData.role = data.role
+    if (data.departmentId !== undefined) updateData.departmentId = data.departmentId ?? null
+    if (data.status !== undefined) updateData.status = data.status
+
     return prisma.user.update({
       where: { id },
-      data,
+      data: updateData,
       select: {
         id: true,
         username: true,
@@ -167,8 +183,8 @@ export class UserService {
         phone: true,
         email: true,
         role: true,
+        status: true,
         departmentId: true,
-        isActive: true,
         updatedAt: true,
       },
     })

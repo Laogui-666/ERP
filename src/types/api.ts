@@ -46,11 +46,12 @@ export class AppError extends Error {
 }
 
 export function createSuccessResponse<T>(data: T, meta?: ApiMeta): ApiResponse<T> {
-  return {
+  const response: ApiResponse<T> = {
     success: true,
     data,
-    meta,
   }
+  if (meta) response.meta = meta
+  return response
 }
 
 export function createErrorResponse(error: AppError): ApiError {

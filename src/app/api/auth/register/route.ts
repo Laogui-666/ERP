@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
       const company = await tx.company.create({
         data: {
           name: data.company.name,
-          phone: data.company.phone,
-          email: data.company.email,
+          phone: data.company.phone ?? null,
+          email: data.company.email ?? null,
         },
       })
 
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
           companyId: company.id,
           username: data.user.username,
           phone: data.user.phone,
-          email: data.user.email,
+          email: data.user.email ?? null,
           passwordHash,
           realName: data.user.realName,
           role: 'COMPANY_OWNER',

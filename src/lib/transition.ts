@@ -125,7 +125,7 @@ export async function transitionOrder(input: {
   userId: string
   userRole: UserRole
   companyId: string
-  detail?: string
+  detail: string | undefined
 }) {
   const { orderId, toStatus, userId, userRole, companyId, detail } = input
 
@@ -199,7 +199,7 @@ export async function transitionOrder(input: {
         action: rule.action,
         fromStatus: order.status,
         toStatus,
-        detail,
+        detail: detail ?? null,
       },
     })
   })

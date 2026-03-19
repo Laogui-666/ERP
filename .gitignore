@@ -50,3 +50,5 @@ prisma/*.db
 
 # Turbo
 .turbo/
+tsconfig.tsbuildinfo
+next-env.d.ts

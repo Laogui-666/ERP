@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/prisma'
-import { transition, getAvailableTransitions } from '@/lib/transition'
+import { transitionOrder, getAvailableTransitions } from '@/lib/transition'
 import { generateOrderNo } from '@/lib/utils'
 import { AppError, DEFAULT_PAGE_SIZE } from '@/types/api'
-import type { OrderStatus, Priority, OrderQuery, CreateOrderPayload, UpdateOrderPayload } from '@/types/order'
+import type { OrderStatus, OrderQuery, CreateOrderPayload, UpdateOrderPayload } from '@/types/order'
+import type { UserRole } from '@/types/user'
 import type { JwtPayload } from '@/lib/auth'
 import { getDataScopeFilter } from '@/lib/rbac'
 
@@ -19,17 +20,11 @@ export class OrderService {
     if (query.status) {
       where.status = query.status
     }
-    if (query.priority) {
-      where.priority = query.priority
-    }
-    if (query.assigneeId) {
-      where.assigneeId = query.assigneeId
-    }
     if (query.search) {
       where.OR = [
         { orderNo: { contains: query.search } },
-        { applicantName: { contains: query.search } },
-        { applicantPhone: { contains: query.search } },
+        { customerName: { contains: query.search } },
+        { customerPhone: { contains: query.search } },
       ]
     }
     if (query.startDate || query.endDate) {
@@ -46,7 +41,7 @@ export class OrderService {
         take: pageSize,
         orderBy: { createdAt: 'desc' },
         include: {
-          assignee: { select: { id: true, realName: true } },
+          collector: { select: { id: true, realName: true } },
           operator: { select: { id: true, realName: true } },
         },
       }),
@@ -71,10 +66,14 @@ export class OrderService {
         ...getDataScopeFilter(user),
       },
       include: {
-        assignee: { select: { id: true, realName: true } },
+        customer: { select: { id: true, realName: true } },
+        collector: { select: { id: true, realName: true } },
         operator: { select: { id: true, realName: true } },
-        documentRequirements: { orderBy: { sortOrder: 'asc' } },
-        documentFiles: true,
+        documentRequirements: {
+          orderBy: { sortOrder: 'asc' },
+          include: { files: true },
+        },
+        visaMaterials: true,
         orderLogs: {
           orderBy: { createdAt: 'desc' },
           take: 50,
@@ -96,28 +95,32 @@ export class OrderService {
     const order = await prisma.order.create({
       data: {
         orderNo,
-        applicantName: payload.applicantName,
-        applicantPhone: payload.applicantPhone ?? null,
-        applicantIdCard: payload.applicantIdCard ?? null,
-        visaCountry: payload.visaCountry,
+        customerName: payload.customerName,
+        customerPhone: payload.customerPhone,
+        customerEmail: payload.customerEmail ?? null,
+        passportNo: payload.passportNo ?? null,
+        targetCountry: payload.targetCountry,
         visaType: payload.visaType,
-        priority: payload.priority ?? 'NORMAL',
-        planDepartDate: payload.planDepartDate ? new Date(payload.planDepartDate) : null,
-        deadline: payload.deadline ? new Date(payload.deadline) : null,
+        visaCategory: payload.visaCategory ?? null,
+        travelDate: payload.travelDate ? new Date(payload.travelDate) : null,
+        amount: payload.amount,
+        paymentMethod: payload.paymentMethod ?? null,
+        sourceChannel: payload.sourceChannel ?? null,
         remark: payload.remark ?? null,
-        totalPrice: payload.totalPrice ?? null,
         companyId: user.companyId,
+        status: 'PENDING_CONNECTION',
       },
     })
 
-    // Write log
+    // 写操作日志
     await prisma.orderLog.create({
       data: {
         orderId: order.id,
         userId: user.userId,
         action: '创建订单',
-        toStatus: 'PENDING',
+        toStatus: 'PENDING_CONNECTION',
         companyId: user.companyId,
+        detail: null,
       },
     })
 
@@ -134,18 +137,18 @@ export class OrderService {
     }
 
     const updateData: Record<string, unknown> = {}
-    if (payload.applicantName !== undefined) updateData.applicantName = payload.applicantName
-    if (payload.applicantPhone !== undefined) updateData.applicantPhone = payload.applicantPhone
-    if (payload.applicantIdCard !== undefined) updateData.applicantIdCard = payload.applicantIdCard
-    if (payload.visaCountry !== undefined) updateData.visaCountry = payload.visaCountry
+    if (payload.customerName !== undefined) updateData.customerName = payload.customerName
+    if (payload.customerPhone !== undefined) updateData.customerPhone = payload.customerPhone
+    if (payload.customerEmail !== undefined) updateData.customerEmail = payload.customerEmail ?? null
+    if (payload.passportNo !== undefined) updateData.passportNo = payload.passportNo ?? null
+    if (payload.targetCountry !== undefined) updateData.targetCountry = payload.targetCountry
     if (payload.visaType !== undefined) updateData.visaType = payload.visaType
-    if (payload.priority !== undefined) updateData.priority = payload.priority
-    if (payload.assigneeId !== undefined) updateData.assigneeId = payload.assigneeId
-    if (payload.operatorId !== undefined) updateData.operatorId = payload.operatorId
-    if (payload.planDepartDate !== undefined) updateData.planDepartDate = payload.planDepartDate ? new Date(payload.planDepartDate) : null
-    if (payload.deadline !== undefined) updateData.deadline = payload.deadline ? new Date(payload.deadline) : null
-    if (payload.remark !== undefined) updateData.remark = payload.remark
-    if (payload.totalPrice !== undefined) updateData.totalPrice = payload.totalPrice
+    if (payload.visaCategory !== undefined) updateData.visaCategory = payload.visaCategory ?? null
+    if (payload.travelDate !== undefined) updateData.travelDate = payload.travelDate ? new Date(payload.travelDate) : null
+    if (payload.amount !== undefined) updateData.amount = payload.amount
+    if (payload.paymentMethod !== undefined) updateData.paymentMethod = payload.paymentMethod ?? null
+    if (payload.sourceChannel !== undefined) updateData.sourceChannel = payload.sourceChannel ?? null
+    if (payload.remark !== undefined) updateData.remark = payload.remark ?? null
 
     return prisma.order.update({
       where: { id },
@@ -153,14 +156,14 @@ export class OrderService {
     })
   }
 
-  async changeStatus(orderId: string, toStatus: OrderStatus, user: JwtPayload, remark?: string) {
-    await transition({
+  async changeStatus(orderId: string, toStatus: OrderStatus, user: JwtPayload, detail?: string) {
+    await transitionOrder({
       orderId,
       toStatus,
       userId: user.userId,
       userRole: user.role,
       companyId: user.companyId,
-      remark,
+      detail,
     })
 
     return this.getById(orderId, user)
@@ -175,34 +178,70 @@ export class OrderService {
       throw new AppError('ORDER_NOT_FOUND', '订单不存在', 404)
     }
 
-    if (order.status !== 'PENDING') {
-      throw new AppError('INVALID_STATUS', '只有待分配状态的订单可接单', 400)
-    }
+    // 资料员接单：PENDING_CONNECTION → CONNECTED
+    if (['DOC_COLLECTOR', 'VISA_ADMIN'].includes(user.role)) {
+      if (order.status !== 'PENDING_CONNECTION') {
+        throw new AppError('INVALID_STATUS', '只有待对接状态的订单可接单', 400)
+      }
+      if (order.collectorId) {
+        throw new AppError('ALREADY_ASSIGNED', '该订单已被资料员接单', 400)
+      }
 
-    if (order.assigneeId) {
-      throw new AppError('ALREADY_ASSIGNED', '该订单已被接单', 400)
-    }
+      await prisma.$transaction(async (tx) => {
+        await tx.order.update({
+          where: { id: orderId },
+          data: {
+            collectorId: user.userId,
+            status: 'CONNECTED',
+          },
+        })
 
-    await prisma.$transaction(async (tx) => {
-      await tx.order.update({
-        where: { id: orderId },
-        data: {
-          assigneeId: user.userId,
-          status: 'DATA_ENTRY',
-        },
+        await tx.orderLog.create({
+          data: {
+            orderId,
+            userId: user.userId,
+            action: '接单',
+            fromStatus: 'PENDING_CONNECTION',
+            toStatus: 'CONNECTED',
+            companyId: user.companyId,
+            detail: null,
+          },
+        })
       })
+    }
+    // 操作员接单：PENDING_REVIEW → UNDER_REVIEW
+    else if (['OPERATOR', 'OUTSOURCE'].includes(user.role)) {
+      if (order.status !== 'PENDING_REVIEW') {
+        throw new AppError('INVALID_STATUS', '只有待审核状态的订单可接单', 400)
+      }
+      if (order.operatorId) {
+        throw new AppError('ALREADY_ASSIGNED', '该订单已被操作员接单', 400)
+      }
 
-      await tx.orderLog.create({
-        data: {
-          orderId,
-          userId: user.userId,
-          action: '接单',
-          fromStatus: 'PENDING',
-          toStatus: 'DATA_ENTRY',
-          companyId: user.companyId,
-        },
+      await prisma.$transaction(async (tx) => {
+        await tx.order.update({
+          where: { id: orderId },
+          data: {
+            operatorId: user.userId,
+            status: 'UNDER_REVIEW',
+          },
+        })
+
+        await tx.orderLog.create({
+          data: {
+            orderId,
+            userId: user.userId,
+            action: '操作员接单',
+            fromStatus: 'PENDING_REVIEW',
+            toStatus: 'UNDER_REVIEW',
+            companyId: user.companyId,
+            detail: null,
+          },
+        })
       })
-    })
+    } else {
+      throw new AppError('FORBIDDEN', '当前角色无法接单', 403)
+    }
 
     return this.getById(orderId, user)
   }
@@ -212,10 +251,23 @@ export class OrderService {
     const pageSize = Math.min(query.pageSize ?? DEFAULT_PAGE_SIZE, 100)
     const skip = (page - 1) * pageSize
 
-    const where = {
-      companyId: user.companyId,
-      status: 'PENDING' as OrderStatus,
-      assigneeId: null,
+    // 资料员公共池：PENDING_CONNECTION 且未被接单
+    // 操作员公共池：PENDING_REVIEW 且未被接单
+    let where: Record<string, unknown>
+    if (['DOC_COLLECTOR', 'VISA_ADMIN'].includes(user.role)) {
+      where = {
+        companyId: user.companyId,
+        status: 'PENDING_CONNECTION',
+        collectorId: null,
+      }
+    } else if (['OPERATOR', 'OUTSOURCE'].includes(user.role)) {
+      where = {
+        companyId: user.companyId,
+        status: 'PENDING_REVIEW',
+        operatorId: null,
+      }
+    } else {
+      throw new AppError('FORBIDDEN', '当前角色无法查看公共池', 403)
     }
 
     const [orders, total] = await Promise.all([

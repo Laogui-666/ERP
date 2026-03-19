@@ -9,16 +9,16 @@ interface StatusBadgeProps {
 }
 
 const STATUS_VARIANTS: Record<OrderStatus, 'default' | 'info' | 'warning' | 'success' | 'danger' | 'purple'> = {
-  PENDING: 'default',
-  DATA_ENTRY: 'info',
-  DOCUMENT_PENDING: 'warning',
-  DOCUMENT_COMPLETE: 'success',
-  REVIEWING: 'purple',
+  PENDING_CONNECTION: 'default',
+  CONNECTED: 'info',
+  COLLECTING_DOCS: 'warning',
+  PENDING_REVIEW: 'warning',
+  UNDER_REVIEW: 'purple',
+  MAKING_MATERIALS: 'info',
+  PENDING_DELIVERY: 'purple',
+  DELIVERED: 'success',
   APPROVED: 'success',
-  SUBMITTED_TO_EMBASSY: 'info',
-  VISA_GRANTED: 'success',
-  VISA_REJECTED: 'danger',
-  COMPLETED: 'default',
+  REJECTED: 'danger',
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {

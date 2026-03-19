@@ -36,7 +36,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
-    await fetch('/api/auth/refresh', { method: 'DELETE' })
+    await fetch('/api/auth/logout', { method: 'POST' })
     set({ user: null, isAuthenticated: false })
   },
 

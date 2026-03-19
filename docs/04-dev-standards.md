@@ -870,4 +870,166 @@ pm2 logs erp               # 查看日志
 
 ---
 
+## 13. TypeScript 与 Prisma 类型防错指南
+
+> **背景**：本项目启用了 `exactOptionalPropertyTypes: true`，结合 Prisma ORM 的 `null` vs `undefined` 语义差异，容易产生大量类型错误。以下规则**必须严格遵守**。
+
+### 13.1 核心问题：`undefined` ≠ `null`
+
+Prisma 可选字段（`String?`）在数据库中是 `null`，但 TypeScript 的 `.optional()` 返回 `string | undefined`。
+
+**tsconfig.json 中 `exactOptionalPropertyTypes: true` 的影响**：
+- `{ key?: string }` 表示 `key` 可以**不传**或传 `string`，但**不能传 `undefined`**
+- 而 zod 的 `.optional()` 返回 `string | undefined`，直接传给 Prisma 会报错
+
+### 13.2 黄金规则
+
+#### 规则 1：Prisma 创建/更新数据时，可选字段必须用 `?? null`
+
+```typescript
+// ❌ 错误：undefined 不能赋值给 Prisma 的可选字段
+await prisma.user.create({
+  data: {
+    email: data.email,        // string | undefined → 报错！
+    departmentId: data.dept,  // string | undefined → 报错！
+  },
+})
+
+// ✅ 正确：将 undefined 转为 null
+await prisma.user.create({
+  data: {
+    email: data.email ?? null,
+    departmentId: data.dept ?? null,
+  },
+})
+```
+
+#### 规则 2：构建 update 对象时逐字段赋值
+
+```typescript
+// ❌ 错误：直接 spread body，可能包含非法字段
+await prisma.order.update({
+  where: { id },
+  data: { ...body },
+})
+
+// ✅ 正确：逐字段白名单赋值
+const updateData: Record<string, unknown> = {}
+if (data.name !== undefined) updateData.name = data.name
+if (data.email !== undefined) updateData.email = data.email ?? null
+await prisma.order.update({
+  where: { id },
+  data: updateData,
+})
+```
+
+#### 规则 3：函数参数中的可选字段用 `string | undefined` 而非 `string?`
+
+```typescript
+// ❌ 错误：调用时传 undefined 会触发 exactOptionalPropertyTypes 报错
+async function transition(input: {
+  orderId: string
+  detail?: string       // ← 调用者传 detail: string | undefined 会报错
+})
+
+// ✅ 正确：明确接受 undefined
+async function transition(input: {
+  orderId: string
+  detail: string | undefined   // ← 允许传入 undefined
+})
+```
+
+#### 规则 4：API Route 中 zod 的 `.optional()` 结果必须转 null
+
+```typescript
+const schema = z.object({
+  email: z.string().email().optional(),   // string | undefined
+})
+
+const data = schema.parse(body)
+
+// ✅ 在 Prisma 调用处转换
+await prisma.user.create({
+  data: {
+    email: data.email ?? null,   // undefined → null
+  },
+})
+```
+
+#### 规则 5：Prisma include/select 必须匹配 schema 中的关系名
+
+```typescript
+// ❌ 错误：旧字段名
+include: {
+  documentFiles: true,   // ← 不存在，应为 files
+  assignee: true,        // ← 不存在，应为 collector
+}
+
+// ✅ 正确：匹配 Prisma schema 的关系名
+include: {
+  files: true,
+  collector: { select: { id: true, realName: true } },
+}
+```
+
+#### 规则 6：Prisma select 字段必须匹配 schema 字段名
+
+```typescript
+// ❌ 错误：旧字段名
+select: {
+  isActive: true,    // ← schema 中是 status: UserStatus
+}
+
+// ✅ 正确
+select: {
+  status: true,
+}
+```
+
+### 13.3 常见错误速查表
+
+| 错误信息 | 原因 | 修复 |
+|---|---|---|
+| `undefined is not assignable to type 'string \| null'` | 传了 `undefined` 给 Prisma 可选字段 | 加 `?? null` |
+| `does not exist in type '...Include'` | include 的关系名不匹配 | 对照 schema 修正 |
+| `does not exist in type '...Select'` | select 的字段名不匹配 | 对照 schema 修正 |
+| `not assignable to type 'string'` (exactOptionalPropertyTypes) | 传了 `undefined` 给 `{ key?: string }` | 改为 `string \| undefined` 或条件赋值 |
+| `Cannot find name 'UserRole'` | 缺少 import | 添加 `import type { UserRole } from '@/types/user'` |
+| `has no exported member 'xxx'` | 导出名不匹配 | 检查实际导出名 |
+
+### 13.4 开发 Checklist
+
+每次写 Prisma 相关代码时，对照以下清单：
+
+- [ ] Prisma `create` 中所有可选字段都加了 `?? null`
+- [ ] Prisma `update` 使用白名单字段赋值，不直接 spread body
+- [ ] Prisma `include` 关系名与 schema 定义一致
+- [ ] Prisma `select` 字段名与 schema 定义一致
+- [ ] API Route 的 zod schema `.optional()` 结果在 Prisma 调用处转 `null`
+- [ ] 函数参数中需要接受 `undefined` 时使用 `T | undefined` 而非 `T?`
+- [ ] 所有 import 的类型与实际导出名一致
+- [ ] 运行 `npx tsc --noEmit` 确认零错误后再提交
+
+### 13.5 快速验证命令
+
+```bash
+# 提交前必跑
+npx tsc --noEmit      # TypeScript 类型检查
+npm run build          # 完整构建验证
+```
+
+---
+
+## 14. 已知技术债务与待办
+
+| 项目 | 说明 | 优先级 |
+|---|---|---|
+| OSS 集成 | `src/lib/oss.ts` 目前是占位实现，需接入阿里云 OSS SDK | M3 |
+| Socket.io 集成 | `src/lib/socket.ts` 有框架但未与 Next.js 服务端集成 | M4 |
+| Notification API | 前端 store 引用 `/api/notifications/*` 路由但尚未创建 | M4 |
+| 密码重置 | 客户账号创建时 `passwordHash` 为空字符串，需实现首次登录重置流程 | M2 |
+| Next.js 安全漏洞 | 当前 14.2.18 有多个已知漏洞，建议升级到最新稳定版 | P1 |
+
+---
+
 *文档结束*

@@ -53,6 +53,19 @@ interface StatusChangeData {
   action: string
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  PENDING_CONNECTION: '待对接',
+  CONNECTED: '已对接',
+  COLLECTING_DOCS: '资料收集中',
+  PENDING_REVIEW: '待审核',
+  UNDER_REVIEW: '资料审核中',
+  MAKING_MATERIALS: '材料制作中',
+  PENDING_DELIVERY: '待交付',
+  DELIVERED: '已交付',
+  APPROVED: '出签',
+  REJECTED: '拒签',
+}
+
 // 状态变更 → 创建站内通知
 eventBus.on(EVENTS.ORDER_STATUS_CHANGED, async (data) => {
   const { orderId, companyId, actorId, fromStatus, toStatus, action } = data as StatusChangeData
@@ -76,14 +89,17 @@ eventBus.on(EVENTS.ORDER_STATUS_CHANGED, async (data) => {
 
   if (notifyUserIds.size === 0) return
 
+  const fromLabel = STATUS_LABELS[fromStatus] ?? fromStatus
+  const toLabel = STATUS_LABELS[toStatus] ?? toStatus
+
   await prisma.notification.createMany({
     data: Array.from(notifyUserIds).map((userId) => ({
       companyId,
       userId,
       orderId,
       type: 'STATUS_CHANGE',
-      title: `订单状态变更：${action}`,
-      content: `订单 ${order.orderNo} (${order.customerName}) 状态从 ${fromStatus} 变更为 ${toStatus}`,
+      title: `订单 ${order.orderNo} ${action}`,
+      content: `${order.customerName} 的订单状态：${fromLabel} → ${toLabel}`,
     })),
   })
 })

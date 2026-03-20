@@ -25,6 +25,9 @@ export default function OrderDetailPage() {
   const [showStatusModal, setShowStatusModal] = useState(false)
   const [transitionDetail, setTransitionDetail] = useState('')
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [preselectedStatus, setPreselectedStatus] = useState<OrderStatus | null>(null)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
 
   useEffect(() => {
     fetchOrder(orderId)
@@ -101,6 +104,34 @@ export default function OrderDetailPage() {
     }
   }
 
+  const handleCancel = async () => {
+    if (!cancelReason.trim()) {
+      toast('error', '请输入取消原因')
+      return
+    }
+    setIsTransitioning(true)
+    try {
+      const res = await fetch(`/api/orders/${orderId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: cancelReason }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        toast('success', '订单已取消')
+        setShowCancelConfirm(false)
+        setCancelReason('')
+        fetchOrder(orderId)
+      } else {
+        toast('error', json.error?.message ?? '取消失败')
+      }
+    } catch {
+      toast('error', '取消失败')
+    } finally {
+      setIsTransitioning(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="p-12 text-center">
@@ -123,6 +154,8 @@ export default function OrderDetailPage() {
 
   const order = currentOrder
   const availableActions = getAvailableActions()
+  const canCancel = user?.role && ['COMPANY_OWNER', 'CS_ADMIN', 'VISA_ADMIN', 'SUPER_ADMIN'].includes(user.role)
+    && !['APPROVED', 'REJECTED'].includes(order.status)
 
   return (
     <div className="space-y-6">
@@ -138,19 +171,25 @@ export default function OrderDetailPage() {
         }
         backLink="/admin/orders"
         action={
-          availableActions.length > 0 ? (
+          (availableActions.length > 0 || canCancel) ? (
             <div className="flex gap-2">
               {availableActions.map((action) => (
                 <button
                   key={action.toStatus}
-                  onClick={() => setShowStatusModal(true)}
+                  onClick={() => { setPreselectedStatus(action.toStatus); setShowStatusModal(true) }}
                   className="glass-btn-primary flex items-center gap-2 px-4 py-2.5 text-sm font-medium"
-                  data-action={action.toStatus}
-                  data-label={action.label}
                 >
                   {action.label}
                 </button>
               ))}
+              {canCancel && (
+                <button
+                  onClick={() => setShowCancelConfirm(true)}
+                  className="px-4 py-2.5 text-sm font-medium rounded-xl border border-[var(--color-error)]/30 text-[var(--color-error)] hover:bg-[var(--color-error)]/10 transition-all"
+                >
+                  取消订单
+                </button>
+              )}
             </div>
           ) : undefined
         }
@@ -269,7 +308,7 @@ export default function OrderDetailPage() {
             <DocumentPanel
               orderId={order.id}
               requirements={order.documentRequirements}
-              userRole={user?.role as never}
+              userRole={user?.role ?? 'CUSTOMER'}
               orderStatus={order.status}
               onRefresh={() => fetchOrder(orderId)}
             />
@@ -280,7 +319,7 @@ export default function OrderDetailPage() {
             <MaterialPanel
               orderId={order.id}
               materials={order.visaMaterials}
-              userRole={user?.role as never}
+              userRole={user?.role ?? 'CUSTOMER'}
               orderStatus={order.status}
               onRefresh={() => fetchOrder(orderId)}
             />
@@ -297,7 +336,46 @@ export default function OrderDetailPage() {
           onSubmit={handleTransition}
           onClose={() => { setShowStatusModal(false); setTransitionDetail('') }}
           isSubmitting={isTransitioning}
+          initialStatus={preselectedStatus}
         />
+      )}
+
+      {/* 取消订单确认弹窗 */}
+      {showCancelConfirm && (
+        <Modal isOpen onClose={() => { setShowCancelConfirm(false); setCancelReason('') }} title="确认取消订单" size="md">
+          <div className="space-y-4">
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              取消后订单将标记为「拒签」终态，此操作不可撤销。
+            </p>
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                取消原因 *
+              </label>
+              <textarea
+                className="glass-input w-full text-sm resize-none"
+                rows={3}
+                placeholder="请输入取消原因..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => { setShowCancelConfirm(false); setCancelReason('') }}
+                className="px-4 py-2 text-sm rounded-xl bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all"
+              >
+                返回
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={isTransitioning || !cancelReason.trim()}
+                className="px-6 py-2 text-sm font-medium rounded-xl bg-[var(--color-error)]/20 text-[var(--color-error)] border border-[var(--color-error)]/30 hover:bg-[var(--color-error)]/30 transition-all disabled:opacity-50"
+              >
+                {isTransitioning ? '处理中...' : '确认取消'}
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   )
@@ -335,6 +413,7 @@ function StatusTransitionModal({
   onSubmit,
   onClose,
   isSubmitting,
+  initialStatus,
 }: {
   actions: { toStatus: OrderStatus; label: string }[]
   detail: string
@@ -342,8 +421,9 @@ function StatusTransitionModal({
   onSubmit: (toStatus: OrderStatus) => void
   onClose: () => void
   isSubmitting: boolean
+  initialStatus?: OrderStatus | null
 }) {
-  const [selectedStatus, setSelectedStatus] = useState<OrderStatus>(actions[0]?.toStatus ?? 'CONNECTED')
+  const [selectedStatus, setSelectedStatus] = useState<OrderStatus>(initialStatus ?? actions[0]?.toStatus ?? 'CONNECTED')
 
   return (
     <Modal isOpen onClose={onClose} title="状态流转" size="md">

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import '@/styles/globals.css'
 import '@/styles/glassmorphism.css'
+import { ToastProvider } from '@/components/ui/toast'
 
 export const metadata: Metadata = {
   title: '沐海旅行 - 签证ERP系统',
@@ -16,7 +17,9 @@ export default function RootLayout({
     <html lang="zh-CN">
       <body className="min-h-screen antialiased">
         <div className="bg-decoration" />
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   )

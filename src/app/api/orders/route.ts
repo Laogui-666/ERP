@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const data = createSchema.parse(body)
 
-    // 生成系统专属订单号: MH + YYYYMMDD + 4位随机码（数据库 unique 约束兜底）
+    // 生成系统专属订单号: HX + YYYYMMDD + 4位随机码（数据库 unique 约束兜底）
     const orderNo = generateOrderNo()
 
     const order = await prisma.$transaction(async (tx) => {

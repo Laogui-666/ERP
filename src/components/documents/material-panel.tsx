@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react'
 import { useToast } from '@/components/ui/toast'
+import { FilePreview } from '@/components/ui/file-preview'
+import { formatDateTime } from '@/lib/utils'
 import type { VisaMaterial } from '@/types/order'
 import type { UserRole } from '@/types/user'
 
@@ -52,6 +54,16 @@ export function MaterialPanel({ orderId, materials, userRole, orderStatus, onRef
     }
   }
 
+  // 按版本分组
+  const groupedByVersion = materials.reduce<Record<number, VisaMaterial[]>>((acc, mat) => {
+    const v = mat.version
+    if (!acc[v]) acc[v] = []
+    acc[v].push(mat)
+    return acc
+  }, {})
+
+  const versions = Object.keys(groupedByVersion).map(Number).sort((a, b) => b - a)
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -62,7 +74,7 @@ export function MaterialPanel({ orderId, materials, userRole, orderStatus, onRef
           签证材料
           {materials.length > 0 && (
             <span className="text-xs text-[var(--color-text-placeholder)] font-normal">
-              (v{materials[0]?.version ?? 1})
+              (最新 v{Math.max(...materials.map((m) => m.version))})
             </span>
           )}
         </h3>
@@ -83,49 +95,61 @@ export function MaterialPanel({ orderId, materials, userRole, orderStatus, onRef
             disabled={isUploading}
             className="w-full glass-btn-primary py-2 text-xs font-medium disabled:opacity-50"
           >
-            {isUploading ? '上传中...' : '上传签证材料'}
+            {isUploading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                上传中...
+              </span>
+            ) : '上传签证材料'}
           </button>
           <input
             ref={fileInputRef}
             type="file"
             className="hidden"
             onChange={handleFileChange}
-            accept=".pdf,.doc,.docx,.zip,image/*"
+            accept=".pdf,.doc,.docx,.zip,.rar,.7z,.txt,image/*,.heic,.heif"
           />
         </div>
       )}
 
-      {/* 材料列表 */}
+      {/* 材料列表 — 按版本分组 */}
       {materials.length === 0 ? (
         <p className="text-xs text-[var(--color-text-placeholder)] py-2">暂无签证材料</p>
       ) : (
-        <div className="space-y-2">
-          {materials.map((mat) => (
-            <div key={mat.id} className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
-              <div className="flex items-start gap-3">
-                <svg className="w-4 h-4 text-[var(--color-accent)] mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <div className="flex-1 min-w-0">
-                  <a
-                    href={mat.ossUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-[var(--color-info)] hover:text-[var(--color-primary-light)] truncate block"
-                  >
-                    {mat.fileName}
-                  </a>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-[var(--color-text-placeholder)]">
-                    <span>v{mat.version}</span>
-                    <span>·</span>
-                    <span>{(mat.fileSize / 1024).toFixed(1)}KB</span>
-                    <span>·</span>
-                    <span>{new Date(mat.createdAt).toLocaleDateString('zh-CN')}</span>
-                  </div>
-                  {mat.remark && (
-                    <p className="text-xs text-[var(--color-text-secondary)] mt-1">{mat.remark}</p>
+        <div className="space-y-3">
+          {versions.map((version) => (
+            <div key={version}>
+              {versions.length > 1 && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--color-accent)]/15 text-[var(--color-accent)] font-medium">
+                    v{version}
+                  </span>
+                  {version === Math.max(...versions) && (
+                    <span className="text-[10px] text-[var(--color-success)]">最新</span>
                   )}
                 </div>
+              )}
+              <div className="space-y-2">
+                {groupedByVersion[version]!.map((mat) => (
+                  <div key={mat.id} className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                    <FilePreview
+                      fileName={mat.fileName}
+                      fileType={mat.fileType}
+                      ossUrl={mat.ossUrl}
+                      fileSize={mat.fileSize}
+                      compact
+                    />
+                    <div className="flex items-center gap-2 mt-1.5 text-xs text-[var(--color-text-placeholder)] pl-5">
+                      <span>{formatDateTime(mat.createdAt)}</span>
+                    </div>
+                    {mat.remark && (
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1 pl-5">{mat.remark}</p>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           ))}

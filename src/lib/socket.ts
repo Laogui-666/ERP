@@ -7,7 +7,7 @@ let io: Server | null = null
 export function initSocketServer(httpServer: HttpServer): Server {
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
+      origin: process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3002',
       methods: ['GET', 'POST'],
       credentials: true,
     },

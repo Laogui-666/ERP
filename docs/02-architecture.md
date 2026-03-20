@@ -2,9 +2,9 @@
 
 # 架构实现方案
 
-> **文档版本**: V1.5  
+> **文档版本**: V2.0  
 > **生成日期**: 2026-03-19  
-> **最后更新**: 2026-03-20 11:23  
+> **最后更新**: 2026-03-21 01:29  
 > **技术栈**: Next.js 14 + React 18 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
 > **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
@@ -675,7 +675,23 @@ model VisaTemplate {
 | GET | `/api/departments` | 部门列表 | Lv2-5 |
 | POST | `/api/departments` | 创建部门 | Lv2 |
 
-### 4.7 数据分析模块
+### 4.7 订单管理扩展模块
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| POST | `/api/orders/[id]/cancel` | 取消订单（需填写原因，标记为REJECTED终态） | Lv2-3,5 |
+| POST | `/api/orders/[id]/reassign` | 转单（转交给同角色其他员工+通知目标用户） | Lv2-3,5 |
+
+### 4.8 定时任务模块
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| POST | `/api/cron/appointment-remind` | 预约提醒（检查24h内预约，创建站内通知） | Cron Secret |
+| POST | `/api/cron/timeout-check` | 超时检测（5级超时规则，通知管理员） | Cron Secret |
+
+> Cron 端点使用 `x-cron-secret` header 鉴权（值为 JWT_SECRET），已在 middleware 中加入公开路由。
+
+### 4.9 数据分析模块
 
 | 方法 | 路径 | 说明 | 权限 |
 |---|---|---|---|
@@ -684,7 +700,7 @@ model VisaTemplate {
 | GET | `/api/analytics/workload` | 人员负荷 | Lv1-3,5 |
 | GET | `/api/analytics/exceptions` | 异常订单 | Lv1-3,5 |
 
-### 4.8 SMS 预留模块
+### 4.10 SMS 预留模块
 
 | 方法 | 路径 | 说明 | 状态 |
 |---|---|---|---|

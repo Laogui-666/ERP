@@ -37,7 +37,7 @@ export function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 glass-card p-0 shadow-2xl z-50 animate-fade-in-up">
+        <div className="absolute right-0 mt-2 w-80 glass-card-static p-0 shadow-2xl z-50 animate-fade-in-up rounded-xl">
           <div className="flex items-center justify-between p-3 border-b border-white/10">
             <span className="text-sm font-medium text-[var(--color-text-primary)]">通知</span>
             {unreadCount > 0 && (

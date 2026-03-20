@@ -10,6 +10,7 @@ const PUBLIC_ROUTES = [
   '/api/auth/refresh',
   '/api/auth/reset-password',
   '/api/health',
+  '/api/cron/',
   '/login',
   '/register',
   '/reset-password',

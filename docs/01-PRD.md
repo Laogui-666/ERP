@@ -2,9 +2,9 @@
 
 # 产品需求文档 (PRD)
 
-> **文档版本**: V1.5  
+> **文档版本**: V2.0  
 > **生成日期**: 2026-03-19  
-> **最后更新**: 2026-03-20 11:23  
+> **最后更新**: 2026-03-21 01:29  
 > **所属公司**: 沐海旅行  
 > **产品定位**: 签证办理行业专属 SaaS 多租户 ERP 系统  
 
@@ -241,6 +241,14 @@ PENDING_CONNECTION ──[客服提交]──► CONNECTED
 | `PENDING_DELIVERY` | `DELIVERED` | DOC_COLLECTOR / VISA_ADMIN | 资料员确认交付 |
 | `DELIVERED` | `APPROVED` | OPERATOR / DOC_COLLECTOR / CUSTOMER | 提交出签结果 |
 | `DELIVERED` | `REJECTED` | OPERATOR / DOC_COLLECTOR / CUSTOMER | 提交拒签结果 |
+| `*非终态` | `REJECTED` | COMPANY_OWNER / CS_ADMIN / VISA_ADMIN | 取消订单（需填写原因） |
+
+**转单操作（不改变状态）：**
+
+| 操作 | 触发角色 | 说明 |
+|---|---|---|
+| 资料员转单 | COMPANY_OWNER / CS_ADMIN / VISA_ADMIN | 将订单转交给同角色其他资料员 |
+| 操作员转单 | COMPANY_OWNER / CS_ADMIN / VISA_ADMIN | 将订单转交给同角色其他操作员 |
 
 ### 4.3 各阶段详细交互
 

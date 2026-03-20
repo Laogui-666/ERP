@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react'
 import { useToast } from '@/components/ui/toast'
+import { FilePreview } from '@/components/ui/file-preview'
+import { CameraCapture } from '@/components/ui/camera-capture'
 import { DOC_REQ_STATUS_LABELS } from '@/types/order'
 import type { DocumentRequirement, DocReqStatus } from '@/types/order'
 import type { UserRole } from '@/types/user'
@@ -22,8 +24,10 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
   const [newItemRequired, setNewItemRequired] = useState(true)
   const [isAdding, setIsAdding] = useState(false)
   const [uploadingId, setUploadingId] = useState<string | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null)
   const [reviewingId, setReviewingId] = useState<string | null>(null)
   const [reviewReason, setReviewReason] = useState('')
+  const [cameraTargetId, setCameraTargetId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [targetReqId, setTargetReqId] = useState<string | null>(null)
 
@@ -75,14 +79,68 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
   }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !targetReqId) return
+    const files = e.target.files
+    if (!files || files.length === 0 || !targetReqId) return
+
+    const fileArray = Array.from(files)
+
+    // 客户端预校验：大小
+    const MAX_SIZE = 50 * 1024 * 1024
+    const oversized = fileArray.filter((f) => f.size > MAX_SIZE)
+    if (oversized.length > 0) {
+      toast('error', `以下文件超过 50MB 限制: ${oversized.map((f) => f.name).join(', ')}`)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
 
     setUploadingId(targetReqId)
+    setUploadProgress({ current: 0, total: fileArray.length })
+    try {
+      let successCount = 0
+      for (let i = 0; i < fileArray.length; i++) {
+        const file = fileArray[i]
+        setUploadProgress({ current: i + 1, total: fileArray.length })
+
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('requirementId', targetReqId)
+
+        const res = await fetch('/api/documents/upload', {
+          method: 'POST',
+          body: formData,
+        })
+        const json = await res.json()
+        if (json.success) {
+          successCount++
+        } else {
+          toast('error', `${file.name} 上传失败: ${json.error?.message ?? '未知错误'}`)
+        }
+      }
+
+      if (successCount > 0) {
+        toast('success', `${successCount} 个文件上传成功`)
+        onRefresh()
+      }
+    } catch {
+      toast('error', '上传失败')
+    } finally {
+      setUploadingId(null)
+      setUploadProgress(null)
+      setTargetReqId(null)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  // 拍照上传
+  const handleCameraCapture = async (file: File) => {
+    if (!cameraTargetId) return
+
+    setUploadingId(cameraTargetId)
+    setCameraTargetId(null)
     try {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('requirementId', targetReqId)
+      formData.append('requirementId', cameraTargetId)
 
       const res = await fetch('/api/documents/upload', {
         method: 'POST',
@@ -90,7 +148,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       })
       const json = await res.json()
       if (json.success) {
-        toast('success', `文件 ${file.name} 上传成功`)
+        toast('success', '照片上传成功')
         onRefresh()
       } else {
         toast('error', json.error?.message ?? '上传失败')
@@ -99,8 +157,6 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       toast('error', '上传失败')
     } finally {
       setUploadingId(null)
-      setTargetReqId(null)
-      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -209,10 +265,12 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
               canUpload={canUpload && ['PENDING', 'REJECTED', 'SUPPLEMENT'].includes(req.status)}
               canReview={canReview && req.status === 'UPLOADED'}
               isUploading={uploadingId === req.id}
+              uploadProgress={uploadingId === req.id ? uploadProgress : null}
               isReviewing={reviewingId === req.id}
               reviewReason={reviewReason}
               onReviewReasonChange={setReviewReason}
               onUpload={() => handleUploadClick(req.id)}
+              onCamera={() => setCameraTargetId(req.id)}
               onApprove={() => handleReview(req.id, 'APPROVED')}
               onReject={(status) => handleReview(req.id, status)}
             />
@@ -220,31 +278,43 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         </div>
       )}
 
-      {/* 隐藏的文件输入 */}
+      {/* 隐藏的文件输入（支持多文件 + HEIC） */}
       <input
         ref={fileInputRef}
         type="file"
         className="hidden"
         onChange={handleFileChange}
-        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.7z,.txt"
+        accept="image/*,.heic,.heif,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.7z,.txt"
+        multiple
       />
+
+      {/* 拍照弹窗 */}
+      {cameraTargetId && (
+        <CameraCapture
+          onCapture={handleCameraCapture}
+          onClose={() => setCameraTargetId(null)}
+          frameType="passport"
+        />
+      )}
     </div>
   )
 }
 
 // 单条资料需求
 function DocumentItem({
-  req, canUpload, canReview, isUploading, isReviewing,
-  reviewReason, onReviewReasonChange, onUpload, onApprove, onReject,
+  req, canUpload, canReview, isUploading, uploadProgress, isReviewing,
+  reviewReason, onReviewReasonChange, onUpload, onCamera, onApprove, onReject,
 }: {
   req: DocumentRequirement
   canUpload: boolean
   canReview: boolean
   isUploading: boolean
+  uploadProgress: { current: number; total: number } | null
   isReviewing: boolean
   reviewReason: string
   onReviewReasonChange: (v: string) => void
   onUpload: () => void
+  onCamera: () => void
   onApprove: () => void
   onReject: (status: 'REJECTED' | 'SUPPLEMENT') => void
 }) {
@@ -287,22 +357,14 @@ function DocumentItem({
           {req.files.length > 0 && (
             <div className="mt-2 space-y-1">
               {req.files.map((file) => (
-                <div key={file.id} className="flex items-center gap-2 text-xs">
-                  <svg className="w-3.5 h-3.5 text-[var(--color-text-placeholder)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                  </svg>
-                  <a
-                    href={file.ossUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[var(--color-info)] hover:text-[var(--color-primary-light)] truncate max-w-[200px]"
-                  >
-                    {file.fileName}
-                  </a>
-                  <span className="text-[var(--color-text-placeholder)] shrink-0">
-                    ({(file.fileSize / 1024).toFixed(1)}KB)
-                  </span>
-                </div>
+                <FilePreview
+                  key={file.id}
+                  fileName={file.fileName}
+                  fileType={file.fileType}
+                  ossUrl={file.ossUrl}
+                  fileSize={file.fileSize}
+                  compact
+                />
               ))}
             </div>
           )}
@@ -310,13 +372,24 @@ function DocumentItem({
           {/* 操作按钮 */}
           <div className="flex items-center gap-2 mt-2">
             {canUpload && (
-              <button
-                onClick={onUpload}
-                disabled={isUploading}
-                className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-info)]/15 text-[var(--color-info)] hover:bg-[var(--color-info)]/25 transition-colors disabled:opacity-50"
-              >
-                {isUploading ? '上传中...' : '上传文件'}
-              </button>
+              <>
+                <button
+                  onClick={onUpload}
+                  disabled={isUploading}
+                  className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-info)]/15 text-[var(--color-info)] hover:bg-[var(--color-info)]/25 transition-colors disabled:opacity-50"
+                >
+                  {isUploading
+                    ? (uploadProgress ? `上传中 (${uploadProgress.current}/${uploadProgress.total})...` : '上传中...')
+                    : '📁 上传'}
+                </button>
+                <button
+                  onClick={onCamera}
+                  disabled={isUploading}
+                  className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-accent)]/15 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/25 transition-colors disabled:opacity-50"
+                >
+                  📷 拍照
+                </button>
+              </>
             )}
             {canReview && !showReviewForm && (
               <button
@@ -327,6 +400,18 @@ function DocumentItem({
               </button>
             )}
           </div>
+
+          {/* 上传进度条 */}
+          {isUploading && uploadProgress && (
+            <div className="mt-2">
+              <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-[var(--color-info)] transition-all duration-300"
+                  style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
 
           {/* 审核表单 */}
           {showReviewForm && (

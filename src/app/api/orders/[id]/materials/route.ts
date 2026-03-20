@@ -55,10 +55,12 @@ export async function POST(
 
     // 文件类型校验
     const allowedTypes = [
-      'application/pdf', 'image/jpeg', 'image/png',
+      'application/pdf', 'image/jpeg', 'image/png', 'image/webp',
+      'image/heic', 'image/heif',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/zip',
+      'application/zip', 'application/x-rar-compressed',
+      'text/plain',
     ]
     if (!allowedTypes.includes(file.type)) {
       throw new AppError('INVALID_FILE_TYPE', `不支持的文件类型: ${file.type}`, 400)
@@ -148,16 +150,31 @@ export async function POST(
       return mat
     })
 
-    // 通知资料员
-    if (order.collectorId && order.status === 'MAKING_MATERIALS') {
+    // 通知资料员（任何材料上传都通知，包括修改反馈）
+    if (order.collectorId) {
+      const isInitial = order.status === 'MAKING_MATERIALS'
       await prisma.notification.create({
         data: {
           companyId: user.companyId,
           userId: order.collectorId,
           orderId: params.id,
+          type: isInitial ? 'MATERIAL_UPLOADED' : 'MATERIAL_FEEDBACK',
+          title: isInitial ? '签证材料已上传' : '签证材料已更新',
+          content: `订单 ${order.orderNo} 的签证材料${isInitial ? '已上传' : '已更新'}，请查看并确认交付`,
+        },
+      })
+    }
+
+    // 通知客户（状态变为待交付时）
+    if (order.customerId && order.status === 'MAKING_MATERIALS') {
+      await prisma.notification.create({
+        data: {
+          companyId: user.companyId,
+          userId: order.customerId,
+          orderId: params.id,
           type: 'MATERIAL_UPLOADED',
-          title: '签证材料已上传',
-          content: `订单 ${order.orderNo} 的签证材料已上传，请查看并确认交付`,
+          title: '签证材料已制作完成',
+          content: `您的订单 ${order.orderNo} 签证材料已制作完成，请在平台查看`,
         },
       })
     }

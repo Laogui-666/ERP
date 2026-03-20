@@ -28,7 +28,7 @@ export function formatDateTime(date: Date | string | null): string {
  * 生成系统专属订单号
  * 格式: HX + YYYYMMDD + 4位随机码
  * 示例: HX20260320A3F2
- * HX = 华夏/公司标识，一眼可识别为本系统订单
+ * HX = 沐海/公司标识，一眼可识别为本系统订单
  */
 export function generateOrderNo(): string {
   const now = new Date()

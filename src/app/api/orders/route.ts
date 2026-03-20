@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
         customerUser = await tx.user.create({
           data: {
             companyId: user.companyId,
-            username: `c_${data.customerPhone}`,
+            username: `c_${user.companyId.slice(0, 8)}_${data.customerPhone}`,
             phone: data.customerPhone,
             email: data.customerEmail ?? null,
             passwordHash: '', // 客户首次登录需重置

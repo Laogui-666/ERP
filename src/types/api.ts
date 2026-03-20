@@ -9,6 +9,7 @@ export interface ApiMeta {
   page?: number
   pageSize?: number
   totalPages?: number
+  unreadCount?: number
 }
 
 export interface ApiError {

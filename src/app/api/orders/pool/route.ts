@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { requirePermission } from '@/lib/rbac'
 import { AppError, createSuccessResponse } from '@/types/api'
 import { z } from 'zod'
+import type { OrderStatus } from '@/types/order'
 
 // GET /api/orders/pool - 公共池订单列表
 export async function GET(request: NextRequest) {
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     // 资料员看到 PENDING_CONNECTION 的订单
     // 操作员看到 PENDING_REVIEW 的订单
-    let poolStatus: string
+    let poolStatus: OrderStatus
     if (['DOC_COLLECTOR', 'VISA_ADMIN'].includes(user.role)) {
       poolStatus = 'PENDING_CONNECTION'
     } else if (['OPERATOR', 'OUTSOURCE'].includes(user.role)) {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     const where = {
       companyId: user.companyId,
-      status: poolStatus as any,
+      status: poolStatus,
     }
 
     const [orders, total] = await Promise.all([

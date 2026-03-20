@@ -2,9 +2,9 @@
 
 # 架构实现方案
 
-> **文档版本**: V1.4  
+> **文档版本**: V1.5  
 > **生成日期**: 2026-03-19  
-> **最后更新**: 2026-03-20 10:45  
+> **最后更新**: 2026-03-20 11:23  
 > **技术栈**: Next.js 14 + React 18 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
 > **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
@@ -673,12 +673,13 @@ model VisaTemplate {
 
 ### 4.5 通知模块
 
-| 方法 | 路径 | 说明 | 权限 |
-|---|---|---|---|
-| GET | `/api/notifications` | 通知列表 | 已登录 |
-| PATCH | `/api/notifications/[id]/read` | 标记已读 | 接收者 |
-| POST | `/api/notifications/mark-all-read` | 全部已读 | 已登录 |
-| GET | `/api/notifications/unread-count` | 未读数 | 已登录 |
+| 方法 | 路径 | 说明 | 权限 | 状态 |
+|---|---|---|---|:---:|
+| GET | `/api/notifications` | 通知列表（含 unreadCount） | 已登录 | ✅ |
+| PATCH | `/api/notifications/[id]` | 标记单条已读 | 接收者 | ✅ |
+| POST | `/api/notifications/mark-all-read` | 全部已读 | 已登录 | ✅ |
+
+> 未读数通过 `GET /api/notifications?unreadOnly=true&pageSize=1` 返回的 `meta.unreadCount` 获取，无需单独端点。
 
 ### 4.6 用户与组织模块
 

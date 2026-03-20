@@ -10,19 +10,19 @@ const config: Config = {
     extend: {
       colors: {
         morandi: {
-          blue: '#6B7FA3',
-          'blue-dark': '#4A5C7A',
-          'blue-light': '#8FA3C4',
-          gray: '#9BA4B5',
-          'gray-light': '#C5CCD6',
-          'gray-dark': '#5A6275',
-          green: '#7FA08A',
+          blue: '#7C8DA6',        // --color-primary
+          'blue-dark': '#5A6B82', // --color-primary-dark
+          'blue-light': '#A8B5C7',// --color-primary-light
+          gray: '#8E99A8',        // --color-text-secondary
+          'gray-light': '#A8B5C7',// --color-primary-light (复用)
+          'gray-dark': '#5A6478', // --color-text-placeholder
+          green: '#7FA87A',       // --color-success
           'green-light': '#A3C4AD',
-          coral: '#C4918F',
+          coral: '#B87C7C',       // --color-error
           'coral-light': '#D4ADA9',
-          purple: '#9A8ABF',
+          purple: '#9B8EC4',      // --color-accent
           'purple-light': '#B8ADCF',
-          cream: '#E8E4DF',
+          cream: '#E8ECF1',       // --color-text-primary
           'cream-dark': '#D4CFC8',
         },
       },

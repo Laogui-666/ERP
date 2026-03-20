@@ -2,9 +2,9 @@
 
 # 架构实现方案
 
-> **文档版本**: V2.0  
+> **文档版本**: V3.0  
 > **生成日期**: 2026-03-19  
-> **最后更新**: 2026-03-21 01:29  
+> **最后更新**: 2026-03-21 02:41  
 > **技术栈**: Next.js 14 + React 18 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
 > **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
@@ -244,6 +244,7 @@ Company ─1──N── User
 Company ─1──N── Department
 Company ─1──N── Order
 Company ─1──N── VisaTemplate
+Company ─1──N── Applicant
 
 User ─1──N── Order (as customer)
 User ─1──N── Order (as collector)
@@ -251,6 +252,7 @@ User ─1──N── Order (as operator)
 User ─1──N── OrderLog
 User ─1──N── Notification
 
+Order ─1──N── Applicant         ← 新增：多申请人
 Order ─1──N── DocumentRequirement
 Order ─1──N── VisaMaterial
 Order ─1──N── OrderLog
@@ -412,6 +414,24 @@ model Order {
   appointmentDate DateTime?
   fingerprintRequired Boolean @default(false)
 
+  // 多申请人
+  applicantCount  Int          @default(1)          // 申请人数（自动统计）
+  contactName     String?      @db.VarChar(50)      // 联系人（下单人 ≠ 申请人）
+  targetCity      String?      @db.VarChar(50)      // 送签城市
+
+  // 流程时间线
+  submittedAt     DateTime?                           // 递交使馆时间
+  visaResultAt    DateTime?                           // 最后一人出签时间
+
+  // 财务明细
+  platformFeeRate   Decimal?   @db.Decimal(5,4)      // 平台扣点费率 (0.061)
+  platformFee       Decimal?   @db.Decimal(10,2)     // 平台费用金额
+  visaFee           Decimal?   @db.Decimal(10,2)     // 签证费（总计）
+  insuranceFee      Decimal?   @db.Decimal(10,2)     // 保险费（总计）
+  rejectionInsurance Decimal?  @db.Decimal(10,2)     // 拒签保险
+  reviewBonus       Decimal?   @db.Decimal(10,2)     // 好评返现
+  grossProfit       Decimal?   @db.Decimal(10,2)     // 毛利（自动计算）
+
   // 时间戳
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
@@ -424,6 +444,7 @@ model Order {
   collector       User?       @relation("OrderCollector", fields: [collectorId], references: [id])
   operator        User?       @relation("OrderOperator", fields: [operatorId], references: [id])
 
+  applicants           Applicant[]
   documentRequirements DocumentRequirement[]
   visaMaterials        VisaMaterial[]
   orderLogs            OrderLog[]
@@ -449,6 +470,44 @@ enum OrderStatus {
   DELIVERED           // 已交付
   APPROVED            // 出签
   REJECTED            // 拒签
+  PARTIAL             // 部分出签（多人订单特有）
+}
+
+// ==================== 申请人（多申请人订单） ====================
+
+model Applicant {
+  id              String     @id @default(cuid())
+  orderId         String     @db.VarChar(30)
+  companyId       String     @db.VarChar(30)
+
+  // 基本信息
+  name            String     @db.VarChar(50)       // 申请人姓名
+  phone           String?    @db.VarChar(20)       // 手机号（部分人有独立联系方式）
+  passportNo      String?    @db.VarChar(20)       // 护照号
+  passportExpiry  DateTime?
+
+  // 签证结果（每个人独立跟踪）
+  visaResult      VisaResult?                       // APPROVED / REJECTED / null(进行中)
+  visaResultAt    DateTime?                         // 出签/拒签时间
+  visaResultNote  String?    @db.Text               // 结果备注（如拒签原因）
+
+  // 资料状态
+  documentsComplete Boolean  @default(false)        // 资料是否齐全
+
+  sortOrder       Int        @default(0)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  order           Order      @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@index([companyId])
+  @@map("erp_applicants")
+}
+
+enum VisaResult {
+  APPROVED    // 出签
+  REJECTED    // 拒签
 }
 
 // ==================== 资料需求 ====================

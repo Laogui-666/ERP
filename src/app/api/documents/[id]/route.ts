@@ -113,6 +113,18 @@ export async function DELETE(
     })
     if (!requirement) throw new AppError('NOT_FOUND', '资料需求不存在', 404)
 
+    // 先删除 OSS 文件，再级联删除数据库记录
+    const files = await prisma.documentFile.findMany({
+      where: { requirementId: params.id },
+      select: { ossKey: true },
+    })
+    if (files.length > 0) {
+      const { deleteFiles } = await import('@/lib/oss')
+      await deleteFiles(files.map((f) => f.ossKey)).catch((err) => {
+        console.error('[OSS] 删除文件失败:', err)
+      })
+    }
+
     // 级联删除文件记录（数据库已设置 onDelete: Cascade）
     await prisma.documentRequirement.delete({
       where: { id: params.id },

@@ -41,3 +41,49 @@ class EventBus {
 }
 
 export const eventBus = new EventBus()
+
+// ==================== 事件处理器注册 ====================
+
+interface StatusChangeData {
+  orderId: string
+  companyId: string
+  actorId: string
+  fromStatus: string
+  toStatus: string
+  action: string
+}
+
+// 状态变更 → 创建站内通知
+eventBus.on(EVENTS.ORDER_STATUS_CHANGED, async (data) => {
+  const { orderId, companyId, actorId, fromStatus, toStatus, action } = data as StatusChangeData
+
+  // 异步导入避免循环依赖
+  const { prisma } = await import('@/lib/prisma')
+
+  // 查询订单基本信息
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { orderNo: true, customerName: true, collectorId: true, operatorId: true, customerId: true, createdBy: true },
+  })
+  if (!order) return
+
+  // 确定需要通知的用户（排除操作者本人）
+  const notifyUserIds = new Set<string>()
+  if (order.collectorId && order.collectorId !== actorId) notifyUserIds.add(order.collectorId)
+  if (order.operatorId && order.operatorId !== actorId) notifyUserIds.add(order.operatorId)
+  if (order.customerId && order.customerId !== actorId) notifyUserIds.add(order.customerId)
+  if (order.createdBy && order.createdBy !== actorId) notifyUserIds.add(order.createdBy)
+
+  if (notifyUserIds.size === 0) return
+
+  await prisma.notification.createMany({
+    data: Array.from(notifyUserIds).map((userId) => ({
+      companyId,
+      userId,
+      orderId,
+      type: 'STATUS_CHANGE',
+      title: `订单状态变更：${action}`,
+      content: `订单 ${order.orderNo} (${order.customerName}) 状态从 ${fromStatus} 变更为 ${toStatus}`,
+    })),
+  })
+})

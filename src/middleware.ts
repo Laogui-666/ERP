@@ -8,9 +8,11 @@ const PUBLIC_ROUTES = [
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/refresh',
+  '/api/auth/reset-password',
   '/api/health',
   '/login',
   '/register',
+  '/reset-password',
 ]
 
 function isPublicRoute(pathname: string): boolean {

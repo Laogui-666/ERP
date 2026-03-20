@@ -636,6 +636,7 @@ model VisaTemplate {
 | POST | `/api/auth/refresh` | 刷新 Access Token | 已登录 |
 | POST | `/api/auth/logout` | 登录，清除 Cookie | 已登录 |
 | GET | `/api/auth/me` | 获取当前用户信息 | 已登录 |
+| POST | `/api/auth/reset-password` | 客户首次登录重置密码（验证手机号+用户名后设置新密码并自动登录） | 公开 |
 
 ### 4.2 订单模块
 
@@ -880,15 +881,22 @@ async function emitEvent(event: AppEvent) {
   await Promise.allSettled(eventHandlers.map(h => h(event)))
 }
 
-// 注册通知处理器
-onEvent('ORDER_STATUS_CHANGED', async (event) => {
-  // 创建站内通知
-  // Socket.io 推送
-  // SMS 发送（预留）
+// 事务成功后触发事件（异步，不阻塞主流程）
+eventBus.emit(EVENTS.ORDER_STATUS_CHANGED, {
+  orderId, companyId, actorId: userId,
+  fromStatus: order.status, toStatus, action: rule.action,
 })
+```
 
-onEvent('DOCUMENT_REVIEWED', async (event) => {
-  // 通知客户审核结果
+### 5.2 事件驱动通知（已集成）
+
+```typescript
+// src/lib/events.ts - 已注册状态变更通知处理器
+
+eventBus.on(EVENTS.ORDER_STATUS_CHANGED, async (data) => {
+  // 查询订单 → 确定需要通知的用户（排除操作者本人）
+  // → 批量创建 Notification 记录
+  // 涉及角色：资料员、操作员、客户、创建者
 })
 ```
 
@@ -1490,7 +1498,7 @@ SMS_ENABLED=false
 | 层 | 措施 |
 |---|---|
 | 传输 | 全站 HTTPS + HSTS |
-| 认证 | JWT 双 Token + HttpOnly Cookie |
+| 认证 | JWT 双 Token + HttpOnly Cookie + 客户首次登录重置密码 |
 | 授权 | 9 级 RBAC + 公司级数据隔离 |
 | 密码 | bcrypt (cost=12) |
 | 输入 | Zod 校验 + Prisma 参数化查询 |

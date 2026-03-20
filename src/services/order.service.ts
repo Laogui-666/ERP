@@ -180,66 +180,30 @@ export class OrderService {
       throw new AppError('ORDER_NOT_FOUND', '订单不存在', 404)
     }
 
-    // 资料员接单：PENDING_CONNECTION → CONNECTED
+    // 统一走状态机 transitionOrder（含事务+日志+事件）
     if (['DOC_COLLECTOR', 'VISA_ADMIN'].includes(user.role)) {
       if (order.status !== 'PENDING_CONNECTION') {
         throw new AppError('INVALID_STATUS', '只有待对接状态的订单可接单', 400)
       }
-      if (order.collectorId) {
-        throw new AppError('ALREADY_ASSIGNED', '该订单已被资料员接单', 400)
-      }
-
-      await prisma.$transaction(async (tx) => {
-        await tx.order.update({
-          where: { id: orderId },
-          data: {
-            collectorId: user.userId,
-            status: 'CONNECTED',
-          },
-        })
-
-        await tx.orderLog.create({
-          data: {
-            orderId,
-            userId: user.userId,
-            action: '接单',
-            fromStatus: 'PENDING_CONNECTION',
-            toStatus: 'CONNECTED',
-            companyId: user.companyId,
-            detail: null,
-          },
-        })
+      await transitionOrder({
+        orderId,
+        toStatus: 'CONNECTED',
+        userId: user.userId,
+        userRole: user.role,
+        companyId: user.companyId,
+        detail: '从公共池接单',
       })
-    }
-    // 操作员接单：PENDING_REVIEW → UNDER_REVIEW
-    else if (['OPERATOR', 'OUTSOURCE'].includes(user.role)) {
+    } else if (['OPERATOR', 'OUTSOURCE'].includes(user.role)) {
       if (order.status !== 'PENDING_REVIEW') {
         throw new AppError('INVALID_STATUS', '只有待审核状态的订单可接单', 400)
       }
-      if (order.operatorId) {
-        throw new AppError('ALREADY_ASSIGNED', '该订单已被操作员接单', 400)
-      }
-
-      await prisma.$transaction(async (tx) => {
-        await tx.order.update({
-          where: { id: orderId },
-          data: {
-            operatorId: user.userId,
-            status: 'UNDER_REVIEW',
-          },
-        })
-
-        await tx.orderLog.create({
-          data: {
-            orderId,
-            userId: user.userId,
-            action: '操作员接单',
-            fromStatus: 'PENDING_REVIEW',
-            toStatus: 'UNDER_REVIEW',
-            companyId: user.companyId,
-            detail: null,
-          },
-        })
+      await transitionOrder({
+        orderId,
+        toStatus: 'UNDER_REVIEW',
+        userId: user.userId,
+        userRole: user.role,
+        companyId: user.companyId,
+        detail: '从公共池接单',
       })
     } else {
       throw new AppError('FORBIDDEN', '当前角色无法接单', 403)

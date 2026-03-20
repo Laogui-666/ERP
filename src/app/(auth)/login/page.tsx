@@ -25,6 +25,11 @@ export default function LoginPage() {
       const data = await res.json()
 
       if (!res.ok) {
+        // 客户首次登录 → 跳转重置密码页
+        if (data.error?.code === 'RESET_REQUIRED') {
+          router.push(`/reset-password?username=${encodeURIComponent(username)}`)
+          return
+        }
         setError(data.error?.message || '登录失败')
         return
       }

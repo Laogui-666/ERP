@@ -262,6 +262,8 @@ PENDING_CONNECTION ──[客服提交]──► CONNECTED
 - 订单信息：金额、付款方式、来源渠道
 - 备注信息
 
+**客户账号创建**：客服录入订单时系统自动创建客户账号（`passwordHash` 为空）。客户首次登录时系统提示"首次登录请先设置密码"，跳转至 `/reset-password` 页面，验证手机号+用户名后设置新密码并自动登录。
+
 #### 阶段二：资料员接单及收集反馈
 
 **触发者**: DOC_COLLECTOR / VISA_ADMIN + CUSTOMER

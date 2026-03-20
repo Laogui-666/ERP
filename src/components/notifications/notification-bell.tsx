@@ -19,7 +19,7 @@ export function NotificationBell() {
     <div className="relative">
       <button
         onClick={handleToggle}
-        className="relative p-2 text-morandi-gray hover:text-morandi-cream transition-colors"
+        className="relative p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
@@ -30,7 +30,7 @@ export function NotificationBell() {
           />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[var(--color-error)] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -39,11 +39,11 @@ export function NotificationBell() {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 glass-card p-0 shadow-2xl z-50 animate-fade-in-up">
           <div className="flex items-center justify-between p-3 border-b border-white/10">
-            <span className="text-sm font-medium text-morandi-cream">通知</span>
+            <span className="text-sm font-medium text-[var(--color-text-primary)]">通知</span>
             {unreadCount > 0 && (
               <button
                 onClick={() => { void markAllAsRead() }}
-                className="text-xs text-morandi-blue hover:text-morandi-blue-light"
+                className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)]"
               >
                 全部已读
               </button>
@@ -51,26 +51,26 @@ export function NotificationBell() {
           </div>
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="p-4 text-center text-sm text-morandi-gray">暂无通知</div>
+              <div className="p-4 text-center text-sm text-[var(--color-text-placeholder)]">暂无通知</div>
             ) : (
               notifications.map((n) => (
                 <div
                   key={n.id}
                   className={`p-3 border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${
-                    !n.isRead ? 'bg-morandi-blue/5' : ''
+                    !n.isRead ? 'bg-[var(--color-info)]/5' : ''
                   }`}
                   onClick={() => { void markAsRead(n.id) }}
                 >
                   <div className="flex items-start gap-2">
                     {!n.isRead && (
-                      <span className="w-2 h-2 bg-morandi-blue rounded-full mt-1.5 shrink-0" />
+                      <span className="w-2 h-2 bg-[var(--color-info)] rounded-full mt-1.5 shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-morandi-cream font-medium truncate">{n.title}</p>
+                      <p className="text-sm text-[var(--color-text-primary)] font-medium truncate">{n.title}</p>
                       {n.content && (
-                        <p className="text-xs text-morandi-gray mt-0.5 line-clamp-2">{n.content}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 line-clamp-2">{n.content}</p>
                       )}
-                      <p className="text-xs text-morandi-gray mt-1">{formatDateTime(n.createdAt)}</p>
+                      <p className="text-xs text-[var(--color-text-placeholder)] mt-1">{formatDateTime(n.createdAt)}</p>
                     </div>
                   </div>
                 </div>

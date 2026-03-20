@@ -2,6 +2,7 @@ import type { OrderStatus } from '@/types/order'
 import type { UserRole } from '@/types/user'
 import { prisma } from '@/lib/prisma'
 import { AppError } from '@/types/api'
+import { eventBus, EVENTS } from '@/lib/events'
 
 interface TransitionRule {
   from: OrderStatus
@@ -202,5 +203,15 @@ export async function transitionOrder(input: {
         detail: detail ?? null,
       },
     })
+  })
+
+  // 事务成功后触发事件（异步，不阻塞主流程）
+  eventBus.emit(EVENTS.ORDER_STATUS_CHANGED, {
+    orderId,
+    companyId,
+    actorId: userId,
+    fromStatus: order.status,
+    toStatus,
+    action: rule.action,
   })
 }

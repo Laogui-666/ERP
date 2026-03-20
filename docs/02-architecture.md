@@ -99,43 +99,45 @@ ERP/
 │   └── seed.ts                    # 种子数据
 ├── src/
 │   ├── app/                       # Next.js App Router
-│   │   ├── (auth)/                # 认证页面组
+│   │   ├── (auth)/                # 认证页面组（路由组，不参与URL）
 │   │   │   ├── login/
 │   │   │   └── register/
-│   │   ├── (admin)/               # 管理端页面组
+│   │   ├── admin/                 # 管理端页面（实际路径 /admin/*）
 │   │   │   ├── dashboard/
 │   │   │   ├── orders/
-│   │   │   ├── pool/
-│   │   │   ├── my-workspace/
-│   │   │   ├── templates/
-│   │   │   ├── team/
-│   │   │   ├── analytics/
-│   │   │   └── settings/
-│   │   ├── (customer)/            # 客户端页面组
+│   │   │   │   └── [id]/          # 订单详情
+│   │   │   ├── pool/              # 公共池
+│   │   │   ├── workspace/         # 我的工作台
+│   │   │   ├── templates/         # 签证模板
+│   │   │   ├── team/              # 团队管理
+│   │   │   ├── analytics/         # 数据统计
+│   │   │   ├── settings/          # 系统设置
+│   │   │   └── layout.tsx
+│   │   ├── customer/              # 客户端页面（实际路径 /customer/*）
 │   │   │   ├── orders/
-│   │   │   ├── notifications/
-│   │   │   └── profile/
+│   │   │   └── layout.tsx
 │   │   ├── api/                   # API 路由
 │   │   │   ├── auth/
 │   │   │   │   ├── login/route.ts
 │   │   │   │   ├── register/route.ts
 │   │   │   │   ├── refresh/route.ts
-│   │   │   │   └── logout/route.ts
+│   │   │   │   ├── logout/route.ts
+│   │   │   │   ├── me/route.ts
+│   │   │   │   └── reset-password/route.ts
 │   │   │   ├── orders/
 │   │   │   │   ├── route.ts
 │   │   │   │   ├── [id]/route.ts
 │   │   │   │   ├── [id]/status/route.ts
 │   │   │   │   ├── [id]/claim/route.ts
+│   │   │   │   ├── [id]/documents/route.ts   # 资料清单 API
+│   │   │   │   ├── [id]/materials/route.ts    # 签证材料 API
 │   │   │   │   └── pool/route.ts
 │   │   │   ├── documents/
-│   │   │   │   ├── route.ts
-│   │   │   │   ├── upload/route.ts
-│   │   │   │   ├── [id]/route.ts
-│   │   │   │   ├── [id]/download/route.ts
-│   │   │   │   └── requirements/
+│   │   │   │   ├── [id]/route.ts              # 审核/删除资料需求
+│   │   │   │   └── upload/route.ts            # 文件上传
 │   │   │   ├── notifications/
 │   │   │   │   ├── route.ts
-│   │   │   │   ├── [id]/read/route.ts
+│   │   │   │   ├── [id]/route.ts
 │   │   │   │   └── mark-all-read/route.ts
 │   │   │   ├── users/
 │   │   │   ├── departments/
@@ -143,8 +145,6 @@ ERP/
 │   │   │   ├── templates/
 │   │   │   ├── analytics/
 │   │   │   └── sms/               # SMS 预留端口
-│   │   │       ├── route.ts       # 暂返回 501
-│   │   │       └── templates/route.ts
 │   │   ├── layout.tsx
 │   │   └── page.tsx
 │   ├── components/
@@ -155,23 +155,12 @@ ERP/
 │   │   │   ├── glass-card.tsx
 │   │   │   └── page-header.tsx
 │   │   ├── orders/                # 订单相关组件
-│   │   │   ├── order-card.tsx
-│   │   │   ├── order-table.tsx
-│   │   │   ├── order-timeline.tsx
-│   │   │   ├── status-badge.tsx
-│   │   │   └── kanban-board.tsx
+│   │   │   └── status-badge.tsx
 │   │   ├── documents/             # 资料相关组件
-│   │   │   ├── doc-requirement-list.tsx
-│   │   │   ├── doc-upload-panel.tsx
-│   │   │   ├── doc-preview.tsx
-│   │   │   └── doc-review-panel.tsx
-│   │   ├── dashboard/             # 数据看板组件
-│   │   │   ├── stat-card.tsx
-│   │   │   ├── trend-chart.tsx
-│   │   │   └── workload-table.tsx
+│   │   │   ├── document-panel.tsx  # 资料面板（需求/上传/审核）
+│   │   │   └── material-panel.tsx  # 签证材料面板（上传/版本/列表）
 │   │   └── notifications/         # 通知组件
-│   │       ├── notification-bell.tsx
-│   │       └── notification-list.tsx
+│   │       └── notification-bell.tsx
 │   ├── lib/
 │   │   ├── prisma.ts              # Prisma 客户端单例
 │   │   ├── auth.ts                # JWT 认证工具
@@ -179,17 +168,14 @@ ERP/
 │   │   ├── transition.ts          # 状态机 TransitionService
 │   │   ├── events.ts              # 事件总线
 │   │   ├── socket.ts              # Socket.io 服务端
-│   │   ├── sms.ts                 # SMS 预留模块
 │   │   ├── oss.ts                 # 阿里云 OSS 客户端
 │   │   ├── desensitize.ts         # 数据脱敏工具
 │   │   └── utils.ts               # 通用工具
 │   ├── services/                  # 业务服务层
 │   │   ├── order.service.ts
-│   │   ├── document.service.ts
-│   │   ├── user.service.ts
 │   │   ├── notification.service.ts
-│   │   ├── analytics.service.ts
-│   │   └── template.service.ts
+│   │   ├── document.service.ts
+│   │   └── user.service.ts
 │   ├── hooks/                     # React Hooks
 │   │   ├── use-auth.ts
 │   │   ├── use-orders.ts
@@ -202,11 +188,10 @@ ERP/
 │   ├── types/                     # TypeScript 类型定义
 │   │   ├── order.ts
 │   │   ├── user.ts
-│   │   ├── document.ts
 │   │   └── api.ts
 │   ├── middleware.ts              # Next.js 中间件 (认证+租户)
 │   └── styles/
-│       ├── globals.css            # 全局样式
+│       ├── globals.css            # 全局样式 + CSS变量
 │       └── glassmorphism.css      # 玻璃拟态工具类
 ├── public/
 │   └── ...
@@ -656,20 +641,18 @@ model VisaTemplate {
 
 | 方法 | 路径 | 说明 | 权限 |
 |---|---|---|---|
-| GET | `/api/orders/[id]/documents` | 资料清单 | 有权限的用户 |
-| POST | `/api/orders/[id]/documents` | 添加资料需求 | Lv5-7 |
-| PATCH | `/api/documents/[id]` | 更新资料状态 | Lv5-7 |
-| POST | `/api/documents/upload` | 上传文件 | 有权限的用户 |
-| GET | `/api/documents/[id]/download` | 下载文件 | 有权限的用户 |
-| DELETE | `/api/documents/[id]` | 删除文件 | 上传者+管理员 |
+| GET | `/api/orders/[id]/documents` | 资料清单（含文件列表） | 有权限的用户 |
+| POST | `/api/orders/[id]/documents` | 批量添加资料需求项 | Lv5-7 |
+| PATCH | `/api/documents/[id]` | 审核资料（APPROVED/REJECTED/SUPPLEMENT） | Lv5-7 |
+| DELETE | `/api/documents/[id]` | 删除资料需求（级联删除文件） | Lv2,5-7 |
+| POST | `/api/documents/upload` | 上传文件到 OSS | 有权限的用户 |
 
 ### 4.4 签证材料模块
 
 | 方法 | 路径 | 说明 | 权限 |
 |---|---|---|---|
-| GET | `/api/orders/[id]/materials` | 签证材料列表 | Lv5-7, Lv9 |
-| POST | `/api/orders/[id]/materials` | 上传签证材料 | Lv5,7 |
-| GET | `/api/materials/[id]/download` | 下载签证材料 | 有权限的用户 |
+| GET | `/api/orders/[id]/materials` | 签证材料列表（按版本降序） | Lv5-7, Lv9 |
+| POST | `/api/orders/[id]/materials` | 上传签证材料（自动版本号+状态流转） | Lv5,7 |
 
 ### 4.5 通知模块
 

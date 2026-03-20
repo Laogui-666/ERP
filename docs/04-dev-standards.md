@@ -39,6 +39,9 @@
 
 ### 1.2 TypeScript 严格配置
 
+> ⚠️ **路由结构约定**：管理端使用实际路径段 `admin/`（非路由组 `(admin)/`），客户端同理使用 `customer/`。
+> 路由组 `()` 不参与 URL 路径，仅用于 `auth` 等不需要路径前缀的场景。新增页面必须放在 `admin/` 或 `customer/` 实际目录下。
+
 ```json
 // tsconfig.json
 {

@@ -79,8 +79,6 @@ export async function GET(request: NextRequest) {
           operatorId: true,
           createdAt: true,
           updatedAt: true,
-          collector: { select: { id: true, realName: true } },
-          operator: { select: { id: true, realName: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip: (params.page - 1) * params.pageSize,
@@ -134,6 +132,7 @@ export async function POST(request: NextRequest) {
         where: {
           phone: data.customerPhone,
           companyId: user.companyId,
+          role: 'CUSTOMER',
         },
       })
 

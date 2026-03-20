@@ -56,7 +56,10 @@ export async function POST(request: NextRequest) {
       realName: z.string().min(1).max(50),
       phone: z.string().regex(/^1[3-9]\d{9}$/),
       email: z.string().email().optional(),
-      role: z.string(),
+      role: z.enum([
+        'COMPANY_OWNER', 'CS_ADMIN', 'CUSTOMER_SERVICE',
+        'VISA_ADMIN', 'DOC_COLLECTOR', 'OPERATOR', 'OUTSOURCE', 'CUSTOMER',
+      ]),
       departmentId: z.string().optional(),
     })
 
@@ -75,7 +78,7 @@ export async function POST(request: NextRequest) {
         realName: data.realName,
         phone: data.phone,
         email: data.email ?? null,
-        role: data.role as any,
+        role: data.role,
         departmentId: data.departmentId ?? null,
       },
     })

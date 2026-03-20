@@ -27,9 +27,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // 统一鉴权（只调用一次 getCurrentUser）
+  const user = await getCurrentUser(request)
+
   // API 路由鉴权
   if (pathname.startsWith('/api/')) {
-    const user = await getCurrentUser(request)
     if (!user) {
       return NextResponse.json(
         { success: false, error: { code: 'UNAUTHORIZED', message: '未登录或Token已过期' } },
@@ -46,7 +48,6 @@ export async function middleware(request: NextRequest) {
   }
 
   // 页面路由鉴权
-  const user = await getCurrentUser(request)
   if (!user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }

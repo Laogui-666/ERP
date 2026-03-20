@@ -2,9 +2,9 @@
 
 # 开发规范
 
-> **文档版本**: V2.0  
+> **文档版本**: V3.0  
 > **生成日期**: 2026-03-19  
-> **最后更新**: 2026-03-21 01:29  
+> **最后更新**: 2026-03-21 03:30  
 > **适用范围**: 全团队所有开发人员
 
 ---
@@ -572,6 +572,7 @@ model Order {
 | `Department` | `erp_departments` | 部门 |
 | `User` | `erp_users` | 用户（9级角色） |
 | `Order` | `erp_orders` | 签证订单 |
+| `Applicant` | `erp_applicants` | 申请人（M5新增） |
 | `DocumentRequirement` | `erp_document_requirements` | 资料需求清单 |
 | `DocumentFile` | `erp_document_files` | 资料文件 |
 | `VisaMaterial` | `erp_visa_materials` | 签证材料（操作员产出） |

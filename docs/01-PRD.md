@@ -2,9 +2,9 @@
 
 # 产品需求文档 (PRD)
 
-> **文档版本**: V3.0  
+> **文档版本**: V4.0  
 > **生成日期**: 2026-03-19  
-> **最后更新**: 2026-03-21 02:41  
+> **最后更新**: 2026-03-21 03:30  
 > **所属公司**: 沐海旅行  
 > **产品定位**: 签证办理行业专属 SaaS 多租户 ERP 系统  
 
@@ -392,37 +392,64 @@ Applicant.visaResult  → 控制每人独立结果（申请人级）
 
 ### 5.1 当前手工表分析
 
-公司当前使用 Excel 手工统计，覆盖 2025年1月 ~ 2026年3月，共 15 个工作表，约 2,475 条记录。
+公司当前使用 Excel 手工统计，覆盖 2025年1月 ~ 2026年3月，共 15 个工作表，约 2,718 行数据。
 
-手工表 23 列结构：
+**实际数据规模（2026年3月单月）**：~330 单 / 471 个申请人 / 多人订单占比 33.5%
+
+**表头位置**：第 2 行（第 1 行为合并标题，非表头）
+
+**各月列数差异**：
+
+| 表 | 列数 | 特殊说明 |
+|---|:---:|---|
+| 2026年3月（最新） | 23 | 标准模板，无"签OR拒签"列 |
+| 2026年1-2月 | 23 | 与最新表一致 |
+| 2025年10-12月 | 23-24 | 12月有"好评返现"列 |
+| 2025年3-7月 | 24 | 有"申请人数"/"出签人数"列 |
+| 2025年8-9月 | 21 | 缺少签证费/保险列 |
+| 2025年1月 | 28 | 格式完全不同，需跳过 |
+
+**多人订单检测**：通过 B 列（联系人）合并单元格识别，非多列模式。合并范围内每行 C 列 = 一个申请人，共享字段取第一行。
+
+手工表 23 列结构（以最新表为标准）：
 
 | 分类 | 列名 | ERP 映射 | 状态 |
 |---|---|---|:---:|
-| 客户 | 联系人 | Order.contactName（新增） | 🟡 |
-| 客户 | 申请人 | Applicant.name | ✅ |
+| 客户 | 联系人 | Order.contactName | M5 实现 |
+| 客户 | 申请人 | Applicant.name | M5 实现 |
 | 客户 | 手机号 | Order.customerPhone | ✅ |
 | 签证 | 国家 | Order.targetCountry | ✅ |
-| 签证 | 城市 | Order.targetCity（新增） | 🟡 |
+| 签证 | 城市 | Order.targetCity | M5 实现 |
 | 签证 | 套餐 | Order.visaCategory | ✅ |
 | 签证 | 备注/预计出行 | Order.remark + Order.travelDate | ✅ |
 | 流程 | 下单时间 | Order.createdAt | ✅ |
 | 流程 | 接待客服 | Order.createdBy → User.realName | ✅ |
 | 流程 | 资料收集（人员） | Order.collectorId → User.realName | ✅ |
 | 流程 | 平台进度更新 | Order.status 中文标签 | ✅ |
-| 流程 | 递交日期 | Order.submittedAt（新增） | 🟡 |
-| 流程 | 出签时间 | Applicant.visaResultAt（新增） | 🟡 |
+| 流程 | 递交日期 | Order.submittedAt | M5 实现 |
+| 流程 | 出签时间 | Applicant.visaResultAt | M5 实现 |
 | 流程 | 操作专员 | Order.operatorId → User.realName | ✅ |
 | 订单 | 订单编号 | Order.externalOrderNo | ✅ |
 | 订单 | 订单金额 | Order.amount | ✅ |
 | 财务 | 支付方式 | Order.paymentMethod | ✅ |
-| 财务 | 平台扣点 | Order.platformFeeRate（新增） | 🟡 |
-| 财务 | 平台费用 | Order.platformFee（新增） | 🟡 |
-| 财务 | 签证费 | Order.visaFee（新增） | 🟡 |
-| 财务 | 申根保险 | Order.insuranceFee（新增） | 🟡 |
-| 财务 | 拒签保险 | Order.rejectionInsurance（新增） | 🟡 |
-| 财务 | 好评返现 | Order.reviewBonus（新增） | 🟡 |
+| 财务 | 平台扣点 | Order.platformFeeRate | M5 实现 |
+| 财务 | 平台费用 | Order.platformFee | M5 实现 |
+| 财务 | 签证费 | Order.visaFee | M5 实现 |
+| 财务 | 申根保险 | Order.insuranceFee | M5 实现 |
+| 财务 | 拒签保险 | Order.rejectionInsurance | M5 实现 |
+| 财务 | 好评返现 | Order.reviewBonus | M5 实现 |
 
-**映射率：12/23 直接映射 + 11/23 需新增字段 = 100% 可覆盖**
+**映射率：12/23 直接映射 + 11/23 M5 新增字段 = 100% 可覆盖**
+
+**支付方式标准化**（13种 → 5种）：
+
+| ERP 标准值 | Excel 实际取值 |
+|---|---|
+| ALIPAY | 支付宝 |
+| HUABEI | 花呗、花呗支付 |
+| CREDIT | 信用支付、分期购 |
+| WECHAT | 盼达二维码、华夏二维码、企业二维码 等 |
+| CASH | 生哥现收 |
 
 ### 5.2 财务自动计算
 
@@ -462,9 +489,25 @@ Applicant.visaResult  → 控制每人独立结果（申请人级）
 ### 5.5 历史数据迁移
 
 提供批量导入脚本，将历史 Excel 数据一次性导入 ERP：
-- 解析 15 个工作表
-- 按行创建 Order + Applicant
-- 自动映射字段 + 计算财务
+
+```bash
+npx tsx scripts/import-excel.ts ./签证统计表2026.3.xlsx
+```
+
+**导入策略**：
+
+| 策略 | 说明 |
+|---|---|
+| 标准模板 | 以最新表（2026.3）的 23 列为标准 |
+| 表头行 | 第 2 行（第 1 行是标题，跳过） |
+| 多人检测 | B 列合并单元格范围 = 同一订单的多行 |
+| 日期转换 | Excel 序列号 → JS Date（含小数的递交日期） |
+| 扣点转换 | 文本"6.1%" → 数字 0.061 |
+| 支付标准化 | 13 种取值 → 5 种标准值 |
+| 缺失列 | 8-9月无财务列 → 字段留 NULL |
+| 异常表 | "1月（已统计）"格式完全不同 → 跳过 |
+| 订单号 | 多个换行分隔 → 取第一个 |
+| dry-run | 先预览再写入，用户确认后执行 |
 
 ---
 

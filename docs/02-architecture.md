@@ -2,9 +2,9 @@
 
 # 架构实现方案
 
-> **文档版本**: V3.0  
+> **文档版本**: V4.0  
 > **生成日期**: 2026-03-19  
-> **最后更新**: 2026-03-21 02:41  
+> **最后更新**: 2026-03-21 03:30  
 > **技术栈**: Next.js 14 + React 18 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
 > **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
@@ -755,11 +755,18 @@ model VisaTemplate {
 | 方法 | 路径 | 说明 | 权限 |
 |---|---|---|---|
 | GET | `/api/analytics/overview` | 核心指标概览 | Lv1-3,5 |
-| GET | `/api/analytics/trend` | 趋势数据 | Lv1-3,5 |
-| GET | `/api/analytics/workload` | 人员负荷 | Lv1-3,5 |
+| GET | `/api/analytics/trend` | 月度趋势数据（原生 SQL GROUP BY） | Lv1-3,5 |
+| GET | `/api/analytics/workload` | 人员负荷/绩效排行 | Lv1-3,5 |
+| GET | `/api/analytics/export` | Excel 导出（23列对齐手工表） | Lv1-3,5 |
 | GET | `/api/analytics/exceptions` | 异常订单 | Lv1-3,5 |
 
-### 4.10 SMS 预留模块
+### 4.10 申请人模块
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| PATCH | `/api/applicants/[id]` | 更新申请人结果/资料状态（含自动终态判断） | Lv5-7 |
+
+### 4.11 SMS 预留模块
 
 | 方法 | 路径 | 说明 | 状态 |
 |---|---|---|---|
@@ -906,7 +913,55 @@ class TransitionService {
 }
 ```
 
-### 5.2 事件驱动通知
+### 5.2 自动终态判断（多人订单）
+
+```typescript
+/**
+ * 根据所有申请人结果，自动判断订单终态
+ * 独立于 transitionOrder()，不走 TRANSITION_RULES
+ * 调用场景：PATCH /api/applicants/[id] 更新 visaResult 后
+ */
+export async function autoResolveOrderStatus(
+  tx: Prisma.TransactionClient,
+  orderId: string,
+  companyId: string,
+  actorId: string
+): Promise<OrderStatus | null> {
+  // 1. 获取所有申请人结果
+  const applicants = await tx.applicant.findMany({
+    where: { orderId },
+    select: { visaResult: true, name: true },
+  })
+
+  // 2. 还有人没出结果 → 不操作
+  if (applicants.some(a => a.visaResult === null)) return null
+
+  // 3. 判断终态
+  const allApproved = applicants.every(a => a.visaResult === 'APPROVED')
+  const allRejected = applicants.every(a => a.visaResult === 'REJECTED')
+  const newStatus = allApproved ? 'APPROVED' : allRejected ? 'REJECTED' : 'PARTIAL'
+
+  // 4. 更新订单 + 写日志（同一事务）
+  await tx.order.update({
+    where: { id: orderId },
+    data: { status: newStatus, visaResultAt: new Date() }
+  })
+  await tx.orderLog.create({
+    data: { orderId, companyId, userId: actorId,
+      action: allApproved ? '全部出签' : allRejected ? '全部拒签' : '部分出签' }
+  })
+
+  return newStatus
+}
+```
+
+**PARTIAL 手动流转规则**（在 TRANSITION_RULES 中新增）：
+```typescript
+{ from: 'PARTIAL', to: 'APPROVED', allowedRoles: ['COMPANY_OWNER', 'VISA_ADMIN'], action: '确认全部出签' }
+{ from: 'PARTIAL', to: 'REJECTED', allowedRoles: ['COMPANY_OWNER', 'VISA_ADMIN'], action: '确认全部拒签' }
+```
+
+### 5.3 事件驱动通知
 
 ```typescript
 // src/lib/events.ts

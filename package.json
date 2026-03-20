@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "tsx server.ts",
+    "dev:next": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_ENV=production tsx server.ts",
+    "start:next": "next start",
     "lint": "next lint",
+    "type-check": "tsc --noEmit",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
@@ -15,6 +18,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "ali-oss": "^6.23.0",
     "bcryptjs": "^2.4.3",
     "jose": "^5.9.6",
     "next": "14.2.18",
@@ -26,6 +30,7 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@types/ali-oss": "^6.23.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.12",

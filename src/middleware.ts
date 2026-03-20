@@ -51,16 +51,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  // 客户角色自动跳转到客户端（必须在权限检查之前，否则先命中 403）
+  if (user.role === 'CUSTOMER' && pathname.startsWith('/admin')) {
+    return NextResponse.redirect(new URL('/customer/orders', request.url))
+  }
+
   // 路由级权限检查
   if (pathname.startsWith('/admin') || pathname.startsWith('/customer')) {
     if (!canAccessRoute(user.role, pathname)) {
       return NextResponse.redirect(new URL('/403', request.url))
     }
-  }
-
-  // 客户角色自动跳转到客户端
-  if (user.role === 'CUSTOMER' && pathname.startsWith('/admin')) {
-    return NextResponse.redirect(new URL('/customer/orders', request.url))
   }
 
   // 管理角色自动跳转到管理端

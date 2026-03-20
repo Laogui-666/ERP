@@ -2,9 +2,9 @@
 
 # 架构实现方案
 
-> **文档版本**: V1.3  
+> **文档版本**: V1.4  
 > **生成日期**: 2026-03-19  
-> **最后更新**: 2026-03-20 02:24  
+> **最后更新**: 2026-03-20 10:45  
 > **技术栈**: Next.js 14 + React 18 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
 > **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
@@ -1025,10 +1025,23 @@ export async function GET(request: NextRequest) {
 
 ## 8. 文件存储方案
 
-### 8.1 阿里云 OSS 集成
+### 8.1 阿里云 OSS 集成（已实现 ✅）
+
+使用 `ali-oss` SDK（`src/lib/oss.ts`），提供完整文件操作能力：
+
+| 函数 | 说明 |
+|---|---|
+| `uploadFile()` | 上传 Buffer/Stream 到 OSS，返回签名 URL |
+| `generatePresignedPutUrl()` | 客户端直传预签名 URL（文件不经服务器） |
+| `getSignedUrl()` | 带过期的签名下载 URL（内联展示） |
+| `getDownloadUrl()` | 强制下载的签名 URL |
+| `deleteFile()` / `deleteFiles()` | 单文件/批量删除 |
+| `buildOssKey()` | 按规范路径构建存储 key |
+| `fileExists()` / `getFileInfo()` | 文件检查和元信息 |
+
+OSS Bucket 结构:
 
 ```
-OSS Bucket 结构:
 ├── companies/
 │   └── {companyId}/
 │       ├── orders/
@@ -1081,18 +1094,24 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
 
 ## 9. 实时通信方案
 
-### 9.1 Socket.io 架构
+### 9.1 Socket.io 架构（已实现）
+
+Custom Server (`server.ts`) 将 Next.js 和 Socket.io 绑定在同一 HTTP 服务器上：
 
 ```
-Next.js Server
-├── HTTP (3000) ─── API Routes + SSR
-└── Socket.io (3000, 共享端口) ─── 实时通知
+server.ts (tsx 启动)
+├── HTTP Server ─── Next.js App (SSR + API Routes)
+└── Socket.io (共享端口) ─── 实时通知
 
 房间设计:
 ├── company:{companyId}        # 公司级广播
 ├── user:{userId}              # 用户级推送
 ├── order:{orderId}            # 订单级协同
 └── department:{departmentId}  # 部门级通知
+
+启动命令:
+  npm run dev     → tsx server.ts (启用 Socket.io)
+  npm run dev:next → next dev (纯 Next.js，无 Socket.io)
 ```
 
 ### 9.2 通知事件定义
@@ -1408,8 +1427,11 @@ npm run build
 # 2. 数据库迁移
 npx prisma migrate deploy
 
-# 3. PM2 进程管理
-pm2 start npm --name "erp" -- start
+# 3. PM2 进程管理（Custom Server + Socket.io）
+pm2 start tsx --name "erp" -- server.ts
+
+# 或使用 npm script
+# pm2 start npm --name "erp" -- start
 
 # 4. Nginx 反向代理
 server {
@@ -1420,7 +1442,7 @@ server {
     ssl_certificate_key /path/to/key.pem;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3002;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';  # WebSocket 支持

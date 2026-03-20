@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { requirePermission, getDataScopeFilter } from '@/lib/rbac'
 import { AppError, createSuccessResponse } from '@/types/api'
 import { generateOrderNo } from '@/lib/utils'
+import { desensitizeOrderData } from '@/lib/desensitize'
 import { z } from 'zod'
 import type { Prisma } from '@prisma/client'
 
@@ -88,7 +89,12 @@ export async function GET(request: NextRequest) {
       prisma.order.count({ where }),
     ])
 
-    return NextResponse.json(createSuccessResponse(orders, {
+    // OUTSOURCE 角色脱敏
+    const data = user.role === 'OUTSOURCE'
+      ? orders.map((o) => desensitizeOrderData(o as Record<string, unknown>, user.role))
+      : orders
+
+    return NextResponse.json(createSuccessResponse(data, {
       total,
       page: params.page,
       pageSize: params.pageSize,

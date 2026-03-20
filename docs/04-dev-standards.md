@@ -2,9 +2,9 @@
 
 # 开发规范
 
-> **文档版本**: V1.3  
+> **文档版本**: V1.4  
 > **生成日期**: 2026-03-19  
-> **最后更新**: 2026-03-20 02:24  
+> **最后更新**: 2026-03-20 10:45  
 > **适用范围**: 全团队所有开发人员
 
 ---
@@ -923,7 +923,8 @@ npx prisma migrate resolve --rolled-back <migration_name>
 
 ```bash
 # 开发
-npm run dev              # 启动开发服务器
+npm run dev              # 启动 Custom Server (tsx server.ts，含 Socket.io)
+npm run dev:next         # 启动纯 Next.js (无 Socket.io)
 npx prisma studio        # 打开数据库可视化
 npx prisma migrate dev   # 创建并应用迁移
 npx prisma db seed       # 运行种子数据
@@ -1099,13 +1100,18 @@ npm run build          # 完整构建验证
 
 ## 14. 已知技术债务与待办
 
-| 项目 | 说明 | 优先级 |
+| 项目 | 说明 | 优先级 | 状态 |
+|---|---|---|:---:|
+| Notification API | 前端 store 引用 `/api/notifications/*` 路由但尚未创建 | M4 | 🔲 |
+| Next.js 安全漏洞 | 当前 14.2.18 有多个已知漏洞，建议升级到最新稳定版 | P1 | 🔲 |
+
+### 已解决（M1 阶段）
+
+| 项目 | 说明 | 解决日期 |
 |---|---|---|
-| OSS 集成 | `src/lib/oss.ts` 目前是占位实现，需接入阿里云 OSS SDK | M3 |
-| Socket.io 集成 | `src/lib/socket.ts` 有框架但未与 Next.js 服务端集成 | M4 |
-| Notification API | 前端 store 引用 `/api/notifications/*` 路由但尚未创建 | M4 |
-| 密码重置 | 客户账号创建时 `passwordHash` 为空字符串，需实现首次登录重置流程 | M2 |
-| Next.js 安全漏洞 | 当前 14.2.18 有多个已知漏洞，建议升级到最新稳定版 | P1 |
+| OSS 集成 | `src/lib/oss.ts` 已接入阿里云 ali-oss SDK | 2026-03-20 |
+| Socket.io 集成 | `server.ts` Custom Server + Socket.io 共享端口 | 2026-03-20 |
+| 密码重置 | `/api/auth/reset-password` 端点 + 页面已实现 | 2026-03-20 |
 
 ---
 

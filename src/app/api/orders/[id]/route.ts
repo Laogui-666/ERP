@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { requirePermission, getDataScopeFilter } from '@/lib/rbac'
 import { AppError, createSuccessResponse } from '@/types/api'
+import { desensitizeOrderData } from '@/lib/desensitize'
 import { z } from 'zod'
 
 // GET /api/orders/[id] - 订单详情
@@ -39,7 +40,12 @@ export async function GET(
       throw new AppError('NOT_FOUND', '订单不存在', 404)
     }
 
-    return NextResponse.json(createSuccessResponse(order))
+    // OUTSOURCE 角色脱敏
+    const data = user.role === 'OUTSOURCE'
+      ? desensitizeOrderData(order as unknown as Record<string, unknown>, user.role)
+      : order
+
+    return NextResponse.json(createSuccessResponse(data))
   } catch (error) {
     if (error instanceof AppError) {
       return NextResponse.json(error.toJSON(), { status: error.statusCode })

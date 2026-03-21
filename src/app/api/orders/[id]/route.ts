@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { requirePermission, getDataScopeFilter } from '@/lib/rbac'
 import { AppError, createSuccessResponse } from '@/types/api'
 import { desensitizeOrderData } from '@/lib/desensitize'
+import { calcPlatformFee, calcGrossProfit } from '@/lib/utils'
 import { z } from 'zod'
 
 // GET /api/orders/[id] - 订单详情
@@ -24,6 +25,7 @@ export async function GET(
         customer: { select: { id: true, realName: true } },
         collector: { select: { id: true, realName: true } },
         operator: { select: { id: true, realName: true } },
+        applicants: { orderBy: { sortOrder: 'asc' } },
         documentRequirements: {
           include: { files: true },
           orderBy: { sortOrder: 'asc' },
@@ -56,6 +58,7 @@ export async function GET(
 
 // PATCH /api/orders/[id] - 更新订单信息（仅允许更新安全字段）
 const updateSchema = z.object({
+  // 基础字段
   customerName: z.string().min(1).max(50).optional(),
   customerPhone: z.string().regex(/^1[3-9]\d{9}$/).optional(),
   customerEmail: z.string().email().optional(),
@@ -68,6 +71,16 @@ const updateSchema = z.object({
   paymentMethod: z.string().max(30).optional(),
   sourceChannel: z.string().max(50).optional(),
   remark: z.string().optional(),
+  // M5：多申请人 & 流程
+  contactName: z.string().max(50).optional(),
+  targetCity: z.string().max(50).optional(),
+  submittedAt: z.string().optional(),
+  // M5：财务字段
+  platformFeeRate: z.number().min(0).max(1).optional(),
+  visaFee: z.number().min(0).optional(),
+  insuranceFee: z.number().min(0).optional(),
+  rejectionInsurance: z.number().min(0).optional(),
+  reviewBonus: z.number().min(0).optional(),
 })
 
 export async function PATCH(
@@ -102,6 +115,31 @@ export async function PATCH(
     if (data.paymentMethod !== undefined) updateData.paymentMethod = data.paymentMethod ?? null
     if (data.sourceChannel !== undefined) updateData.sourceChannel = data.sourceChannel ?? null
     if (data.remark !== undefined) updateData.remark = data.remark ?? null
+    // M5：多申请人 & 流程
+    if (data.contactName !== undefined) updateData.contactName = data.contactName ?? null
+    if (data.targetCity !== undefined) updateData.targetCity = data.targetCity ?? null
+    if (data.submittedAt !== undefined) updateData.submittedAt = data.submittedAt ? new Date(data.submittedAt) : null
+    // M5：财务字段 + 自动计算
+    let needRecalcProfit = false
+    if (data.platformFeeRate !== undefined) { updateData.platformFeeRate = data.platformFeeRate; needRecalcProfit = true }
+    if (data.visaFee !== undefined) { updateData.visaFee = data.visaFee; needRecalcProfit = true }
+    if (data.insuranceFee !== undefined) { updateData.insuranceFee = data.insuranceFee; needRecalcProfit = true }
+    if (data.rejectionInsurance !== undefined) { updateData.rejectionInsurance = data.rejectionInsurance; needRecalcProfit = true }
+    if (data.reviewBonus !== undefined) { updateData.reviewBonus = data.reviewBonus; needRecalcProfit = true }
+    // 自动重算 platformFee 和 grossProfit
+    if (needRecalcProfit) {
+      const currentAmount = data.amount ?? existing.amount.toNumber()
+      const currentRate = data.platformFeeRate ?? (existing.platformFeeRate?.toNumber() ?? 0.061)
+      updateData.platformFee = calcPlatformFee(currentAmount, currentRate)
+      updateData.grossProfit = calcGrossProfit({
+        amount: currentAmount,
+        platformFeeRate: currentRate,
+        visaFee: data.visaFee ?? existing.visaFee?.toNumber() ?? null,
+        insuranceFee: data.insuranceFee ?? existing.insuranceFee?.toNumber() ?? null,
+        rejectionInsurance: data.rejectionInsurance ?? existing.rejectionInsurance?.toNumber() ?? null,
+        reviewBonus: data.reviewBonus ?? existing.reviewBonus?.toNumber() ?? null,
+      })
+    }
 
     const order = await prisma.order.update({
       where: { id: params.id },

@@ -1,7 +1,7 @@
 # 沐海旅行 ERP — M5 全知开发手册（最终版）
 
-> **文档版本**: V2.1
-> **更新日期**: 2026-03-22
+> **文档版本**: V3.0
+> **更新日期**: 2026-03-22 03:00
 > **用途**: M5 阶段唯一开发指南。即使丢失所有上下文，拿到本文件 + Git 仓库即可完整恢复开发。
 > **前置条件**: M1 + M2 全部完成（84 源文件 / ~9225 行 / 25 API / 14 页面 / 17 组件）
 > **数据基础**: 基于用户实际 Excel 统计表深度分析（15 个工作表 / 2718 数据行 / 330 单月订单）
@@ -42,7 +42,7 @@
 | M1 基础架构 | ✅ 100% |
 | M2 核心工作流 | ✅ 100% (19/19) |
 | M3 文件与客户端 | ⬜ 待开发 |
-| M5 多申请人+看板 | ⬜ 本次开发 |
+| M5 多申请人+看板 | ✅ 75% (批次1-6完成，批次7-8待开发) |
 
 ### 1.3 关键文件位置
 
@@ -1122,33 +1122,33 @@ export function calcGrossProfit(order: {
   └── src/lib/utils.ts           +calcPlatformFee +calcGrossProfit
   验收: npx tsc --noEmit = 0 错误 ✅
 
-批次 3 — 订单 API 扩展（2h）
+批次 3 ✅ — 订单 API 扩展（2h）
   ├── POST /api/orders           +applicants可选 +财务计算 +创建Applicant
   ├── GET  /api/orders/[id]      +include applicants
-  └── PATCH /api/orders/[id]     +财务字段白名单
-  验收: npx tsc --noEmit = 0 错误, 旧前端调用不传 applicants 仍正常
+  └── PATCH /api/orders/[id]     +财务字段白名单+自动重算毛利
+  验收: npx tsc --noEmit = 0 错误 ✅
 
-批次 4 — 申请人 API（1.5h）
-  └── PATCH /api/applicants/[id]  含autoResolveOrderStatus调用
-  验收: npx tsc --noEmit = 0 错误
+批次 4 ✅ — 申请人 API（1.5h）
+  └── PATCH /api/applicants/[id]  含autoResolveOrderStatus调用+通知
+  验收: npx tsc --noEmit = 0 错误 ✅
 
-批次 5 — 前端多申请人（3h）
+批次 5 ✅ — 前端多申请人（3h）
   ├── src/components/orders/applicant-card.tsx     新组件
   ├── src/components/orders/applicant-form-item.tsx 新组件
-  ├── src/app/admin/orders/page.tsx                创建表单重写申请人区域
-  └── src/app/admin/orders/[id]/page.tsx           +申请人卡片 +PARTIAL case +结果标记
-  验收: 创建订单→多人展示→结果标记 全流程走通
+  ├── src/app/admin/orders/page.tsx                创建表单重写申请人区域+财务预览
+  └── src/app/admin/orders/[id]/page.tsx           +申请人卡片 +PARTIAL case +结果标记+财务明细
+  验收: 创建订单→多人展示→结果标记 全流程走通 ✅
 
-批次 6 — 数据看板（4h）
+批次 6 ✅ — 数据看板（4h）
   ├── /api/analytics/overview    概览API
   ├── /api/analytics/trend       趋势API(原生SQL)
   ├── /api/analytics/workload    人员负荷API
-  ├── /api/analytics/export      导出API
+  ├── /api/analytics/export      导出API(23列+行合并)
   ├── stat-card.tsx              指标卡片
-  ├── trend-chart.tsx            折线图
+  ├── trend-chart.tsx            折线图(recharts)
   ├── ranking-table.tsx          排行表
   └── analytics/page.tsx         完全重写
-  验收: 看板页面加载正确, 导出文件可打开
+  验收: 看板页面加载正确, 导出文件可打开 ✅
 
 批次 7 — Excel 导入（3h）
   └── scripts/import-excel.ts    合并单元格检测 + 列映射 + 月份推断 + dry-run
@@ -1161,7 +1161,7 @@ export function calcGrossProfit(order: {
   验收: 全部功能清单通过
 ```
 
-**已完成：批次 1-2（~4h） | 剩余：批次 3-8（~15h） | 总计：~19 小时（2.5 天）**
+**已完成：批次 1-6（~22h） | 剩余：批次 7-8（~4.5h） | 总计：~26.5 小时（3.5 天）**
 
 ---
 

@@ -8,8 +8,15 @@ import { GlassCard } from '@/components/layout/glass-card'
 import { PageHeader } from '@/components/layout/page-header'
 import { Modal } from '@/components/ui/modal'
 import { useToast } from '@/components/ui/toast'
+import { ApplicantFormItem } from '@/components/orders/applicant-form-item'
 import { formatDate } from '@/lib/utils'
 import type { OrderStatus } from '@/types/order'
+
+interface ApplicantForm {
+  name: string
+  phone: string
+  passportNo: string
+}
 
 // 订单状态筛选选项
 const STATUS_OPTIONS: { value: OrderStatus | ''; label: string }[] = [
@@ -265,15 +272,57 @@ function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSucce
     sourceChannel: '',
     remark: '',
     externalOrderNo: '',
+    contactName: '',
+    targetCity: '',
+    platformFeeRate: '0.061',
+    visaFee: '',
+    insuranceFee: '',
+    rejectionInsurance: '',
+    reviewBonus: '',
   })
+
+  // M5：多申请人
+  const [applicants, setApplicants] = useState<ApplicantForm[]>([
+    { name: '', phone: '', passportNo: '' },
+  ])
 
   const handleChange = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
+  const addApplicant = () => {
+    setApplicants([...applicants, { name: '', phone: '', passportNo: '' }])
+  }
+
+  const removeApplicant = (index: number) => {
+    if (applicants.length <= 1) return
+    setApplicants(applicants.filter((_, i) => i !== index))
+  }
+
+  const updateApplicant = (index: number, field: keyof ApplicantForm, value: string) => {
+    setApplicants((prev) => prev.map((a, i) => (i === index ? { ...a, [field]: value } : a)))
+  }
+
+  // 财务预览
+  const amount = parseFloat(form.amount) || 0
+  const rate = parseFloat(form.platformFeeRate) || 0.061
+  const platformFeePreview = Math.round(amount * rate * 100) / 100
+  const visaFee = parseFloat(form.visaFee) || 0
+  const insuranceFee = parseFloat(form.insuranceFee) || 0
+  const rejectIns = parseFloat(form.rejectionInsurance) || 0
+  const reviewBonus = parseFloat(form.reviewBonus) || 0
+  const grossProfitPreview = Math.round((amount - platformFeePreview - visaFee - insuranceFee - rejectIns - reviewBonus) * 100) / 100
+
   const handleSubmit = async () => {
     if (!form.customerName || !form.customerPhone || !form.targetCountry || !form.visaType || !form.amount) {
       toast('error', '请填写必填字段')
+      return
+    }
+
+    // 校验申请人
+    const validApplicants = applicants.filter((a) => a.name.trim())
+    if (validApplicants.length === 0) {
+      toast('error', '至少需要一个申请人')
       return
     }
 
@@ -283,16 +332,34 @@ function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSucce
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...form,
-          amount: parseFloat(form.amount),
+          customerName: form.customerName,
+          customerPhone: form.customerPhone,
           customerEmail: form.customerEmail || undefined,
           passportNo: form.passportNo || undefined,
+          targetCountry: form.targetCountry,
+          visaType: form.visaType,
           visaCategory: form.visaCategory || undefined,
           travelDate: form.travelDate || undefined,
+          amount: parseFloat(form.amount),
           paymentMethod: form.paymentMethod || undefined,
           sourceChannel: form.sourceChannel || undefined,
           remark: form.remark || undefined,
           externalOrderNo: form.externalOrderNo || undefined,
+          // M5
+          applicants: validApplicants.length > 1 || validApplicants[0].name !== form.customerName
+            ? validApplicants.map((a) => ({
+                name: a.name,
+                phone: a.phone || undefined,
+                passportNo: a.passportNo || undefined,
+              }))
+            : undefined,
+          contactName: form.contactName || undefined,
+          targetCity: form.targetCity || undefined,
+          platformFeeRate: rate,
+          visaFee: visaFee || undefined,
+          insuranceFee: insuranceFee || undefined,
+          rejectionInsurance: rejectIns || undefined,
+          reviewBonus: reviewBonus || undefined,
         }),
       })
       const json = await res.json()
@@ -313,18 +380,18 @@ function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSucce
 
   return (
     <Modal isOpen onClose={onClose} title="新建订单" size="xl">
-      <div className="space-y-4">
-        {/* 客户信息 */}
+      <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+        {/* 联系人信息 */}
         <div>
           <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-3 pb-2 border-b border-white/5">
-            客户信息
+            联系人信息
           </h4>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>客户姓名 *</label>
+              <label className={labelClass}>联系人姓名 *</label>
               <input
                 className={inputClass}
-                placeholder="请输入客户姓名"
+                placeholder="请输入联系人姓名"
                 value={form.customerName}
                 onChange={(e) => handleChange('customerName', e.target.value)}
               />
@@ -361,6 +428,33 @@ function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSucce
           </div>
         </div>
 
+        {/* M5：申请人列表 */}
+        <div>
+          <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/5">
+            <h4 className="text-sm font-medium text-[var(--color-text-primary)]">
+              申请人列表 ({applicants.length}人)
+            </h4>
+            <button
+              onClick={addApplicant}
+              className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors"
+            >
+              + 添加申请人
+            </button>
+          </div>
+          <div className="space-y-2">
+            {applicants.map((applicant, i) => (
+              <ApplicantFormItem
+                key={i}
+                index={i}
+                applicant={applicant}
+                onChange={updateApplicant}
+                onRemove={removeApplicant}
+                canRemove={applicants.length > 1}
+              />
+            ))}
+          </div>
+        </div>
+
         {/* 签证信息 */}
         <div>
           <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-3 pb-2 border-b border-white/5">
@@ -392,6 +486,15 @@ function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSucce
                 placeholder="如：贴纸签、电子签"
                 value={form.visaCategory}
                 onChange={(e) => handleChange('visaCategory', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>送签城市</label>
+              <input
+                className={inputClass}
+                placeholder="如：北京、上海"
+                value={form.targetCity}
+                onChange={(e) => handleChange('targetCity', e.target.value)}
               />
             </div>
             <div>
@@ -432,9 +535,10 @@ function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSucce
                 onChange={(e) => handleChange('paymentMethod', e.target.value)}
               >
                 <option value="" className="bg-[#252B3B]">请选择</option>
-                <option value="微信" className="bg-[#252B3B]">微信</option>
                 <option value="支付宝" className="bg-[#252B3B]">支付宝</option>
-                <option value="银行转账" className="bg-[#252B3B]">银行转账</option>
+                <option value="花呗" className="bg-[#252B3B]">花呗</option>
+                <option value="信用支付" className="bg-[#252B3B]">信用支付</option>
+                <option value="微信" className="bg-[#252B3B]">微信</option>
                 <option value="现金" className="bg-[#252B3B]">现金</option>
               </select>
             </div>
@@ -467,6 +571,99 @@ function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSucce
               onChange={(e) => handleChange('remark', e.target.value)}
             />
           </div>
+        </div>
+
+        {/* M5：财务明细 */}
+        <div>
+          <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-3 pb-2 border-b border-white/5">
+            财务明细
+          </h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass}>平台扣点费率</label>
+              <select
+                className={inputClass}
+                value={form.platformFeeRate}
+                onChange={(e) => handleChange('platformFeeRate', e.target.value)}
+              >
+                <option value="0.061" className="bg-[#252B3B]">6.1%</option>
+                <option value="0.073" className="bg-[#252B3B]">7.3%</option>
+                <option value="0.05" className="bg-[#252B3B]">5%</option>
+                <option value="0" className="bg-[#252B3B]">0%</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>签证费 (¥)</label>
+              <input
+                className={inputClass}
+                type="number"
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+                value={form.visaFee}
+                onChange={(e) => handleChange('visaFee', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>保险费 (¥)</label>
+              <input
+                className={inputClass}
+                type="number"
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+                value={form.insuranceFee}
+                onChange={(e) => handleChange('insuranceFee', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>拒签保险 (¥)</label>
+              <input
+                className={inputClass}
+                type="number"
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+                value={form.rejectionInsurance}
+                onChange={(e) => handleChange('rejectionInsurance', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>好评返现 (¥)</label>
+              <input
+                className={inputClass}
+                type="number"
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+                value={form.reviewBonus}
+                onChange={(e) => handleChange('reviewBonus', e.target.value)}
+              />
+            </div>
+          </div>
+          {/* 财务预览 */}
+          {amount > 0 && (
+            <div className="mt-3 p-3 rounded-xl bg-white/[0.03] border border-white/5">
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div>
+                  <span className="text-[var(--color-text-placeholder)]">平台费用</span>
+                  <p className="text-[var(--color-warning)] font-medium">¥{platformFeePreview.toFixed(2)}</p>
+                </div>
+                <div>
+                  <span className="text-[var(--color-text-placeholder)]">总成本</span>
+                  <p className="text-[var(--color-error)] font-medium">
+                    ¥{(platformFeePreview + visaFee + insuranceFee + rejectIns + reviewBonus).toFixed(2)}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[var(--color-text-placeholder)]">预估毛利</span>
+                  <p className={`font-medium ${grossProfitPreview >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'}`}>
+                    ¥{grossProfitPreview.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 操作按钮 */}

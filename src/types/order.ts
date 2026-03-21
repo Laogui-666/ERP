@@ -231,17 +231,5 @@ export interface OrderQuery {
   endDate?: string
 }
 
-export interface UpdateOrderPayload {
-  customerName?: string
-  customerPhone?: string
-  customerEmail?: string
-  passportNo?: string
-  targetCountry?: string
-  visaType?: string
-  visaCategory?: string
-  travelDate?: string
-  amount?: number
-  paymentMethod?: string
-  sourceChannel?: string
-  remark?: string
-}
+// M5批次3：PATCH /api/orders/[id] 扩展字段见各 API route 的 zod schema
+// UpdateOrderPayload 已废弃，使用各路由内联 schema 定义

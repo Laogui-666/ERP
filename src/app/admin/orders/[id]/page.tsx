@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useOrders } from '@/hooks/use-orders'
 import { useAuth } from '@/hooks/use-auth'
 import { StatusBadge } from '@/components/orders/status-badge'
+import { ApplicantCard } from '@/components/orders/applicant-card'
 import { GlassCard } from '@/components/layout/glass-card'
 import { PageHeader } from '@/components/layout/page-header'
 import { DocumentPanel } from '@/components/documents/document-panel'
@@ -83,6 +84,12 @@ export default function OrderDetailPage() {
         if (['OPERATOR', 'DOC_COLLECTOR', 'CUSTOMER', 'VISA_ADMIN'].includes(role)) {
           actions.push({ toStatus: 'APPROVED', label: '出签' })
           actions.push({ toStatus: 'REJECTED', label: '拒签' })
+        }
+        break
+      case 'PARTIAL':
+        if (['COMPANY_OWNER', 'VISA_ADMIN'].includes(role)) {
+          actions.push({ toStatus: 'APPROVED', label: '确认全部出签' })
+          actions.push({ toStatus: 'REJECTED', label: '确认全部拒签' })
         }
         break
     }
@@ -207,7 +214,7 @@ export default function OrderDetailPage() {
               客户信息
             </h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <InfoField label="姓名" value={order.customerName} />
+              <InfoField label="联系人" value={order.contactName ?? order.customerName} />
               <InfoField label="手机号" value={order.customerPhone} />
               <InfoField label="邮箱" value={order.customerEmail} />
               <InfoField label="护照号" value={order.passportNo} />
@@ -215,6 +222,40 @@ export default function OrderDetailPage() {
               <InfoField label="护照有效期" value={formatDate(order.passportExpiry)} />
             </div>
           </GlassCard>
+
+          {/* M5：申请人卡片 */}
+          {order.applicants && order.applicants.length > 0 && (
+            <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '25ms' }}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+                  <svg className="w-4 h-4 text-[var(--color-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  申请人 ({order.applicants.length}人)
+                </h3>
+                {/* 进度统计 */}
+                <span className="text-xs text-[var(--color-text-secondary)]">
+                  资料齐全: {order.applicants.filter(a => a.documentsComplete).length}/{order.applicants.length}
+                  {order.applicants.some(a => a.visaResult) && (
+                    <> · 已出结果: {order.applicants.filter(a => a.visaResult).length}/{order.applicants.length}</>
+                  )}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {order.applicants.map((applicant) => (
+                  <ApplicantCard
+                    key={applicant.id}
+                    applicant={applicant}
+                    canMarkResult={['DELIVERED', 'APPROVED', 'REJECTED', 'PARTIAL'].includes(order.status)
+                      && ['OPERATOR', 'DOC_COLLECTOR', 'VISA_ADMIN'].includes(user?.role ?? '')}
+                    canMarkDocs={['COLLECTING_DOCS', 'PENDING_REVIEW', 'UNDER_REVIEW'].includes(order.status)
+                      && ['DOC_COLLECTOR', 'VISA_ADMIN'].includes(user?.role ?? '')}
+                    onRefresh={() => fetchOrder(orderId)}
+                  />
+                ))}
+              </div>
+            </GlassCard>
+          )}
 
           {/* 签证信息 */}
           <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '50ms' }}>
@@ -249,7 +290,48 @@ export default function OrderDetailPage() {
               <InfoField label="支付方式" value={order.paymentMethod} />
               <InfoField label="来源渠道" value={order.sourceChannel} />
               <InfoField label="创建者" value={order.customer?.realName ?? order.createdBy} />
+              <InfoField label="送签城市" value={order.targetCity} />
+              <InfoField label="递交日期" value={formatDate(order.submittedAt)} />
             </div>
+
+            {/* 财务明细 */}
+            {(order.platformFee || order.visaFee || order.grossProfit) && (
+              <div className="mt-4 pt-4 border-t border-white/5">
+                <span className="text-xs font-medium text-[var(--color-text-secondary)] mb-2 block">财务明细</span>
+                <div className="grid grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <span className="text-[var(--color-text-placeholder)]">平台扣点</span>
+                    <p className="text-[var(--color-text-primary)]">
+                      {order.platformFeeRate ? `${(Number(order.platformFeeRate) * 100).toFixed(1)}%` : '-'}
+                      {order.platformFee && <span className="text-[var(--color-text-secondary)]"> (¥{Number(order.platformFee).toFixed(2)})</span>}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[var(--color-text-placeholder)]">签证费</span>
+                    <p className="text-[var(--color-text-primary)]">{order.visaFee ? `¥${Number(order.visaFee).toFixed(2)}` : '-'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[var(--color-text-placeholder)]">保险费</span>
+                    <p className="text-[var(--color-text-primary)]">{order.insuranceFee ? `¥${Number(order.insuranceFee).toFixed(2)}` : '-'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[var(--color-text-placeholder)]">拒签保险</span>
+                    <p className="text-[var(--color-text-primary)]">{order.rejectionInsurance ? `¥${Number(order.rejectionInsurance).toFixed(2)}` : '-'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[var(--color-text-placeholder)]">好评返现</span>
+                    <p className="text-[var(--color-text-primary)]">{order.reviewBonus ? `¥${Number(order.reviewBonus).toFixed(2)}` : '-'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[var(--color-text-placeholder)]">毛利</span>
+                    <p className={`font-medium ${Number(order.grossProfit ?? 0) >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'}`}>
+                      {order.grossProfit ? `¥${Number(order.grossProfit).toFixed(2)}` : '-'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {order.remark && (
               <div className="mt-4 pt-4 border-t border-white/5">
                 <span className="text-xs text-[var(--color-text-placeholder)]">备注</span>

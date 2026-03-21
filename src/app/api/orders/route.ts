@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { requirePermission, getDataScopeFilter } from '@/lib/rbac'
 import { AppError, createSuccessResponse } from '@/types/api'
-import { generateOrderNo } from '@/lib/utils'
+import { generateOrderNo, calcPlatformFee, calcGrossProfit } from '@/lib/utils'
 import { desensitizeOrderData } from '@/lib/desensitize'
 import { z } from 'zod'
 import type { Prisma } from '@prisma/client'
@@ -30,7 +30,21 @@ const createSchema = z.object({
   paymentMethod: z.string().max(30).optional(),
   sourceChannel: z.string().max(50).optional(),
   remark: z.string().optional(),
-  externalOrderNo: z.string().max(50).optional(),  // 外部订单号（网店同步/手动录入）
+  externalOrderNo: z.string().max(50).optional(),
+  // M5：多申请人（可选，不传则自动创建1人）
+  applicants: z.array(z.object({
+    name: z.string().min(1).max(50),
+    phone: z.string().regex(/^1[3-9]\d{9}$/).optional(),
+    passportNo: z.string().max(20).optional(),
+  })).min(1).optional(),
+  // M5：流程 & 财务
+  contactName: z.string().max(50).optional(),
+  targetCity: z.string().max(50).optional(),
+  platformFeeRate: z.number().min(0).max(1).optional(),
+  visaFee: z.number().min(0).optional(),
+  insuranceFee: z.number().min(0).optional(),
+  rejectionInsurance: z.number().min(0).optional(),
+  reviewBonus: z.number().min(0).optional(),
 })
 
 // GET /api/orders - 订单列表
@@ -126,6 +140,25 @@ export async function POST(request: NextRequest) {
     // 生成系统专属订单号: HX + YYYYMMDD + 4位随机码（数据库 unique 约束兜底）
     const orderNo = generateOrderNo()
 
+    // 兼容层：不传 applicants → 自动从 customerName 创建 1 人
+    const applicantList = data.applicants ?? [{
+      name: data.customerName,
+      phone: data.customerPhone,
+      passportNo: data.passportNo,
+    }]
+
+    // 财务自动计算
+    const feeRate = data.platformFeeRate ?? 0.061
+    const platformFee = calcPlatformFee(data.amount, feeRate)
+    const grossProfit = calcGrossProfit({
+      amount: data.amount,
+      platformFeeRate: feeRate,
+      visaFee: data.visaFee ?? null,
+      insuranceFee: data.insuranceFee ?? null,
+      rejectionInsurance: data.rejectionInsurance ?? null,
+      reviewBonus: data.reviewBonus ?? null,
+    })
+
     const order = await prisma.$transaction(async (tx) => {
       // 检查/创建客户账号
       let customerUser = await tx.user.findFirst({
@@ -170,7 +203,30 @@ export async function POST(request: NextRequest) {
           createdBy: user.userId,
           externalOrderNo: data.externalOrderNo ?? null,
           status: 'PENDING_CONNECTION',
+          // M5：多申请人 & 财务
+          applicantCount: applicantList.length,
+          contactName: data.contactName ?? data.customerName,
+          targetCity: data.targetCity ?? null,
+          platformFeeRate: feeRate,
+          platformFee,
+          visaFee: data.visaFee ?? null,
+          insuranceFee: data.insuranceFee ?? null,
+          rejectionInsurance: data.rejectionInsurance ?? null,
+          reviewBonus: data.reviewBonus ?? null,
+          grossProfit,
         },
+      })
+
+      // 创建 Applicant 记录
+      await tx.applicant.createMany({
+        data: applicantList.map((a, i) => ({
+          orderId: order.id,
+          companyId: user.companyId,
+          name: a.name,
+          phone: a.phone ?? null,
+          passportNo: a.passportNo ?? null,
+          sortOrder: i,
+        })),
       })
 
       // 写操作日志

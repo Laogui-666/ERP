@@ -1,8 +1,14 @@
+'use client'
+
+import { useAuth } from '@/hooks/use-auth'
+
 export default function CustomerLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const { user, logout } = useAuth()
+
   return (
     <div className="min-h-screen">
       {/* 客户端顶部导航 */}
@@ -12,11 +18,14 @@ export default function CustomerLayout({
             沐海旅行
           </h1>
           <div className="flex items-center gap-3">
-            <button className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
-              🔔
-            </button>
-            <button className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
-              👤
+            <span className="text-xs text-[var(--color-text-secondary)]">
+              {user?.realName ?? ''}
+            </span>
+            <button
+              onClick={() => { void logout() }}
+              className="text-xs text-[var(--color-text-placeholder)] hover:text-[var(--color-error)] transition-colors"
+            >
+              退出
             </button>
           </div>
         </div>

@@ -152,12 +152,29 @@ Order
   customerName, customerPhone, customerEmail?, passportNo?, passportIssue?, passportExpiry?,
   targetCountry, visaType, visaCategory?, travelDate?,
   amount(Decimal), paymentMethod?, sourceChannel?, remark?,
-  status(PENDING_CONNECTION/CONNECTED/COLLECTING_DOCS/PENDING_REVIEW/UNDER_REVIEW/MAKING_MATERIALS/PENDING_DELIVERY/DELIVERED/APPROVED/REJECTED),
+  status(PENDING_CONNECTION/CONNECTED/COLLECTING_DOCS/PENDING_REVIEW/UNDER_REVIEW/MAKING_MATERIALS/PENDING_DELIVERY/DELIVERED/APPROVED/REJECTED/PARTIAL),
   customerId?, collectorId?, operatorId?, createdBy(创建者客服ID),
   appointmentDate?, fingerprintRequired(default false),
+  // M5 多申请人
+  applicantCount(Int, default 1), contactName?(VARCHAR50), targetCity?(VARCHAR50),
+  // M5 流程时间线
+  submittedAt?(DateTime), visaResultAt?(DateTime),
+  // M5 财务明细
+  platformFeeRate?(Decimal 5,4), platformFee?(Decimal 10,2), visaFee?(Decimal 10,2),
+  insuranceFee?(Decimal 10,2), rejectionInsurance?(Decimal 10,2), reviewBonus?(Decimal 10,2),
+  grossProfit?(Decimal 10,2),
   createdAt, updatedAt, deliveredAt?, completedAt?
   → 关联: company, customer?, collector?, operator?, creator,
-          documentRequirements[], visaMaterials[], orderLogs[], notifications[]
+          applicants[], documentRequirements[], visaMaterials[], orderLogs[], notifications[]
+
+Applicant
+  id, orderId, companyId,
+  name(VARCHAR50), phone?(VARCHAR20), passportNo?(VARCHAR20), passportExpiry?(DateTime),
+  visaResult?(APPROVED/REJECTED), visaResultAt?(DateTime), visaResultNote?(Text),
+  documentsComplete(Boolean, default false), sortOrder(Int, default 0),
+  createdAt, updatedAt
+  → 关联: order(Cascade)
+  → 索引: [orderId], [companyId]
 
 DocumentRequirement
   id, orderId, companyId, name, description?, isRequired(default true),
@@ -309,7 +326,7 @@ UserStatus: ACTIVE | INACTIVE | LOCKED
 | `layout/topbar.tsx` | ✅ | 顶栏（面包屑+通知+个人中心） |
 | `layout/glass-card.tsx` | ✅ | 玻璃拟态卡片组件 |
 | `layout/page-header.tsx` | ✅ | 页面标题组件（支持返回链接+action插槽） |
-| `orders/status-badge.tsx` | ✅ | 订单状态徽章（10种颜色） |
+| `orders/status-badge.tsx` | ✅ | 订单状态徽章（11种颜色，含PARTIAL） |
 | `documents/document-panel.tsx` | ✅ | 资料面板（需求列表+添加+多文件上传+拍照+审核+文件预览一体化） |
 | `documents/material-panel.tsx` | ✅ | 签证材料面板（上传+版本分组+文件预览+HEIC支持） |
 | `notifications/notification-bell.tsx` | ✅ | 通知铃铛组件 |
@@ -330,10 +347,10 @@ UserStatus: ACTIVE | INACTIVE | LOCKED
 | `prisma.ts` | ✅ | Prisma 客户端单例 |
 | `auth.ts` | ✅ | JWT 签发/验证/Cookie 管理 |
 | `rbac.ts` | ✅ | 9级权限矩阵 + 数据范围过滤 + 路由权限 |
-| `transition.ts` | ✅ | 状态机（12条规则+事务+日志） |
-| `utils.ts` | ✅ | 通用工具（日期格式化/订单号生成/cn等） |
+| `transition.ts` | ✅ | 状态机（14条规则+事务+日志+autoResolveOrderStatus自动终态） |
+| `utils.ts` | ✅ | 通用工具（日期格式化/订单号生成/cn/calcPlatformFee/calcGrossProfit） |
 | `desensitize.ts` | ✅ | 数据脱敏（手机/护照/身份证/邮箱） |
-| `events.ts` | ✅ | 事件总线 + 状态变更通知处理器（transitionOrder 触发） |
+| `events.ts` | ✅ | 事件总线 + 状态变更通知处理器（11个状态标签含PARTIAL） |
 | `socket.ts` | ✅ | Socket.io 服务端（JWT 认证 + 公司/用户房间） |
 | `oss.ts` | ✅ | 阿里云 OSS 客户端（上传/删除/签名URL/预签名直传） |
 
@@ -367,7 +384,7 @@ UserStatus: ACTIVE | INACTIVE | LOCKED
 | 文件 | 状态 | 说明 |
 |---|:---:|---|
 | `api.ts` | ✅ | ApiResponse/ApiError/AppError/Pagination |
-| `order.ts` | ✅ | Order/OrderDetail/DocumentRequirement/DocumentFile/VisaMaterial/OrderLog + 枚举标签+颜色映射 |
+| `order.ts` | ✅ | Order(+M5扩展12字段)/OrderDetail(+applicants)/Applicant/DocumentRequirement/DocumentFile/VisaMaterial/OrderLog + 枚举标签+颜色映射 |
 | `user.ts` | ✅ | UserRole/UserProfile/LoginPayload/RegisterPayload |
 
 ### 3.9 中间件
@@ -434,6 +451,21 @@ UserStatus: ACTIVE | INACTIVE | LOCKED
 | GET | `/api/health` | 公开 | ✅ | 健康检查 |
 | — | `/api/sms/*` | — | 🔲 | SMS 预留（返回 501） |
 
+### 4.6 申请人模块（M5）
+
+| 方法 | 路径 | 权限 | 状态 | 说明 |
+|---|---|---|:---:|---|
+| PATCH | `/api/applicants/[id]` | Lv5-7 | 🔲 M5批次4 | 更新申请人结果/资料状态（含autoResolveOrderStatus） |
+
+### 4.7 数据分析模块（M5）
+
+| 方法 | 路径 | 权限 | 状态 | 说明 |
+|---|---|---|:---:|---|
+| GET | `/api/analytics/overview` | Lv1-3,5 | 🔲 M5批次6 | 核心指标概览（总订单/营收/毛利/出签率/分布） |
+| GET | `/api/analytics/trend` | Lv1-3,5 | 🔲 M5批次6 | 月度趋势（原生SQL GROUP BY） |
+| GET | `/api/analytics/workload` | Lv1-3,5 | 🔲 M5批次6 | 人员负荷/绩效排行 |
+| GET | `/api/analytics/export` | Lv1-3,5 | 🔲 M5批次6 | Excel导出（23列+多人行合并） |
+
 ---
 
 ## 5. TypeScript 类型定义
@@ -447,11 +479,13 @@ type OrderStatus = 'PENDING_CONNECTION' | 'CONNECTED' | 'COLLECTING_DOCS' | 'PEN
 // 签证结果（M5新增）
 type VisaResult = 'APPROVED' | 'REJECTED'
 
-// 申请人（M5新增）
+// 申请人（M5已实现）
 interface Applicant {
   id: string; orderId: string; name: string; phone: string | null;
-  passportNo: string | null; visaResult: VisaResult | null;
-  visaResultAt: string | null; documentsComplete: boolean; sortOrder: number
+  passportNo: string | null; passportExpiry: string | null;
+  visaResult: VisaResult | null; visaResultAt: string | null;
+  visaResultNote: string | null; documentsComplete: boolean;
+  sortOrder: number; createdAt: string; updatedAt: string
 }
 
 // 资料需求状态（6种）
@@ -461,10 +495,16 @@ type DocReqStatus = 'PENDING' | 'UPLOADED' | 'REVIEWING' | 'APPROVED' | 'REJECTE
 type NotificationType = 'ORDER_NEW' | 'ORDER_CREATED' | 'STATUS_CHANGE' | 'DOC_REVIEWED' | 'MATERIAL_UPLOADED' | 'MATERIAL_FEEDBACK' | 'APPOINTMENT_REMIND' | 'SYSTEM'
 
 // 订单（列表项）
-interface Order { id, orderNo, externalOrderNo?, customerName, customerPhone, targetCountry, visaType, status, amount, collectorId?, operatorId?, createdBy, createdAt, updatedAt, ... }
+interface Order { id, orderNo, externalOrderNo?, customerName, customerPhone, targetCountry, visaType, status, amount, collectorId?, operatorId?, createdBy, createdAt, updatedAt, ...,
+  // M5扩展
+  applicantCount: number, contactName: string | null, targetCity: string | null,
+  submittedAt: string | null, visaResultAt: string | null,
+  platformFeeRate: string | null, platformFee: string | null, visaFee: string | null,
+  insuranceFee: string | null, rejectionInsurance: string | null, reviewBonus: string | null,
+  grossProfit: string | null }
 
 // 订单详情（含关联数据）
-interface OrderDetail extends Order { customer?, collector?, operator?, documentRequirements[], visaMaterials[], orderLogs[] }
+interface OrderDetail extends Order { customer?, collector?, operator?, applicants: Applicant[], documentRequirements[], visaMaterials[], orderLogs[] }
 
 // 资料需求
 interface DocumentRequirement { id, orderId, name, description?, isRequired, status, rejectReason?, sortOrder, files[] }
@@ -507,7 +547,7 @@ class AppError extends Error { code, statusCode, details?, toJSON() }
 | RBAC 权限 | ✅ | 9级角色 + 功能权限 + 路由权限 + 数据范围 |
 | 多租户隔离 | ✅ | companyId 强制过滤 |
 | 订单 CRUD | ✅ | 创建/列表/详情/更新 + 新建订单表单 |
-| 状态机 | ✅ | 12条规则 + 事务 + 日志 + 取消订单 |
+| 状态机 | ✅ | 14条规则（含2条PARTIAL）+ 事务 + 日志 + 取消订单 + autoResolveOrderStatus |
 | 公共池 + 接单 | ✅ | 统一走 transitionOrder，卡片式接单 UI，排除已接单 |
 | 客户自动创建 | ✅ | 创建订单时自动注册客户 + 首次登录重置密码流程 |
 | 资料管理 | ✅ | API（需求/审核/多文件上传）+ DocumentPanel + FilePreview |
@@ -531,6 +571,15 @@ class AppError extends Error { code, statusCode, details?, toJSON() }
 | 操作日志 | ✅ | 数据模型 + 全流程写入（创建/状态/审核/上传） |
 | 登录/注册 UI | ✅ | 玻璃拟态风格 |
 | 管理端布局 | ✅ | 侧边栏+顶栏（9个菜单项+角色过滤） |
+| **M5：Applicant 数据模型** | **✅** | **erp_applicants 表 + VisaResult 枚举 + PARTIAL 状态 + Order 12 扩展字段** |
+| **M5：autoResolveOrderStatus** | **✅** | **多人自动终态判断（全部出签/全部拒签/部分出签）** |
+| **M5：财务自动计算** | **✅** | **calcPlatformFee + calcGrossProfit** |
+| **M5：订单创建多人支持** | **🔲** | **批次3：POST /api/orders 扩展 applicants 可选** |
+| **M5：申请人 API** | **🔲** | **批次4：PATCH /api/applicants/[id]** |
+| **M5：前端多申请人** | **🔲** | **批次5：申请人卡片+表单+详情页扩展** |
+| **M5：数据看板** | **🔲** | **批次6：4个analytics API + 3个图表组件 + 看板页面** |
+| **M5：Excel 导入** | **🔲** | **批次7：import-excel.ts 脚本** |
+| **M5：资料面板分组** | **🔲** | **批次8：applicantCount>1 时按人分组** |
 
 ### 6.2 M1 修复状态（12项全部完成 ✅）
 

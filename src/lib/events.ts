@@ -1,0 +1,106 @@
+export const EVENTS = {
+  ORDER_CREATED: 'order:created',
+  ORDER_UPDATED: 'order:updated',
+  ORDER_STATUS_CHANGED: 'order:status-changed',
+  ORDER_ASSIGNED: 'order:assigned',
+  ORDER_CLAIMED: 'order:claimed',
+  DOCUMENT_UPLOADED: 'document:uploaded',
+  NOTIFICATION_NEW: 'notification:new',
+} as const
+
+export type EventName = (typeof EVENTS)[keyof typeof EVENTS]
+
+type EventHandler = (data: unknown) => void
+
+class EventBus {
+  private handlers: Map<string, Set<EventHandler>> = new Map()
+
+  on(event: EventName, handler: EventHandler): () => void {
+    if (!this.handlers.has(event)) {
+      this.handlers.set(event, new Set())
+    }
+    this.handlers.get(event)!.add(handler)
+
+    return () => {
+      this.handlers.get(event)?.delete(handler)
+    }
+  }
+
+  emit(event: EventName, data: unknown): void {
+    const handlers = this.handlers.get(event)
+    if (handlers) {
+      handlers.forEach((handler) => {
+        try {
+          handler(data)
+        } catch (error) {
+          console.error(`Event handler error for ${event}:`, error)
+        }
+      })
+    }
+  }
+}
+
+export const eventBus = new EventBus()
+
+// ==================== 事件处理器注册 ====================
+
+interface StatusChangeData {
+  orderId: string
+  companyId: string
+  actorId: string
+  fromStatus: string
+  toStatus: string
+  action: string
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  PENDING_CONNECTION: '待对接',
+  CONNECTED: '已对接',
+  COLLECTING_DOCS: '资料收集中',
+  PENDING_REVIEW: '待审核',
+  UNDER_REVIEW: '资料审核中',
+  MAKING_MATERIALS: '材料制作中',
+  PENDING_DELIVERY: '待交付',
+  DELIVERED: '已交付',
+  APPROVED: '出签',
+  REJECTED: '拒签',
+  PARTIAL: '部分出签',
+}
+
+// 状态变更 → 创建站内通知
+eventBus.on(EVENTS.ORDER_STATUS_CHANGED, async (data) => {
+  const { orderId, companyId, actorId, fromStatus, toStatus, action } = data as StatusChangeData
+
+  // 异步导入避免循环依赖
+  const { prisma } = await import('@/lib/prisma')
+
+  // 查询订单基本信息
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { orderNo: true, customerName: true, collectorId: true, operatorId: true, customerId: true, createdBy: true },
+  })
+  if (!order) return
+
+  // 确定需要通知的用户（排除操作者本人）
+  const notifyUserIds = new Set<string>()
+  if (order.collectorId && order.collectorId !== actorId) notifyUserIds.add(order.collectorId)
+  if (order.operatorId && order.operatorId !== actorId) notifyUserIds.add(order.operatorId)
+  if (order.customerId && order.customerId !== actorId) notifyUserIds.add(order.customerId)
+  if (order.createdBy && order.createdBy !== actorId) notifyUserIds.add(order.createdBy)
+
+  if (notifyUserIds.size === 0) return
+
+  const fromLabel = STATUS_LABELS[fromStatus] ?? fromStatus
+  const toLabel = STATUS_LABELS[toStatus] ?? toStatus
+
+  await prisma.notification.createMany({
+    data: Array.from(notifyUserIds).map((userId) => ({
+      companyId,
+      userId,
+      orderId,
+      type: 'STATUS_CHANGE',
+      title: `订单 ${order.orderNo} ${action}`,
+      content: `${order.customerName} 的订单状态：${fromLabel} → ${toLabel}`,
+    })),
+  })
+})

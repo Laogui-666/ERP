@@ -1,0 +1,407 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== Enums ====================
+
+enum UserRole {
+  SUPER_ADMIN        // Lv1 超级管理员
+  COMPANY_OWNER      // Lv2 公司负责人
+  CS_ADMIN           // Lv3 客服部管理员
+  CUSTOMER_SERVICE   // Lv4 客服
+  VISA_ADMIN         // Lv5 签证部管理员
+  DOC_COLLECTOR      // Lv6 资料员
+  OPERATOR           // Lv7 签证操作员
+  OUTSOURCE          // Lv8 外包业务员
+  CUSTOMER           // Lv9 普通用户
+}
+
+enum OrderStatus {
+  PENDING_CONNECTION  // 待对接
+  CONNECTED           // 已对接
+  COLLECTING_DOCS     // 资料收集中
+  PENDING_REVIEW      // 待审核
+  UNDER_REVIEW        // 资料审核中
+  MAKING_MATERIALS    // 材料制作中
+  PENDING_DELIVERY    // 待交付
+  DELIVERED           // 已交付
+  APPROVED            // 出签
+  REJECTED            // 拒签
+  PARTIAL             // 部分出签（多人订单特有）
+}
+
+enum VisaResult {
+  APPROVED    // 出签
+  REJECTED    // 拒签
+}
+
+enum CompanyStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  LOCKED
+}
+
+enum DocReqStatus {
+  PENDING     // 待上传
+  UPLOADED    // 已上传
+  REVIEWING   // 审核中
+  APPROVED    // 已合格
+  REJECTED    // 需修改
+  SUPPLEMENT  // 需补充
+}
+
+enum NotificationType {
+  ORDER_NEW          // 新订单到达（公共池）
+  ORDER_CREATED      // 订单已创建（通知客户）
+  STATUS_CHANGE      // 状态变更
+  DOC_REVIEWED       // 资料审核结果
+  MATERIAL_UPLOADED  // 签证材料已上传
+  MATERIAL_FEEDBACK  // 签证材料反馈
+  APPOINTMENT_REMIND // 预约提醒
+  SYSTEM             // 系统通知
+}
+
+// ==================== 公司/租户 ====================
+
+model Company {
+  id          String        @id @default(cuid())
+  name        String        @db.VarChar(100)
+  logo        String?       @db.Text
+  phone       String?       @db.VarChar(20)
+  email       String?       @db.VarChar(100)
+  address     String?       @db.Text
+  status      CompanyStatus @default(ACTIVE)
+  settings    Json?         // 公司配置
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  users       User[]
+  departments Department[]
+  orders      Order[]
+  templates   VisaTemplate[]
+
+  @@map("erp_companies")
+}
+
+// ==================== 部门 ====================
+
+model Department {
+  id          String      @id @default(cuid())
+  companyId   String      @map("company_id")
+  name        String      @db.VarChar(50)
+  code        String      @db.VarChar(30) // CS / VISA / MANAGEMENT
+  parentId    String?     @map("parent_id")
+  sortOrder   Int         @default(0) @map("sort_order")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  company     Company     @relation(fields: [companyId], references: [id])
+  parent      Department? @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children    Department[] @relation("DepartmentHierarchy")
+  users       User[]
+
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@map("erp_departments")
+}
+
+// ==================== 用户 ====================
+
+model User {
+  id              String     @id @default(cuid())
+  companyId       String     @map("company_id")
+  departmentId    String?    @map("department_id")
+  username        String     @unique @db.VarChar(50)
+  phone           String     @db.VarChar(20)
+  email           String?    @db.VarChar(100)
+  passwordHash    String     @db.Text @map("password_hash")
+  realName        String     @db.VarChar(50) @map("real_name")
+  role            UserRole
+  status          UserStatus @default(ACTIVE)
+  avatar          String?    @db.Text
+  lastLoginAt     DateTime?  @map("last_login_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  company         Company     @relation(fields: [companyId], references: [id])
+  department      Department? @relation(fields: [departmentId], references: [id])
+
+  customerOrders  Order[] @relation("OrderCustomer")
+  collectorOrders Order[] @relation("OrderCollector")
+  operatorOrders  Order[] @relation("OrderOperator")
+  createdOrders   Order[] @relation("OrderCreator")
+
+  orderLogs       OrderLog[]
+  notifications   Notification[]
+
+  @@index([companyId])
+  @@index([companyId, role])
+  @@index([departmentId])
+  @@unique([companyId, phone])
+  @@map("erp_users")
+}
+
+// ==================== 订单 ====================
+
+model Order {
+  id                String      @id @default(cuid())
+  companyId         String      @map("company_id")
+  orderNo           String      @unique @db.VarChar(30) @map("order_no")  // 系统编号 HX20260320XXXX
+  externalOrderNo   String?     @unique @db.VarChar(50) @map("external_order_no")  // 外部订单号（网店/手动录入）
+
+  // 客户信息
+  customerName      String      @db.VarChar(50) @map("customer_name")
+  customerPhone     String      @db.VarChar(20) @map("customer_phone")
+  customerEmail     String?     @db.VarChar(100) @map("customer_email")
+  passportNo        String?     @db.VarChar(20) @map("passport_no")
+  passportIssue     DateTime?   @map("passport_issue")
+  passportExpiry    DateTime?   @map("passport_expiry")
+
+  // 签证信息
+  targetCountry     String      @db.VarChar(50) @map("target_country")
+  visaType          String      @db.VarChar(50) @map("visa_type")
+  visaCategory      String?     @db.VarChar(50) @map("visa_category")
+  travelDate        DateTime?   @map("travel_date")
+
+  // 订单信息
+  amount            Decimal     @db.Decimal(10, 2)
+  paymentMethod     String?     @db.VarChar(30) @map("payment_method")
+  sourceChannel     String?     @db.VarChar(50) @map("source_channel")
+  remark            String?     @db.Text
+
+  // 状态
+  status            OrderStatus @default(PENDING_CONNECTION)
+
+  // 角色关联
+  customerId        String?     @map("customer_id")
+  collectorId       String?     @map("collector_id")
+  operatorId        String?     @map("operator_id")
+  createdBy         String      @map("created_by")         // 创建者（客服ID）
+
+  // 预约信息
+  appointmentDate   DateTime?   @map("appointment_date")
+  fingerprintRequired Boolean   @default(false) @map("fingerprint_required")
+
+  // 多申请人
+  applicantCount    Int         @default(1) @map("applicant_count")
+  contactName       String?     @db.VarChar(50) @map("contact_name")       // 联系人（下单人 ≠ 申请人）
+  targetCity        String?     @db.VarChar(50) @map("target_city")        // 送签城市
+
+  // 流程时间线
+  submittedAt       DateTime?   @map("submitted_at")                       // 递交使馆时间
+  visaResultAt      DateTime?   @map("visa_result_at")                     // 最后一人出签时间
+
+  // 财务明细
+  platformFeeRate   Decimal?    @db.Decimal(5, 4) @map("platform_fee_rate")  // 平台扣点费率 (0.061)
+  platformFee       Decimal?    @db.Decimal(10, 2) @map("platform_fee")      // 平台费用金额
+  visaFee           Decimal?    @db.Decimal(10, 2) @map("visa_fee")          // 签证费（总计）
+  insuranceFee      Decimal?    @db.Decimal(10, 2) @map("insurance_fee")     // 保险费（总计）
+  rejectionInsurance Decimal?   @db.Decimal(10, 2) @map("rejection_insurance") // 拒签保险
+  reviewBonus       Decimal?    @db.Decimal(10, 2) @map("review_bonus")      // 好评返现
+  grossProfit       Decimal?    @db.Decimal(10, 2) @map("gross_profit")      // 毛利（自动计算）
+
+  // 时间戳
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+  deliveredAt       DateTime?   @map("delivered_at")
+  completedAt       DateTime?   @map("completed_at")
+
+  // 关联
+  company           Company     @relation(fields: [companyId], references: [id])
+  customer          User?       @relation("OrderCustomer", fields: [customerId], references: [id])
+  collector         User?       @relation("OrderCollector", fields: [collectorId], references: [id])
+  operator          User?       @relation("OrderOperator", fields: [operatorId], references: [id])
+  creator           User        @relation("OrderCreator", fields: [createdBy], references: [id])
+
+  applicants           Applicant[]
+  documentRequirements DocumentRequirement[]
+  visaMaterials        VisaMaterial[]
+  orderLogs            OrderLog[]
+  notifications        Notification[]
+
+  @@index([companyId])
+  @@index([companyId, status])
+  @@index([customerId])
+  @@index([collectorId])
+  @@index([operatorId])
+  @@index([orderNo])
+  @@index([companyId, createdBy])
+  @@map("erp_orders")
+}
+
+// ==================== 申请人（多申请人订单） ====================
+
+model Applicant {
+  id                String      @id @default(cuid())
+  orderId           String      @map("order_id")
+  companyId         String      @map("company_id")
+
+  // 基本信息
+  name              String      @db.VarChar(50)
+  phone             String?     @db.VarChar(20)
+  passportNo        String?     @db.VarChar(20) @map("passport_no")
+  passportExpiry    DateTime?   @map("passport_expiry")
+
+  // 签证结果（每个人独立跟踪）
+  visaResult        VisaResult? @map("visa_result")
+  visaResultAt      DateTime?   @map("visa_result_at")
+  visaResultNote    String?     @db.Text @map("visa_result_note")
+
+  // 资料状态
+  documentsComplete Boolean     @default(false) @map("documents_complete")
+
+  sortOrder         Int         @default(0) @map("sort_order")
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  order             Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([companyId])
+  @@map("erp_applicants")
+}
+
+// ==================== 资料需求 ====================
+
+model DocumentRequirement {
+  id              String       @id @default(cuid())
+  orderId         String       @map("order_id")
+  companyId       String       @map("company_id")
+  name            String       @db.VarChar(100)
+  description     String?      @db.Text
+  isRequired      Boolean      @default(true) @map("is_required")
+  status          DocReqStatus @default(PENDING)
+  rejectReason    String?      @db.Text @map("reject_reason")
+  sortOrder       Int          @default(0) @map("sort_order")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  order           Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  files           DocumentFile[]
+
+  @@index([orderId])
+  @@index([companyId])
+  @@map("erp_document_requirements")
+}
+
+// ==================== 资料文件 ====================
+
+model DocumentFile {
+  id              String   @id @default(cuid())
+  requirementId   String   @map("requirement_id")
+  companyId       String   @map("company_id")
+  fileName        String   @db.VarChar(255) @map("file_name")
+  fileSize        Int      @map("file_size")
+  fileType        String   @db.VarChar(50) @map("file_type")
+  ossKey          String   @db.Text @map("oss_key")
+  ossUrl          String   @db.Text @map("oss_url")
+  uploadedBy      String   @map("uploaded_by")
+  sortOrder       Int      @default(0) @map("sort_order")       // 排序序号
+  label           String?  @db.VarChar(100)                     // 自定义标签 "房产证1"
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  requirement     DocumentRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  @@index([requirementId])
+  @@index([companyId])
+  @@map("erp_document_files")
+}
+
+// ==================== 签证材料 ====================
+
+model VisaMaterial {
+  id          String   @id @default(cuid())
+  orderId     String   @map("order_id")
+  companyId   String   @map("company_id")
+  fileName    String   @db.VarChar(255) @map("file_name")
+  fileSize    Int      @map("file_size")
+  fileType    String   @db.VarChar(50) @map("file_type")
+  ossKey      String   @db.Text @map("oss_key")
+  ossUrl      String   @db.Text @map("oss_url")
+  remark      String?  @db.Text
+  uploadedBy  String   @map("uploaded_by")
+  version     Int      @default(1)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([companyId])
+  @@map("erp_visa_materials")
+}
+
+// ==================== 操作日志 ====================
+
+model OrderLog {
+  id          String   @id @default(cuid())
+  orderId     String   @map("order_id")
+  companyId   String   @map("company_id")
+  userId      String   @map("user_id")
+  action      String   @db.VarChar(50)
+  fromStatus  String?  @db.VarChar(30) @map("from_status")
+  toStatus    String?  @db.VarChar(30) @map("to_status")
+  detail      String?  @db.Text
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([orderId])
+  @@index([companyId])
+  @@index([createdAt])
+  @@map("erp_order_logs")
+}
+
+// ==================== 通知 ====================
+
+model Notification {
+  id          String           @id @default(cuid())
+  companyId   String           @map("company_id")
+  userId      String           @map("user_id")
+  orderId     String?          @map("order_id")
+  type        NotificationType
+  title       String           @db.VarChar(200)
+  content     String           @db.Text
+  isRead      Boolean          @default(false) @map("is_read")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id])
+  order       Order?   @relation(fields: [orderId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([companyId])
+  @@map("erp_notifications")
+}
+
+// ==================== 签证模板 ====================
+
+model VisaTemplate {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  name        String   @db.VarChar(100)
+  country     String   @db.VarChar(50)
+  visaType    String   @db.VarChar(50) @map("visa_type")
+  items       Json     // [{name, description, required}, ...]
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  company     Company  @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+  @@index([companyId, country, visaType])
+  @@map("erp_visa_templates")
+}

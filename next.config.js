@@ -2,7 +2,16 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    remotePatterns: [],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'hxvisa001.oss-cn-beijing.aliyuncs.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.aliyuncs.com',
+      },
+    ],
   },
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client'],

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 interface FilePreviewProps {
@@ -93,11 +94,12 @@ export function FilePreview({ fileName, fileType, ossUrl, fileSize, compact = fa
             className="w-full"
           >
             <div className="relative aspect-video rounded-lg overflow-hidden bg-white/5 mb-2">
-              <img
+              <Image
                 src={ossUrl}
                 alt={fileName}
-                className="w-full h-full object-cover"
-                loading="lazy"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 400px"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                 <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -223,9 +225,11 @@ function FileLightbox({
         <div className="flex-1 rounded-2xl overflow-hidden bg-[#1a1f2e] border border-white/10 shadow-2xl min-h-[300px]">
           {isImage && (
             <div className="w-full h-full flex items-center justify-center p-4">
-              <img
+              <Image
                 src={ossUrl}
                 alt={fileName}
+                width={1200}
+                height={900}
                 className="max-w-full max-h-[75vh] object-contain rounded-lg"
               />
             </div>

@@ -70,9 +70,13 @@ export async function POST(request: NextRequest) {
         id: user.id,
         username: user.username,
         realName: user.realName,
+        phone: user.phone,
+        email: user.email,
         role: user.role,
         companyId: user.companyId,
-        company: user.company.name,
+        company: { id: user.company.id, name: user.company.name },
+        avatar: user.avatar,
+        lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
       },
     }))
   } catch (error) {

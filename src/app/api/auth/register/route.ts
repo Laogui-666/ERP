@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
           realName: result.user.realName,
           role: result.user.role,
           companyId: result.company.id,
-          company: result.company.name,
+          company: { id: result.company.id, name: result.company.name },
         },
       }),
       { status: 201 }

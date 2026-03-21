@@ -17,12 +17,35 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/admin/settings': '系统设置',
 }
 
+/**
+ * 获取面包屑文本
+ * 支持子路由：/admin/orders/abc123 → 订单管理 / 订单详情
+ */
+function getBreadcrumb(pathname: string): string {
+  // 精确匹配
+  if (BREADCRUMB_MAP[pathname]) return BREADCRUMB_MAP[pathname]
+
+  // 子路由匹配：取最长前缀
+  const parentRoute = Object.keys(BREADCRUMB_MAP)
+    .filter((route) => pathname.startsWith(route + '/'))
+    .sort((a, b) => b.length - a.length)[0]
+
+  if (parentRoute) {
+    const suffix = pathname.slice(parentRoute.length + 1)
+    // /admin/orders/[id] → 订单详情
+    if (parentRoute === '/admin/orders' && suffix) return '订单详情'
+    return BREADCRUMB_MAP[parentRoute]
+  }
+
+  return '页面'
+}
+
 export function Topbar() {
   const { user, logout } = useAuth()
   const pathname = usePathname()
 
   // 面包屑
-  const breadcrumb = BREADCRUMB_MAP[pathname] ?? '页面'
+  const breadcrumb = getBreadcrumb(pathname)
 
   return (
     <header className="glass-topbar h-16 flex items-center justify-between px-6 ml-64">

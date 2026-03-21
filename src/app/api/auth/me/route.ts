@@ -33,7 +33,10 @@ export async function GET(request: NextRequest) {
       company: profile.company,
       department: profile.department,
       avatar: profile.avatar,
+      status: profile.status,
       lastLoginAt: profile.lastLoginAt,
+      createdAt: profile.createdAt.toISOString(),
+      updatedAt: profile.updatedAt.toISOString(),
     }))
   } catch (error) {
     if (error instanceof AppError) {

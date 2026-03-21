@@ -1,7 +1,7 @@
-# 沐海旅行 ERP — M5 全知开发手册（最终版）
+# 沐海旅行 ERP - M5 全知开发手册（最终版）
 
-> **文档版本**: V3.0
-> **更新日期**: 2026-03-22 03:00
+> **文档版本**: V3.1  
+> **更新日期**: 2026-03-22 03:45  
 > **用途**: M5 阶段唯一开发指南。即使丢失所有上下文，拿到本文件 + Git 仓库即可完整恢复开发。
 > **前置条件**: M1 + M2 全部完成（84 源文件 / ~9225 行 / 25 API / 14 页面 / 17 组件）
 > **数据基础**: 基于用户实际 Excel 统计表深度分析（15 个工作表 / 2718 数据行 / 330 单月订单）
@@ -89,7 +89,7 @@ erp-project/
 |---|---|
 | 工作表数 | 15 个（2025年1月 ~ 2026年3月） |
 | 总数据行 | 2,718 行 |
-| 最大表 | 2026年3月 — 493行 × 23列（当前工作表） |
+| 最大表 | 2026年3月 - 493行 × 23列（当前工作表） |
 | 有效订单（2026.3） | ~330 单 / 471 个申请人 |
 
 ### 2.2 最新表（2026年3月）列结构
@@ -181,7 +181,7 @@ Excel 中多人订单的实现方式：联系人/国家/金额等共享字段做
 
 | Excel 列 | ERP 字段 | 说明 |
 |---|---|---|
-| A 序号 | — | 不导入（ERP 自动生成） |
+| A 序号 | - | 不导入（ERP 自动生成） |
 | B 联系人 | `Order.contactName` | 多人订单合并单元格，取第一行 |
 | C 申请人 | `Applicant.name` | 每行一个申请人 |
 | D 手机号 | `Order.customerPhone` | 取第一行（联系人手机） |
@@ -192,7 +192,7 @@ Excel 中多人订单的实现方式：联系人/国家/金额等共享字段做
 | I 下单时间 | `Order.createdAt` | Excel 序列号 → JS Date |
 | J 接待客服 | `Order.createdBy` → User.realName 映射 | |
 | K 资料收集 | `Order.collectorId` → User.realName 映射 | 昵称→全名 |
-| L 平台进度更新 | — | 仅 ✅ 标记，不映射到状态 |
+| L 平台进度更新 | - | 仅 ✅ 标记，不映射到状态 |
 | M 递交日期 | `Order.submittedAt` | Excel 序列号（含小数） |
 | N 出签时间 | `Applicant.visaResultAt` | 最新表此列为空（无出签结果） |
 | O 操作专员 | `Order.operatorId` → User.realName 映射 | |
@@ -238,7 +238,7 @@ Excel 中多人订单的实现方式：联系人/国家/金额等共享字段做
 `transitionOrder()` 是用户驱动的状态变更，有角色校验和规则匹配。PARTIAL 是系统副作用（最后一个 Applicant 结果写入时自动判断），设计为独立函数 `autoResolveOrderStatus()`。
 
 ```typescript
-// transition.ts — 新增，不修改 transitionOrder()
+// transition.ts - 新增，不修改 transitionOrder()
 export async function autoResolveOrderStatus(
   tx: Prisma.TransactionClient,
   orderId: string,
@@ -823,7 +823,7 @@ export async function PATCH(request, { params }) {
 
 ### M5-6：分析 API
 
-#### 5.6.1 概览 API — `GET /api/analytics/overview?month=2026-03`
+#### 5.6.1 概览 API - `GET /api/analytics/overview?month=2026-03`
 
 权限：`requirePermission(user, 'analytics', 'read')`（Lv1-3,5，rbac.ts 已有）
 
@@ -859,7 +859,7 @@ const orders = await prisma.order.findMany({
 }
 ```
 
-#### 5.6.2 趋势 API — `GET /api/analytics/trend?months=6`
+#### 5.6.2 趋势 API - `GET /api/analytics/trend?months=6`
 
 **用原生 SQL GROUP BY**（1 次查询搞定多月聚合）：
 
@@ -891,7 +891,7 @@ const data = raw.map(row => ({
 }))
 ```
 
-#### 5.6.3 人员负荷 API — `GET /api/analytics/workload?month=2026-03`
+#### 5.6.3 人员负荷 API - `GET /api/analytics/workload?month=2026-03`
 
 ```typescript
 // 按 createdBy 分组统计客服绩效
@@ -923,7 +923,7 @@ npm install recharts
 
 ## 6. Phase C：导出与迁移
 
-### M5-11：Excel 导出 API — `GET /api/analytics/export?month=2026-03&format=xlsx`
+### M5-11：Excel 导出 API - `GET /api/analytics/export?month=2026-03&format=xlsx`
 
 #### 列结构（23 列，完全对齐最新 Excel）
 
@@ -967,7 +967,7 @@ npm install recharts
 
 ### M5-13：历史数据导入
 
-#### 导入脚本 — `scripts/import-excel.ts`
+#### 导入脚本 - `scripts/import-excel.ts`
 
 ```bash
 npx tsx scripts/import-excel.ts ./签证统计表2026.3.xlsx
@@ -1109,7 +1109,7 @@ export function calcGrossProfit(order: {
 ## 8. 执行计划
 
 ```
-批次 1 ✅ — 类型+Schema+迁移（2h）
+批次 1 ✅ - 类型+Schema+迁移（2h）
   ├── src/types/order.ts         +Applicant +PARTIAL +Order扩展
   ├── prisma/schema.prisma       +Model +Fields +Enums
   ├── prisma migrate (SQL已生成，部署时执行)
@@ -1117,29 +1117,29 @@ export function calcGrossProfit(order: {
   └── src/components/orders/status-badge.tsx  +PARTIAL variant
   验收: npx tsc --noEmit = 0 错误 ✅
 
-批次 2 ✅ — 后端核心（2h）
+批次 2 ✅ - 后端核心（2h）
   ├── src/lib/transition.ts      +autoResolveOrderStatus +2条PARTIAL规则
   └── src/lib/utils.ts           +calcPlatformFee +calcGrossProfit
   验收: npx tsc --noEmit = 0 错误 ✅
 
-批次 3 ✅ — 订单 API 扩展（2h）
+批次 3 ✅ - 订单 API 扩展（2h）
   ├── POST /api/orders           +applicants可选 +财务计算 +创建Applicant
   ├── GET  /api/orders/[id]      +include applicants
   └── PATCH /api/orders/[id]     +财务字段白名单+自动重算毛利
   验收: npx tsc --noEmit = 0 错误 ✅
 
-批次 4 ✅ — 申请人 API（1.5h）
+批次 4 ✅ - 申请人 API（1.5h）
   └── PATCH /api/applicants/[id]  含autoResolveOrderStatus调用+通知
   验收: npx tsc --noEmit = 0 错误 ✅
 
-批次 5 ✅ — 前端多申请人（3h）
+批次 5 ✅ - 前端多申请人（3h）
   ├── src/components/orders/applicant-card.tsx     新组件
   ├── src/components/orders/applicant-form-item.tsx 新组件
   ├── src/app/admin/orders/page.tsx                创建表单重写申请人区域+财务预览
   └── src/app/admin/orders/[id]/page.tsx           +申请人卡片 +PARTIAL case +结果标记+财务明细
   验收: 创建订单→多人展示→结果标记 全流程走通 ✅
 
-批次 6 ✅ — 数据看板（4h）
+批次 6 ✅ - 数据看板（4h）
   ├── /api/analytics/overview    概览API
   ├── /api/analytics/trend       趋势API(原生SQL)
   ├── /api/analytics/workload    人员负荷API
@@ -1150,11 +1150,11 @@ export function calcGrossProfit(order: {
   └── analytics/page.tsx         完全重写
   验收: 看板页面加载正确, 导出文件可打开 ✅
 
-批次 7 — Excel 导入（3h）
+批次 7 - Excel 导入（3h）
   └── scripts/import-excel.ts    合并单元格检测 + 列映射 + 月份推断 + dry-run
   验收: dry-run 预览正确, 正式导入后数据库记录数与 Excel 一致
 
-批次 8 — 资料面板分组 + 验收（1.5h）
+批次 8 - 资料面板分组 + 验收（1.5h）
   ├── document-panel.tsx         applicantCount>1时分组
   ├── npx tsc --noEmit           零错误
   └── npm run build              构建通过
@@ -1212,4 +1212,4 @@ export function calcGrossProfit(order: {
 
 ---
 
-*文档结束 — M5 全知手册 V2.0（基于实际 Excel 数据深度分析的最终版）*
+*文档结束 - M5 全知手册 V2.0（基于实际 Excel 数据深度分析的最终版）*

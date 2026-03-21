@@ -42,7 +42,7 @@
 | M1 基础架构 | ✅ 100% |
 | M2 核心工作流 | ✅ 100% (19/19) |
 | M3 文件与客户端 | ⬜ 待开发 |
-| M5 多申请人+看板 | ✅ 90% (批次1-7完成，批次8待开发) |
+| M5 多申请人+看板 | ✅ 100% (全部8批次完成) |
 
 ### 1.3 关键文件位置
 
@@ -1150,18 +1150,18 @@ export function calcGrossProfit(order: {
   └── analytics/page.tsx         完全重写
   验收: 看板页面加载正确, 导出文件可打开 ✅
 
-批次 7 ✅ — Excel 导入（3h）
+批次 7 ✅ - Excel 导入（3h）
   └── scripts/import-excel.ts    合并单元格检测 + 列映射 + 月份推断 + dry-run
   验收: dry-run 预览正确, 正式导入后数据库记录数与 Excel 一致
 
-批次 8 - 资料面板分组 + 验收（1.5h）
-  ├── document-panel.tsx         applicantCount>1时分组
-  ├── npx tsc --noEmit           零错误
-  └── npm run build              构建通过
+批次 8 ✅ — 资料面板分组 + 验收（1.5h）
+  ├── document-panel.tsx         applicantCount>1时按人分组展示
+  ├── npx tsc --noEmit           零错误 ✅
+  └── npm run build              构建通过 ✅
   验收: 全部功能清单通过
 ```
 
-**已完成：批次 1-7（~25h） | 剩余：批次 8（~1.5h） | 总计：~26.5 小时（3.5 天）**
+**全部完成：批次 1-8（~26.5h） | 总计：~26.5 小时（3.5 天）**
 
 ---
 

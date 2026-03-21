@@ -13,10 +13,12 @@ interface DocumentPanelProps {
   requirements: DocumentRequirement[]
   userRole: UserRole
   orderStatus: string
+  applicantCount?: number
+  applicants?: Array<{ id: string; name: string }>
   onRefresh: () => void
 }
 
-export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _orderStatus, onRefresh }: DocumentPanelProps) {
+export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _orderStatus, applicantCount = 1, applicants = [], onRefresh }: DocumentPanelProps) {
   const { toast } = useToast()
   const [showAddForm, setShowAddForm] = useState(false)
   const [newItemName, setNewItemName] = useState('')
@@ -192,6 +194,33 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
   const approved = requirements.filter((r) => r.status === 'APPROVED').length
   const total = requirements.length
 
+  // 是否按申请人分组（多人订单）
+  const showGrouped = applicantCount > 1 && applicants.length > 1
+
+  /**
+   * 将需求均匀分配到申请人组
+   * 例：12 项需求 / 3 申请人 → 每人 4 项
+   */
+  const groupedRequirements = (): Array<{ name: string; items: DocumentRequirement[] }> => {
+    if (!showGrouped) return [{ name: '', items: requirements }]
+
+    const groups: Array<{ name: string; items: DocumentRequirement[] }> = []
+    const perPerson = Math.ceil(requirements.length / applicants.length)
+
+    for (let i = 0; i < applicants.length; i++) {
+      const start = i * perPerson
+      const end = Math.min(start + perPerson, requirements.length)
+      groups.push({
+        name: applicants[i].name,
+        items: requirements.slice(start, end),
+      })
+    }
+
+    return groups
+  }
+
+  const groups = groupedRequirements()
+
   return (
     <div className="space-y-3">
       {/* 标题栏 */}
@@ -253,28 +282,59 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         </div>
       )}
 
-      {/* 资料列表 */}
+      {/* 资料列表（分组或平铺） */}
       {requirements.length === 0 ? (
         <p className="text-xs text-[var(--color-text-placeholder)] py-2">暂无资料需求</p>
       ) : (
-        <div className="space-y-2">
-          {requirements.map((req) => (
-            <DocumentItem
-              key={req.id}
-              req={req}
-              canUpload={canUpload && ['PENDING', 'REJECTED', 'SUPPLEMENT'].includes(req.status)}
-              canReview={canReview && req.status === 'UPLOADED'}
-              isUploading={uploadingId === req.id}
-              uploadProgress={uploadingId === req.id ? uploadProgress : null}
-              isReviewing={reviewingId === req.id}
-              reviewReason={reviewReason}
-              onReviewReasonChange={setReviewReason}
-              onUpload={() => handleUploadClick(req.id)}
-              onCamera={() => setCameraTargetId(req.id)}
-              onApprove={() => handleReview(req.id, 'APPROVED')}
-              onReject={(status) => handleReview(req.id, status)}
-            />
-          ))}
+        <div className="space-y-3">
+          {groups.map((group, gi) => {
+            const groupApproved = group.items.filter(r => r.status === 'APPROVED').length
+            const groupTotal = group.items.length
+
+            return (
+              <div key={gi}>
+                {/* 分组标题（多人订单） */}
+                {showGrouped && (
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-[var(--color-text-primary)] flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-[var(--color-primary)]/15 flex items-center justify-center text-[10px] font-bold text-[var(--color-primary-light)]">
+                        {group.name[0]}
+                      </span>
+                      {group.name}
+                    </span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                      groupApproved === groupTotal
+                        ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]'
+                        : 'bg-white/5 text-[var(--color-text-placeholder)]'
+                    }`}>
+                      {groupApproved}/{groupTotal}
+                    </span>
+                  </div>
+                )}
+
+                {/* 需求列表 */}
+                <div className={showGrouped ? 'space-y-2 pl-1' : 'space-y-2'}>
+                  {group.items.map((req) => (
+                    <DocumentItem
+                      key={req.id}
+                      req={req}
+                      canUpload={canUpload && ['PENDING', 'REJECTED', 'SUPPLEMENT'].includes(req.status)}
+                      canReview={canReview && req.status === 'UPLOADED'}
+                      isUploading={uploadingId === req.id}
+                      uploadProgress={uploadingId === req.id ? uploadProgress : null}
+                      isReviewing={reviewingId === req.id}
+                      reviewReason={reviewReason}
+                      onReviewReasonChange={setReviewReason}
+                      onUpload={() => handleUploadClick(req.id)}
+                      onCamera={() => setCameraTargetId(req.id)}
+                      onApprove={() => handleReview(req.id, 'APPROVED')}
+                      onReject={(status) => handleReview(req.id, status)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 

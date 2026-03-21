@@ -392,6 +392,8 @@ export default function OrderDetailPage() {
               requirements={order.documentRequirements}
               userRole={user?.role ?? 'CUSTOMER'}
               orderStatus={order.status}
+              applicantCount={order.applicantCount}
+              applicants={order.applicants.map(a => ({ id: a.id, name: a.name }))}
               onRefresh={() => fetchOrder(orderId)}
             />
           </GlassCard>

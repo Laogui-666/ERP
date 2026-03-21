@@ -24,6 +24,7 @@ const STATUS_OPTIONS: { value: OrderStatus | ''; label: string }[] = [
   { value: 'DELIVERED', label: '已交付' },
   { value: 'APPROVED', label: '已出签' },
   { value: 'REJECTED', label: '已拒签' },
+  { value: 'PARTIAL', label: '部分出签' },
 ]
 
 export default function OrdersPage() {

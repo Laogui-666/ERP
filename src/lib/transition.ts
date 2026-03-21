@@ -3,6 +3,7 @@ import type { UserRole } from '@/types/user'
 import { prisma } from '@/lib/prisma'
 import { AppError } from '@/types/api'
 import { eventBus, EVENTS } from '@/lib/events'
+import type { Prisma } from '@prisma/client'
 
 interface TransitionRule {
   from: OrderStatus
@@ -101,6 +102,20 @@ export const TRANSITION_RULES: TransitionRule[] = [
     to: 'REJECTED',
     allowedRoles: ['OPERATOR', 'DOC_COLLECTOR', 'CUSTOMER', 'VISA_ADMIN'],
     action: '提交拒签结果',
+  },
+
+  // === M5：PARTIAL 手动推进规则 ===
+  {
+    from: 'PARTIAL',
+    to: 'APPROVED',
+    allowedRoles: ['COMPANY_OWNER', 'VISA_ADMIN'],
+    action: '确认全部出签',
+  },
+  {
+    from: 'PARTIAL',
+    to: 'REJECTED',
+    allowedRoles: ['COMPANY_OWNER', 'VISA_ADMIN'],
+    action: '确认全部拒签',
   },
 ]
 
@@ -214,4 +229,86 @@ export async function transitionOrder(input: {
     toStatus,
     action: rule.action,
   })
+}
+
+// ==================== M5：多人订单自动终态判断 ====================
+
+/**
+ * 根据所有申请人的出签结果，自动判断订单终态
+ * 独立于 transitionOrder()，不走 TRANSITION_RULES
+ * 调用场景：PATCH /api/applicants/[id] 更新 visaResult 后
+ *
+ * @returns 更新后的状态，如果还有人未出结果则返回 null
+ */
+export async function autoResolveOrderStatus(
+  tx: Prisma.TransactionClient,
+  orderId: string,
+  companyId: string,
+  actorId: string
+): Promise<OrderStatus | null> {
+  // 1. 获取所有申请人结果
+  const applicants = await tx.applicant.findMany({
+    where: { orderId },
+    select: { visaResult: true, name: true },
+  })
+
+  // 2. 还有人没出结果 → 不操作
+  if (applicants.some((a) => a.visaResult === null)) {
+    return null
+  }
+
+  // 3. 判断终态
+  const allApproved = applicants.every((a) => a.visaResult === 'APPROVED')
+  const allRejected = applicants.every((a) => a.visaResult === 'REJECTED')
+  const newStatus: OrderStatus = allApproved
+    ? 'APPROVED'
+    : allRejected
+      ? 'REJECTED'
+      : 'PARTIAL'
+
+  // 4. 获取当前状态
+  const order = await tx.order.findUnique({
+    where: { id: orderId },
+    select: { status: true },
+  })
+  if (!order) return null
+
+  // 5. 更新订单 + 写日志（同一事务）
+  const updateData: Record<string, unknown> = {
+    status: newStatus,
+    visaResultAt: new Date(),
+    updatedAt: new Date(),
+  }
+  if (newStatus !== 'PARTIAL') {
+    updateData.completedAt = new Date()
+  }
+
+  await tx.order.update({
+    where: { id: orderId },
+    data: updateData,
+  })
+
+  const actionLabel = allApproved
+    ? '全部出签'
+    : allRejected
+      ? '全部拒签'
+      : '部分出签'
+
+  const detail = applicants
+    .map((a) => `${a.name}: ${a.visaResult === 'APPROVED' ? '出签' : '拒签'}`)
+    .join('；')
+
+  await tx.orderLog.create({
+    data: {
+      orderId,
+      companyId,
+      userId: actorId,
+      action: actionLabel,
+      fromStatus: order.status,
+      toStatus: newStatus,
+      detail,
+    },
+  })
+
+  return newStatus
 }

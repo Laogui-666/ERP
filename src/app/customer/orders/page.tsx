@@ -80,7 +80,7 @@ export default function CustomerOrdersPage() {
               {['已对接', '资料收集', '审核', '制作', '交付'].map((step, i) => {
                 const statusIndex = ['CONNECTED', 'COLLECTING_DOCS', 'UNDER_REVIEW', 'MAKING_MATERIALS', 'DELIVERED']
                   .indexOf(order.status)
-                const isDone = i <= statusIndex || ['APPROVED', 'REJECTED'].includes(order.status)
+                const isDone = i <= statusIndex || ['APPROVED', 'REJECTED', 'PARTIAL'].includes(order.status)
                 return (
                   <div key={step} className="flex items-center gap-1">
                     <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${

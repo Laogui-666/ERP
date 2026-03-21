@@ -64,6 +64,7 @@ const STATUS_LABELS: Record<string, string> = {
   DELIVERED: '已交付',
   APPROVED: '出签',
   REJECTED: '拒签',
+  PARTIAL: '部分出签',
 }
 
 // 状态变更 → 创建站内通知

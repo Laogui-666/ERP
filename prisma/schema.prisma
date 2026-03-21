@@ -32,6 +32,12 @@ enum OrderStatus {
   DELIVERED           // 已交付
   APPROVED            // 出签
   REJECTED            // 拒签
+  PARTIAL             // 部分出签（多人订单特有）
+}
+
+enum VisaResult {
+  APPROVED    // 出签
+  REJECTED    // 拒签
 }
 
 enum CompanyStatus {
@@ -187,6 +193,24 @@ model Order {
   appointmentDate   DateTime?   @map("appointment_date")
   fingerprintRequired Boolean   @default(false) @map("fingerprint_required")
 
+  // 多申请人
+  applicantCount    Int         @default(1) @map("applicant_count")
+  contactName       String?     @db.VarChar(50) @map("contact_name")       // 联系人（下单人 ≠ 申请人）
+  targetCity        String?     @db.VarChar(50) @map("target_city")        // 送签城市
+
+  // 流程时间线
+  submittedAt       DateTime?   @map("submitted_at")                       // 递交使馆时间
+  visaResultAt      DateTime?   @map("visa_result_at")                     // 最后一人出签时间
+
+  // 财务明细
+  platformFeeRate   Decimal?    @db.Decimal(5, 4) @map("platform_fee_rate")  // 平台扣点费率 (0.061)
+  platformFee       Decimal?    @db.Decimal(10, 2) @map("platform_fee")      // 平台费用金额
+  visaFee           Decimal?    @db.Decimal(10, 2) @map("visa_fee")          // 签证费（总计）
+  insuranceFee      Decimal?    @db.Decimal(10, 2) @map("insurance_fee")     // 保险费（总计）
+  rejectionInsurance Decimal?   @db.Decimal(10, 2) @map("rejection_insurance") // 拒签保险
+  reviewBonus       Decimal?    @db.Decimal(10, 2) @map("review_bonus")      // 好评返现
+  grossProfit       Decimal?    @db.Decimal(10, 2) @map("gross_profit")      // 毛利（自动计算）
+
   // 时间戳
   createdAt         DateTime    @default(now()) @map("created_at")
   updatedAt         DateTime    @updatedAt @map("updated_at")
@@ -200,6 +224,7 @@ model Order {
   operator          User?       @relation("OrderOperator", fields: [operatorId], references: [id])
   creator           User        @relation("OrderCreator", fields: [createdBy], references: [id])
 
+  applicants           Applicant[]
   documentRequirements DocumentRequirement[]
   visaMaterials        VisaMaterial[]
   orderLogs            OrderLog[]
@@ -213,6 +238,38 @@ model Order {
   @@index([orderNo])
   @@index([companyId, createdBy])
   @@map("erp_orders")
+}
+
+// ==================== 申请人（多申请人订单） ====================
+
+model Applicant {
+  id                String      @id @default(cuid())
+  orderId           String      @map("order_id")
+  companyId         String      @map("company_id")
+
+  // 基本信息
+  name              String      @db.VarChar(50)
+  phone             String?     @db.VarChar(20)
+  passportNo        String?     @db.VarChar(20) @map("passport_no")
+  passportExpiry    DateTime?   @map("passport_expiry")
+
+  // 签证结果（每个人独立跟踪）
+  visaResult        VisaResult? @map("visa_result")
+  visaResultAt      DateTime?   @map("visa_result_at")
+  visaResultNote    String?     @db.Text @map("visa_result_note")
+
+  // 资料状态
+  documentsComplete Boolean     @default(false) @map("documents_complete")
+
+  sortOrder         Int         @default(0) @map("sort_order")
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  order             Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([companyId])
+  @@map("erp_applicants")
 }
 
 // ==================== 资料需求 ====================

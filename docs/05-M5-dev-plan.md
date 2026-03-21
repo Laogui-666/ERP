@@ -1,7 +1,7 @@
 # 沐海旅行 ERP — M5 全知开发手册（最终版）
 
-> **文档版本**: V2.0
-> **更新日期**: 2026-03-21
+> **文档版本**: V2.1
+> **更新日期**: 2026-03-22
 > **用途**: M5 阶段唯一开发指南。即使丢失所有上下文，拿到本文件 + Git 仓库即可完整恢复开发。
 > **前置条件**: M1 + M2 全部完成（84 源文件 / ~9225 行 / 25 API / 14 页面 / 17 组件）
 > **数据基础**: 基于用户实际 Excel 统计表深度分析（15 个工作表 / 2718 数据行 / 330 单月订单）
@@ -1109,18 +1109,18 @@ export function calcGrossProfit(order: {
 ## 8. 执行计划
 
 ```
-批次 1 — 类型+Schema+迁移（2h）
+批次 1 ✅ — 类型+Schema+迁移（2h）
   ├── src/types/order.ts         +Applicant +PARTIAL +Order扩展
   ├── prisma/schema.prisma       +Model +Fields +Enums
-  ├── prisma migrate dev
+  ├── prisma migrate (SQL已生成，部署时执行)
   ├── src/lib/events.ts          +PARTIAL label
   └── src/components/orders/status-badge.tsx  +PARTIAL variant
-  验收: npx tsc --noEmit = 0 错误
+  验收: npx tsc --noEmit = 0 错误 ✅
 
-批次 2 — 后端核心（2h）
+批次 2 ✅ — 后端核心（2h）
   ├── src/lib/transition.ts      +autoResolveOrderStatus +2条PARTIAL规则
   └── src/lib/utils.ts           +calcPlatformFee +calcGrossProfit
-  验收: npx tsc --noEmit = 0 错误
+  验收: npx tsc --noEmit = 0 错误 ✅
 
 批次 3 — 订单 API 扩展（2h）
   ├── POST /api/orders           +applicants可选 +财务计算 +创建Applicant
@@ -1161,7 +1161,7 @@ export function calcGrossProfit(order: {
   验收: 全部功能清单通过
 ```
 
-**总工作量：~19 小时（2.5 天）**
+**已完成：批次 1-2（~4h） | 剩余：批次 3-8（~15h） | 总计：~19 小时（2.5 天）**
 
 ---
 

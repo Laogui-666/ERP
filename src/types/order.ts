@@ -9,6 +9,9 @@ export type OrderStatus =
   | 'DELIVERED'
   | 'APPROVED'
   | 'REJECTED'
+  | 'PARTIAL'
+
+export type VisaResult = 'APPROVED' | 'REJECTED'
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   PENDING_CONNECTION: '待对接',
@@ -21,6 +24,7 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   DELIVERED: '已交付',
   APPROVED: '出签',
   REJECTED: '拒签',
+  PARTIAL: '部分出签',
 }
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
@@ -34,6 +38,7 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   DELIVERED: '#7FA87A',
   APPROVED: '#7FA87A',
   REJECTED: '#B87C7C',
+  PARTIAL: '#C4A97D',
 }
 
 export type DocReqStatus =
@@ -61,6 +66,22 @@ export const DOC_REQ_STATUS_LABELS: Record<DocReqStatus, string> = {
   APPROVED: '已合格',
   REJECTED: '需修改',
   SUPPLEMENT: '需补充',
+}
+
+export interface Applicant {
+  id: string
+  orderId: string
+  name: string
+  phone: string | null
+  passportNo: string | null
+  passportExpiry: string | null
+  visaResult: VisaResult | null
+  visaResultAt: string | null
+  visaResultNote: string | null
+  documentsComplete: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Order {
@@ -93,12 +114,28 @@ export interface Order {
   updatedAt: string
   deliveredAt: string | null
   completedAt: string | null
+  // M5：多申请人
+  applicantCount: number
+  contactName: string | null
+  targetCity: string | null
+  // M5：流程时间线
+  submittedAt: string | null
+  visaResultAt: string | null
+  // M5：财务
+  platformFeeRate: string | null
+  platformFee: string | null
+  visaFee: string | null
+  insuranceFee: string | null
+  rejectionInsurance: string | null
+  reviewBonus: string | null
+  grossProfit: string | null
 }
 
 export interface OrderDetail extends Order {
   customer: { id: string; realName: string } | null
   collector: { id: string; realName: string } | null
   operator: { id: string; realName: string } | null
+  applicants: Applicant[]
   documentRequirements: DocumentRequirement[]
   visaMaterials: VisaMaterial[]
   orderLogs: OrderLog[]
@@ -173,6 +210,16 @@ export interface CreateOrderPayload {
   sourceChannel?: string
   remark?: string
   externalOrderNo?: string
+  // M5：多申请人
+  applicants?: Array<{ name: string; phone?: string; passportNo?: string }>
+  contactName?: string
+  targetCity?: string
+  // M5：财务
+  platformFeeRate?: number
+  visaFee?: number
+  insuranceFee?: number
+  rejectionInsurance?: number
+  reviewBonus?: number
 }
 
 export interface OrderQuery {

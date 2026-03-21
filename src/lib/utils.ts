@@ -66,3 +66,33 @@ export function omit<T extends Record<string, unknown>, K extends keyof T>(
   })
   return result as Omit<T, K>
 }
+
+// ==================== M5 财务计算 ====================
+
+/**
+ * 计算平台费用 = 订单金额 × 平台扣点费率
+ * 精确到分
+ */
+export function calcPlatformFee(amount: number, rate: number): number {
+  return Math.round(amount * rate * 100) / 100
+}
+
+/**
+ * 计算毛利 = 订单金额 - 平台费用 - 签证费 - 保险费 - 拒签保险 - 好评返现
+ */
+export function calcGrossProfit(order: {
+  amount: number
+  platformFeeRate?: number | null
+  visaFee?: number | null
+  insuranceFee?: number | null
+  rejectionInsurance?: number | null
+  reviewBonus?: number | null
+}): number {
+  const platformFee = calcPlatformFee(order.amount, order.platformFeeRate ?? 0)
+  const totalCost = platformFee
+    + (order.visaFee ?? 0)
+    + (order.insuranceFee ?? 0)
+    + (order.rejectionInsurance ?? 0)
+    + (order.reviewBonus ?? 0)
+  return Math.round((order.amount - totalCost) * 100) / 100
+}

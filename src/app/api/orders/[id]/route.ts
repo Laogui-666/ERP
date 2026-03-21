@@ -92,8 +92,8 @@ export async function PATCH(
     const updateData: Record<string, unknown> = {}
     if (data.customerName !== undefined) updateData.customerName = data.customerName
     if (data.customerPhone !== undefined) updateData.customerPhone = data.customerPhone
-    if (data.customerEmail !== undefined) updateData.customerEmail = data.customerEmail
-    if (data.passportNo !== undefined) updateData.passportNo = data.passportNo
+    if (data.customerEmail !== undefined) updateData.customerEmail = data.customerEmail ?? null
+    if (data.passportNo !== undefined) updateData.passportNo = data.passportNo ?? null
     if (data.targetCountry !== undefined) updateData.targetCountry = data.targetCountry
     if (data.visaType !== undefined) updateData.visaType = data.visaType
     if (data.visaCategory !== undefined) updateData.visaCategory = data.visaCategory ?? null

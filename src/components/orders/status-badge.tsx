@@ -19,6 +19,7 @@ const STATUS_VARIANTS: Record<OrderStatus, 'default' | 'info' | 'warning' | 'suc
   DELIVERED: 'success',
   APPROVED: 'success',
   REJECTED: 'danger',
+  PARTIAL: 'warning',
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {

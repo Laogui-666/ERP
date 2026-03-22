@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react'
 import { useOrderStore } from '@/stores/order-store'
+import { apiFetch } from '@/lib/api-client'
 import type { OrderQuery, OrderStatus } from '@/types/order'
 
 export function useOrders() {
@@ -32,7 +33,7 @@ export function useOrders() {
 
   const changeStatus = useCallback(
     async (orderId: string, toStatus: OrderStatus, detail?: string) => {
-      const res = await fetch(`/api/orders/${orderId}/status`, {
+      const res = await apiFetch(`/api/orders/${orderId}/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ toStatus, detail }),
@@ -52,7 +53,7 @@ export function useOrders() {
 
   const claimOrder = useCallback(
     async (orderId: string) => {
-      const res = await fetch(`/api/orders/${orderId}/claim`, { method: 'POST' })
+      const res = await apiFetch(`/api/orders/${orderId}/claim`, { method: 'POST' })
       const json = await res.json()
       if (!json.success) {
         throw new Error(json.error?.message ?? '接单失败')

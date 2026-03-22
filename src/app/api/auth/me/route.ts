@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       department: profile.department,
       avatar: profile.avatar,
       status: profile.status,
-      lastLoginAt: profile.lastLoginAt,
+      lastLoginAt: profile.lastLoginAt?.toISOString() ?? null,
       createdAt: profile.createdAt.toISOString(),
       updatedAt: profile.updatedAt.toISOString(),
     }))

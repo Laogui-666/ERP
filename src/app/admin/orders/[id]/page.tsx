@@ -1,4 +1,5 @@
 'use client'
+import { apiFetch } from '@/lib/api-client'
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -118,7 +119,7 @@ export default function OrderDetailPage() {
     }
     setIsTransitioning(true)
     try {
-      const res = await fetch(`/api/orders/${orderId}/cancel`, {
+      const res = await apiFetch(`/api/orders/${orderId}/cancel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: cancelReason }),

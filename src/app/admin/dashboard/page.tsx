@@ -1,4 +1,5 @@
 'use client'
+import { apiFetch } from '@/lib/api-client'
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
@@ -23,7 +24,7 @@ export default function DashboardPage() {
 
   const fetchOverview = useCallback(async () => {
     try {
-      const res = await fetch('/api/analytics/overview')
+      const res = await apiFetch('/api/analytics/overview')
       const json = await res.json()
       if (json.success) {
         setData(json.data)

@@ -1,4 +1,5 @@
 'use client'
+import { apiFetch } from '@/lib/api-client'
 
 import { useState, useRef } from 'react'
 import { useToast } from '@/components/ui/toast'
@@ -46,7 +47,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     }
     setIsAdding(true)
     try {
-      const res = await fetch(`/api/orders/${orderId}/documents`, {
+      const res = await apiFetch(`/api/orders/${orderId}/documents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -107,7 +108,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         formData.append('file', file)
         formData.append('requirementId', targetReqId)
 
-        const res = await fetch('/api/documents/upload', {
+        const res = await apiFetch('/api/documents/upload', {
           method: 'POST',
           body: formData,
         })
@@ -144,7 +145,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       formData.append('file', file)
       formData.append('requirementId', cameraTargetId)
 
-      const res = await fetch('/api/documents/upload', {
+      const res = await apiFetch('/api/documents/upload', {
         method: 'POST',
         body: formData,
       })
@@ -166,7 +167,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
   const handleReview = async (reqId: string, status: DocReqStatus) => {
     setReviewingId(reqId)
     try {
-      const res = await fetch(`/api/documents/${reqId}`, {
+      const res = await apiFetch(`/api/documents/${reqId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

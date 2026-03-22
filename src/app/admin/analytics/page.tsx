@@ -1,4 +1,5 @@
 'use client'
+import { apiFetch } from '@/lib/api-client'
 
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/hooks/use-auth'
@@ -55,9 +56,9 @@ export default function AnalyticsPage() {
     setIsLoading(true)
     try {
       const [overviewRes, trendRes, workloadRes] = await Promise.all([
-        fetch(`/api/analytics/overview?month=${selectedMonth}`),
-        fetch(`/api/analytics/trend?months=6`),
-        fetch(`/api/analytics/workload?month=${selectedMonth}`),
+        apiFetch(`/api/analytics/overview?month=${selectedMonth}`),
+        apiFetch(`/api/analytics/trend?months=6`),
+        apiFetch(`/api/analytics/workload?month=${selectedMonth}`),
       ])
 
       const [overviewJson, trendJson, workloadJson] = await Promise.all([

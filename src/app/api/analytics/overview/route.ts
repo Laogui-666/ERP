@@ -8,6 +8,8 @@ import { z } from 'zod'
 /**
  * GET /api/analytics/overview?month=2026-03
  * 核心指标概览：总订单/营收/毛利/出签率/国家分布/支付分布
+ *
+ * 使用原生 SQL 聚合，避免全量数据加载到内存
  */
 export async function GET(request: NextRequest) {
   try {
@@ -26,67 +28,81 @@ export async function GET(request: NextRequest) {
     const monthStart = new Date(y, m - 1, 1)
     const monthEnd = new Date(y, m, 0, 23, 59, 59, 999)
 
-    const orders = await prisma.order.findMany({
-      where: {
-        companyId: user.companyId,
-        createdAt: { gte: monthStart, lte: monthEnd },
-      },
-      select: {
-        status: true,
-        amount: true,
-        platformFee: true,
-        visaFee: true,
-        insuranceFee: true,
-        grossProfit: true,
-        targetCountry: true,
-        paymentMethod: true,
-        createdBy: true,
-        operatorId: true,
-        collectorId: true,
-        applicantCount: true,
-      },
-    })
+    // ===== 核心指标聚合（1 次 SQL） =====
+    const [agg] = await prisma.$queryRaw`
+      SELECT
+        COUNT(*) as totalOrders,
+        COALESCE(SUM(applicant_count), 0) as totalApplicants,
+        COALESCE(SUM(CAST(amount AS DECIMAL(10,2))), 0) as totalRevenue,
+        COALESCE(SUM(CAST(gross_profit AS DECIMAL(10,2))), 0) as totalProfit,
+        SUM(CASE WHEN status = 'APPROVED' THEN 1 ELSE 0 END) as approved,
+        SUM(CASE WHEN status = 'REJECTED' THEN 1 ELSE 0 END) as rejected,
+        SUM(CASE WHEN status NOT IN ('APPROVED','REJECTED','DELIVERED','PARTIAL') THEN 1 ELSE 0 END) as inProgress
+      FROM erp_orders
+      WHERE company_id = ${user.companyId}
+        AND created_at >= ${monthStart}
+        AND created_at <= ${monthEnd}
+    ` as Array<{
+      totalOrders: bigint
+      totalApplicants: bigint
+      totalRevenue: string
+      totalProfit: string
+      approved: bigint
+      rejected: bigint
+      inProgress: bigint
+    }>
 
-    const totalOrders = orders.length
-    const totalApplicants = orders.reduce((sum, o) => sum + o.applicantCount, 0)
-    const totalRevenue = orders.reduce((sum, o) => sum + Number(o.amount), 0)
-    const totalProfit = orders.reduce((sum, o) => sum + Number(o.grossProfit ?? 0), 0)
-
-    const approved = orders.filter(o => o.status === 'APPROVED').length
-    const rejected = orders.filter(o => o.status === 'REJECTED').length
+    const totalOrders = Number(agg?.totalOrders ?? 0)
+    const totalApplicants = Number(agg?.totalApplicants ?? 0)
+    const totalRevenue = Math.round(Number(agg?.totalRevenue ?? 0) * 100) / 100
+    const totalProfit = Math.round(Number(agg?.totalProfit ?? 0) * 100) / 100
+    const approved = Number(agg?.approved ?? 0)
+    const rejected = Number(agg?.rejected ?? 0)
+    const inProgress = Number(agg?.inProgress ?? 0)
     const resolved = approved + rejected
-    const approvalRate = resolved > 0 ? ((approved / resolved) * 100).toFixed(1) : '0'
+    const approvalRate = resolved > 0 ? ((approved / resolved) * 100).toFixed(1) + '%' : '0%'
+    const profitRate = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) + '%' : '0%'
 
-    const inProgress = orders.filter(o =>
-      !['APPROVED', 'REJECTED', 'DELIVERED', 'PARTIAL'].includes(o.status)
-    ).length
+    // ===== 国家分布（SQL GROUP BY） =====
+    const countryRows = await prisma.$queryRaw`
+      SELECT target_country as country, COUNT(*) as cnt
+      FROM erp_orders
+      WHERE company_id = ${user.companyId}
+        AND created_at >= ${monthStart}
+        AND created_at <= ${monthEnd}
+      GROUP BY target_country
+      ORDER BY cnt DESC
+      LIMIT 10
+    ` as Array<{ country: string; cnt: bigint }>
 
-    // 国家分布
-    const byCountry: Record<string, number> = {}
-    orders.forEach(o => {
-      byCountry[o.targetCountry] = (byCountry[o.targetCountry] ?? 0) + 1
-    })
+    const byCountry: [string, number][] = countryRows.map(r => [r.country, Number(r.cnt)])
 
-    // 支付方式分布
-    const byPayment: Record<string, number> = {}
-    orders.forEach(o => {
-      const pm = o.paymentMethod ?? '未指定'
-      byPayment[pm] = (byPayment[pm] ?? 0) + 1
-    })
+    // ===== 支付方式分布（SQL GROUP BY） =====
+    const paymentRows = await prisma.$queryRaw`
+      SELECT COALESCE(payment_method, '未指定') as method, COUNT(*) as cnt
+      FROM erp_orders
+      WHERE company_id = ${user.companyId}
+        AND created_at >= ${monthStart}
+        AND created_at <= ${monthEnd}
+      GROUP BY COALESCE(payment_method, '未指定')
+      ORDER BY cnt DESC
+    ` as Array<{ method: string; cnt: bigint }>
+
+    const byPayment: [string, number][] = paymentRows.map(r => [r.method, Number(r.cnt)])
 
     return NextResponse.json(createSuccessResponse({
       month: targetMonth,
       totalOrders,
       totalApplicants,
-      totalRevenue: Math.round(totalRevenue * 100) / 100,
-      totalProfit: Math.round(totalProfit * 100) / 100,
-      profitRate: totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) + '%' : '0%',
+      totalRevenue,
+      totalProfit,
+      profitRate,
       inProgress,
       approved,
       rejected,
-      approvalRate: approvalRate + '%',
-      byCountry: Object.entries(byCountry).sort((a, b) => b[1] - a[1]).slice(0, 10),
-      byPayment: Object.entries(byPayment).sort((a, b) => b[1] - a[1]),
+      approvalRate,
+      byCountry,
+      byPayment,
     }))
   } catch (error) {
     if (error instanceof AppError) return NextResponse.json(error.toJSON(), { status: error.statusCode })

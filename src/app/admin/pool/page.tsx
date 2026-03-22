@@ -1,4 +1,5 @@
 'use client'
+import { apiFetch } from '@/lib/api-client'
 
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/hooks/use-auth'
@@ -21,7 +22,7 @@ export default function PoolPage() {
   const fetchPool = useCallback(async (p: number) => {
     setIsLoading(true)
     try {
-      const res = await fetch(`/api/orders/pool?page=${p}&pageSize=20`)
+      const res = await apiFetch(`/api/orders/pool?page=${p}&pageSize=20`)
       const json = await res.json()
       if (json.success) {
         setOrders(json.data)
@@ -39,7 +40,7 @@ export default function PoolPage() {
   const handleClaim = async (orderId: string, orderNo: string) => {
     setClaiming(orderId)
     try {
-      const res = await fetch(`/api/orders/${orderId}/claim`, { method: 'POST' })
+      const res = await apiFetch(`/api/orders/${orderId}/claim`, { method: 'POST' })
       const json = await res.json()
       if (json.success) {
         toast('success', `已接单 ${orderNo}`)

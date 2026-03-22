@@ -25,7 +25,7 @@ async function main() {
     create: {
       companyId: 'system',
       username: 'superadmin',
-      phone: '10000000000',
+      phone: '13800000000',
       passwordHash: await bcrypt.hash('Admin@123456', 12),
       realName: '系统管理员',
       role: 'SUPER_ADMIN',

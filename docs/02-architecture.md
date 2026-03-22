@@ -2,9 +2,9 @@
 
 # 架构实现方案
 
-> **文档版本**: V4.3  
+> **文档版本**: V4.4  
 > **生成日期**: 2026-03-19  
-> **最后更新**: 2026-03-22 03:45  
+> **最后更新**: 2026-03-22 10:25  
 > **技术栈**: Next.js 14 + React 18 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
 > **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
@@ -164,6 +164,7 @@ ERP/
 │   ├── lib/
 │   │   ├── prisma.ts              # Prisma 客户端单例
 │   │   ├── auth.ts                # JWT 认证工具
+│   │   ├── api-client.ts          # 封装 fetch：Token 自动刷新 + 重试
 │   │   ├── rbac.ts                # RBAC 权限检查
 │   │   ├── transition.ts          # 状态机 TransitionService
 │   │   ├── events.ts              # 事件总线
@@ -171,15 +172,9 @@ ERP/
 │   │   ├── oss.ts                 # 阿里云 OSS 客户端
 │   │   ├── desensitize.ts         # 数据脱敏工具
 │   │   └── utils.ts               # 通用工具
-│   ├── services/                  # 业务服务层
-│   │   ├── order.service.ts
-│   │   ├── notification.service.ts
-│   │   ├── document.service.ts
-│   │   └── user.service.ts
 │   ├── hooks/                     # React Hooks
 │   │   ├── use-auth.ts
 │   │   ├── use-orders.ts
-│   │   ├── use-socket.ts
 │   │   └── use-notifications.ts
 │   ├── stores/                    # Zustand 状态管理
 │   │   ├── auth-store.ts

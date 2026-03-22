@@ -2,9 +2,9 @@
 
 # 开发规范
 
-> **文档版本**: V3.3  
+> **文档版本**: V3.4  
 > **生成日期**: 2026-03-19  
-> **最后更新**: 2026-03-22 03:45  
+> **最后更新**: 2026-03-22 10:25  
 > **适用范围**: 全团队所有开发人员
 
 ---
@@ -345,6 +345,14 @@ export function OrderCard({ order, onClaim }: OrderCardProps) {
 
 **规则**：默认使用 Server Component，只有在需要交互时才添加 `'use client'`。
 
+### 4.4 组件铁律
+
+| 规则 | 说明 |
+|---|---|
+| `'use client'` 必须在首行 | import 语句必须在 `'use client'` 之后，否则 Next.js 将其视为 Server Component |
+| 内部导航用 `<Link>` | 所有站内路由必须使用 `next/link` 的 `<Link>`，禁止 `<a href="/...">`（会导致全页面刷新） |
+| `'use client'` 有 import 顺序 | 先写 `'use client'`，再写所有 import |
+
 ---
 
 ## 5. API 开发规范
@@ -473,6 +481,22 @@ export async function GET(request: NextRequest) {
 | 429 | 请求过于频繁 |
 | 500 | 服务器内部错误 |
 | 501 | 功能未实现（SMS 预留） |
+
+### 5.4 客户端 API 调用规范
+
+> **所有前端认证 API 调用必须使用 `apiFetch`（`src/lib/api-client.ts`），禁止直接使用原生 `fetch`。**
+
+```typescript
+import { apiFetch } from '@/lib/api-client'
+
+// ✅ 正确：自动处理 401 → 刷新 Token → 重试
+const res = await apiFetch('/api/orders', { method: 'POST', ... })
+
+// ❌ 错误：Token 过期后直接 401，用户被迫重新登录
+const res = await fetch('/api/orders', { method: 'POST', ... })
+```
+
+**例外**：认证页面（login/register/reset-password）可直接使用 `fetch`，因为此时用户尚未认证。
 
 ---
 

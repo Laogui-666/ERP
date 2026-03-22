@@ -1,6 +1,8 @@
 'use client'
+import { apiFetch } from '@/lib/api-client'
 
 import { useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
 import { useOrderStore } from '@/stores/order-store'
 import { useAuth } from '@/hooks/use-auth'
 import { StatusBadge } from '@/components/orders/status-badge'
@@ -199,12 +201,12 @@ export default function OrdersPage() {
                       <span className="text-xs text-[var(--color-text-secondary)]">{formatDate(order.createdAt)}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <a
+                      <Link
                         href={`/admin/orders/${order.id}`}
                         className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors"
                       >
                         查看详情
-                      </a>
+                      </Link>
                     </td>
                   </tr>
                 ))}
@@ -328,7 +330,7 @@ function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSucce
 
     setIsSubmitting(true)
     try {
-      const res = await fetch('/api/orders', {
+      const res = await apiFetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

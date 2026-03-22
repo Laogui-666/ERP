@@ -1,4 +1,5 @@
 'use client'
+import { apiFetch } from '@/lib/api-client'
 
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -26,7 +27,7 @@ export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, onRefresh
 
     setIsUpdating(true)
     try {
-      const res = await fetch(`/api/applicants/${applicant.id}`, {
+      const res = await apiFetch(`/api/applicants/${applicant.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -56,7 +57,7 @@ export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, onRefresh
   const handleDocsComplete = async (complete: boolean) => {
     setIsUpdating(true)
     try {
-      const res = await fetch(`/api/applicants/${applicant.id}`, {
+      const res = await apiFetch(`/api/applicants/${applicant.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ documentsComplete: complete }),
@@ -86,7 +87,7 @@ export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, onRefresh
   }
 
   return (
-    <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-all">
+    <div className="relative flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-all">
       <div className="flex items-center gap-3 min-w-0">
         {/* 头像 */}
         <div className="w-8 h-8 rounded-full bg-[var(--color-primary)]/15 flex items-center justify-center text-xs font-medium text-[var(--color-primary-light)] shrink-0">

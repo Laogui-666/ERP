@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -145,9 +146,9 @@ export default function LoginPage() {
           <div className="mt-6 flex items-center justify-between text-sm">
             <span className="text-[var(--color-text-placeholder)]">
               还没有账号？
-              <a href="/register" className="ml-1 text-[var(--color-primary)] hover:text-[var(--color-primary-light)] transition-colors">
+              <Link href="/register" className="ml-1 text-[var(--color-primary)] hover:text-[var(--color-primary-light)] transition-colors">
                 注册入驻
-              </a>
+              </Link>
             </span>
           </div>
         </div>

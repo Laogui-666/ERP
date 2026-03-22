@@ -1,6 +1,8 @@
 'use client'
+import { apiFetch } from '@/lib/api-client'
 
 import { useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
 import { useAuth } from '@/hooks/use-auth'
 import { StatusBadge } from '@/components/orders/status-badge'
 import { GlassCard } from '@/components/layout/glass-card'
@@ -21,7 +23,7 @@ export default function WorkspacePage() {
     setIsLoading(true)
     try {
       // 获取我的订单
-      const res = await fetch('/api/orders?page=1&pageSize=50')
+      const res = await apiFetch('/api/orders?page=1&pageSize=50')
       const json = await res.json()
       if (json.success) {
         setOrders(json.data)
@@ -118,7 +120,7 @@ export default function WorkspacePage() {
         ) : (
           <div className="divide-y divide-white/5">
             {orders.map((order, i) => (
-              <a
+              <Link
                 key={order.id}
                 href={`/admin/orders/${order.id}`}
                 className="flex items-center gap-4 px-5 py-4 hover:bg-white/[0.02] transition-colors animate-fade-in-up"
@@ -160,7 +162,7 @@ export default function WorkspacePage() {
                 <svg className="w-4 h-4 text-[var(--color-text-placeholder)] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </a>
+              </Link>
             ))}
           </div>
         )}

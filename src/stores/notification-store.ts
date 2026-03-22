@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { ApiMeta } from '@/types/api'
+import { apiFetch } from '@/lib/api-client'
 
 interface NotificationItem {
   id: string
@@ -35,7 +36,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       const params = new URLSearchParams()
       if (unreadOnly) params.set('unreadOnly', 'true')
 
-      const res = await fetch(`/api/notifications?${params.toString()}`)
+      const res = await apiFetch(`/api/notifications?${params.toString()}`)
       const json = await res.json()
 
       if (json.success) {
@@ -52,7 +53,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   fetchUnreadCount: async () => {
     try {
-      const res = await fetch('/api/notifications?unreadOnly=true&pageSize=1')
+      const res = await apiFetch('/api/notifications?unreadOnly=true&pageSize=1')
       const json = await res.json()
       if (json.success) {
         set({ unreadCount: json.meta?.unreadCount ?? 0 })
@@ -63,7 +64,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   },
 
   markAsRead: async (id) => {
-    const res = await fetch(`/api/notifications/${id}`, { method: 'PATCH' })
+    const res = await apiFetch(`/api/notifications/${id}`, { method: 'PATCH' })
     const json = await res.json()
     if (json.success) {
       set((state) => ({
@@ -76,7 +77,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   },
 
   markAllAsRead: async () => {
-    const res = await fetch('/api/notifications/mark-all-read', { method: 'POST' })
+    const res = await apiFetch('/api/notifications/mark-all-read', { method: 'POST' })
     const json = await res.json()
     if (json.success) {
       set((state) => ({

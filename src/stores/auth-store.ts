@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { UserProfile } from '@/types/user'
+import { apiFetch } from '@/lib/api-client'
 
 interface AuthState {
   user: UserProfile | null
@@ -21,7 +22,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
 
   login: async (username, password) => {
-    const res = await fetch('/api/auth/login', {
+    const res = await apiFetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
@@ -36,14 +37,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
+    await apiFetch('/api/auth/logout', { method: 'POST' })
     set({ user: null, isAuthenticated: false })
   },
 
   fetchMe: async () => {
     try {
       set({ isLoading: true })
-      const res = await fetch('/api/auth/me')
+      const res = await apiFetch('/api/auth/me')
       const json = await res.json()
 
       if (json.success) {

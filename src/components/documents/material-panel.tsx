@@ -1,4 +1,5 @@
 'use client'
+import { apiFetch } from '@/lib/api-client'
 
 import { useState, useRef } from 'react'
 import { useToast } from '@/components/ui/toast'
@@ -34,7 +35,7 @@ export function MaterialPanel({ orderId, materials, userRole, orderStatus, onRef
       formData.append('file', file)
       if (remark.trim()) formData.append('remark', remark.trim())
 
-      const res = await fetch(`/api/orders/${orderId}/materials`, {
+      const res = await apiFetch(`/api/orders/${orderId}/materials`, {
         method: 'POST',
         body: formData,
       })

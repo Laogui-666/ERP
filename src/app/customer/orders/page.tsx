@@ -9,6 +9,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { apiFetch } from '@/lib/api-client'
 import { GlassCard } from '@/components/layout/glass-card'
 import { StatusBadge } from '@/components/orders/status-badge'
 import { formatDate } from '@/lib/utils'
@@ -22,7 +23,7 @@ export default function CustomerOrdersPage() {
   const fetchOrders = useCallback(async () => {
     setIsLoading(true)
     try {
-      const res = await fetch('/api/orders?page=1&pageSize=50')
+      const res = await apiFetch('/api/orders?page=1&pageSize=50')
       const json = await res.json()
       if (json.success) {
         setOrders(json.data)
@@ -77,9 +78,9 @@ export default function CustomerOrdersPage() {
 
             {/* 状态流程指示 */}
             <div className="flex items-center gap-1 text-xs">
-              {['已对接', '资料收集', '审核', '制作', '交付'].map((step, i) => {
-                const statusIndex = ['CONNECTED', 'COLLECTING_DOCS', 'UNDER_REVIEW', 'MAKING_MATERIALS', 'DELIVERED']
-                  .indexOf(order.status)
+              {['待对接', '已对接', '资料收集', '审核', '制作', '交付'].map((step, i) => {
+                const statusMap = ['PENDING_CONNECTION', 'CONNECTED', 'COLLECTING_DOCS', 'UNDER_REVIEW', 'MAKING_MATERIALS', 'DELIVERED']
+                const statusIndex = statusMap.indexOf(order.status)
                 const isDone = i <= statusIndex || ['APPROVED', 'REJECTED', 'PARTIAL'].includes(order.status)
                 return (
                   <div key={step} className="flex items-center gap-1">
@@ -88,8 +89,8 @@ export default function CustomerOrdersPage() {
                     }`}>
                       {i + 1}
                     </span>
-                    {i < 4 && (
-                      <div className={`h-px w-6 ${i < statusIndex ? 'bg-[var(--color-primary)]' : 'bg-white/10'}`} />
+                    {i < 5 && (
+                      <div className={`h-px w-5 ${i < statusIndex ? 'bg-[var(--color-primary)]' : 'bg-white/10'}`} />
                     )}
                   </div>
                 )

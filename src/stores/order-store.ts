@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Order, OrderDetail, OrderQuery } from '@/types/order'
 import type { ApiMeta } from '@/types/api'
+import { apiFetch } from '@/lib/api-client'
 
 interface OrderState {
   orders: Order[]
@@ -34,7 +35,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       if (query.startDate) params.set('startDate', query.startDate)
       if (query.endDate) params.set('endDate', query.endDate)
 
-      const res = await fetch(`/api/orders?${params.toString()}`)
+      const res = await apiFetch(`/api/orders?${params.toString()}`)
       const json = await res.json()
 
       if (json.success) {
@@ -48,7 +49,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   fetchOrder: async (id) => {
     set({ isLoading: true })
     try {
-      const res = await fetch(`/api/orders/${id}`)
+      const res = await apiFetch(`/api/orders/${id}`)
       const json = await res.json()
 
       if (json.success) {

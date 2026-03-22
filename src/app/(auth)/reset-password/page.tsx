@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 
 function ResetPasswordForm() {
   const router = useRouter()
@@ -136,9 +137,9 @@ function ResetPasswordForm() {
 
           <p className="mt-6 text-center text-sm text-[var(--color-text-placeholder)]">
             已有密码？
-            <a href="/login" className="ml-1 text-[var(--color-primary)] hover:text-[var(--color-primary-light)] transition-colors">
+            <Link href="/login" className="ml-1 text-[var(--color-primary)] hover:text-[var(--color-primary-light)] transition-colors">
               直接登录
-            </a>
+            </Link>
           </p>
         </div>
       </div>

@@ -14,9 +14,10 @@ const updateSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
@@ -27,14 +28,14 @@ export async function PATCH(
 
     // 查找资料需求
     const requirement = await prisma.documentRequirement.findFirst({
-      where: { id: params.id, companyId: user.companyId },
+      where: { id: id, companyId: user.companyId },
       include: { order: { select: { id: true, orderNo: true } } },
     })
     if (!requirement) throw new AppError('NOT_FOUND', '资料需求不存在', 404)
 
     // 更新状态
     const updated = await prisma.documentRequirement.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         status: data.status,
         rejectReason: data.status === 'REJECTED' || data.status === 'SUPPLEMENT'
@@ -100,22 +101,23 @@ export async function PATCH(
 // DELETE /api/documents/[id] - 删除资料需求
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
     requirePermission(user, 'documents', 'delete')
 
     const requirement = await prisma.documentRequirement.findFirst({
-      where: { id: params.id, companyId: user.companyId },
+      where: { id: id, companyId: user.companyId },
     })
     if (!requirement) throw new AppError('NOT_FOUND', '资料需求不存在', 404)
 
     // 先删除 OSS 文件，再级联删除数据库记录
     const files = await prisma.documentFile.findMany({
-      where: { requirementId: params.id },
+      where: { requirementId: id },
       select: { ossKey: true },
     })
     if (files.length > 0) {
@@ -127,7 +129,7 @@ export async function DELETE(
 
     // 级联删除文件记录（数据库已设置 onDelete: Cascade）
     await prisma.documentRequirement.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     return NextResponse.json(createSuccessResponse({ message: '已删除' }))

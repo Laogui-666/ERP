@@ -13,16 +13,31 @@ export async function GET(request: NextRequest) {
 
     requirePermission(user, 'departments', 'read')
 
-    const departments = await prisma.department.findMany({
-      where: { companyId: user.companyId },
-      include: {
-        _count: { select: { users: true } },
-        children: true,
-      },
-      orderBy: { sortOrder: 'asc' },
-    })
+    const params = z.object({
+      page: z.coerce.number().int().min(1).default(1),
+      pageSize: z.coerce.number().int().min(1).max(100).default(50),
+    }).parse(Object.fromEntries(request.nextUrl.searchParams))
 
-    return NextResponse.json(createSuccessResponse(departments))
+    const [departments, total] = await Promise.all([
+      prisma.department.findMany({
+        where: { companyId: user.companyId },
+        include: {
+          _count: { select: { users: true } },
+          children: true,
+        },
+        orderBy: { sortOrder: 'asc' },
+        skip: (params.page - 1) * params.pageSize,
+        take: params.pageSize,
+      }),
+      prisma.department.count({ where: { companyId: user.companyId } }),
+    ])
+
+    return NextResponse.json(createSuccessResponse(departments, {
+      total,
+      page: params.page,
+      pageSize: params.pageSize,
+      totalPages: Math.ceil(total / params.pageSize),
+    }))
   } catch (error) {
     if (error instanceof AppError) {
       return NextResponse.json(error.toJSON(), { status: error.statusCode })

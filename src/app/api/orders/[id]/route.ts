@@ -10,9 +10,10 @@ import { z } from 'zod'
 // GET /api/orders/[id] - 订单详情
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
@@ -20,7 +21,7 @@ export async function GET(
 
     const scopeFilter = getDataScopeFilter(user)
     const order = await prisma.order.findFirst({
-      where: { id: params.id, ...scopeFilter },
+      where: { id: id, ...scopeFilter },
       include: {
         customer: { select: { id: true, realName: true } },
         collector: { select: { id: true, realName: true } },
@@ -85,9 +86,10 @@ const updateSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
@@ -98,7 +100,7 @@ export async function PATCH(
 
     const scopeFilter = getDataScopeFilter(user)
     const existing = await prisma.order.findFirst({
-      where: { id: params.id, ...scopeFilter },
+      where: { id: id, ...scopeFilter },
     })
     if (!existing) throw new AppError('NOT_FOUND', '订单不存在', 404)
 
@@ -142,14 +144,14 @@ export async function PATCH(
     }
 
     const order = await prisma.order.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
     })
 
     // 写操作日志
     await prisma.orderLog.create({
       data: {
-        orderId: params.id,
+        orderId: id,
         companyId: user.companyId,
         userId: user.userId,
         action: '更新订单信息',

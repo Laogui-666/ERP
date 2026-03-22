@@ -1,0 +1,29 @@
+{
+  "apps": [
+    {
+      "name": "erp",
+      "script": "node_modules/.bin/tsx",
+      "args": "server.ts",
+      "cwd": "/app/erp",
+      "instances": 1,
+      "exec_mode": "fork",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": 3002
+      },
+      "max_memory_restart": "1G",
+      "error_file": "/var/log/erp/error.log",
+      "out_file": "/var/log/erp/out.log",
+      "merge_logs": true,
+      "log_date_format": "YYYY-MM-DD HH:mm:ss Z",
+      "autorestart": true,
+      "max_restarts": 10,
+      "restart_delay": 5000,
+      "watch": false,
+      "ignore_watch": ["node_modules", "backups", ".git"],
+      "kill_timeout": 5000,
+      "listen_timeout": 10000,
+      "wait_ready": false
+    }
+  ]
+}

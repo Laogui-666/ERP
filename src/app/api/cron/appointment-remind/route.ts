@@ -75,15 +75,18 @@ export async function POST(request: NextRequest) {
           })
         : '未知'
 
+      // 幂等性：精确到日期级别去重（同一天同订单同类型只发一次）
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
       // 批量创建通知（跳过已有相同提醒的用户）
       for (const userId of notifyUserIds) {
-        // 检查是否已发过同类型提醒
+        // 检查今天是否已发过同类型同订单提醒
         const existing = await prisma.notification.findFirst({
           where: {
             userId,
             orderId: order.id,
             type: 'APPOINTMENT_REMIND',
-            createdAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
+            createdAt: { gte: today },
           },
         })
 

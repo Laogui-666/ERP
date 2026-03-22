@@ -14,25 +14,52 @@ export async function GET(request: NextRequest) {
 
     requirePermission(user, 'users', 'read')
 
-    const users = await prisma.user.findMany({
-      where: { companyId: user.companyId },
-      select: {
-        id: true,
-        username: true,
-        realName: true,
-        phone: true,
-        email: true,
-        role: true,
-        status: true,
-        departmentId: true,
-        department: { select: { id: true, name: true, code: true } },
-        lastLoginAt: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    })
+    const params = z.object({
+      page: z.coerce.number().int().min(1).default(1),
+      pageSize: z.coerce.number().int().min(1).max(100).default(50),
+      role: z.string().optional(),
+      search: z.string().max(50).optional(),
+    }).parse(Object.fromEntries(request.nextUrl.searchParams))
 
-    return NextResponse.json(createSuccessResponse(users))
+    const where: Record<string, unknown> = { companyId: user.companyId }
+    if (params.role) where.role = params.role
+    if (params.search) {
+      where.OR = [
+        { realName: { contains: params.search } },
+        { username: { contains: params.search } },
+        { phone: { contains: params.search } },
+      ]
+    }
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          username: true,
+          realName: true,
+          phone: true,
+          email: true,
+          role: true,
+          status: true,
+          departmentId: true,
+          department: { select: { id: true, name: true, code: true } },
+          lastLoginAt: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (params.page - 1) * params.pageSize,
+        take: params.pageSize,
+      }),
+      prisma.user.count({ where }),
+    ])
+
+    return NextResponse.json(createSuccessResponse(users, {
+      total,
+      page: params.page,
+      pageSize: params.pageSize,
+      totalPages: Math.ceil(total / params.pageSize),
+    }))
   } catch (error) {
     if (error instanceof AppError) {
       return NextResponse.json(error.toJSON(), { status: error.statusCode })

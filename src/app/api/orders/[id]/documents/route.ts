@@ -8,9 +8,10 @@ import { z } from 'zod'
 // GET /api/orders/[id]/documents - 获取订单资料清单
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
@@ -18,12 +19,12 @@ export async function GET(
 
     const scopeFilter = getDataScopeFilter(user)
     const order = await prisma.order.findFirst({
-      where: { id: params.id, ...scopeFilter },
+      where: { id: id, ...scopeFilter },
     })
     if (!order) throw new AppError('NOT_FOUND', '订单不存在', 404)
 
     const requirements = await prisma.documentRequirement.findMany({
-      where: { orderId: params.id },
+      where: { orderId: id },
       include: {
         files: {
           orderBy: { sortOrder: 'asc' },
@@ -52,9 +53,10 @@ const addRequirementSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
@@ -65,13 +67,13 @@ export async function POST(
 
     const scopeFilter = getDataScopeFilter(user)
     const order = await prisma.order.findFirst({
-      where: { id: params.id, ...scopeFilter },
+      where: { id: id, ...scopeFilter },
     })
     if (!order) throw new AppError('NOT_FOUND', '订单不存在', 404)
 
     // 获取当前最大排序号
     const lastReq = await prisma.documentRequirement.findFirst({
-      where: { orderId: params.id },
+      where: { orderId: id },
       orderBy: { sortOrder: 'desc' },
       select: { sortOrder: true },
     })
@@ -82,7 +84,7 @@ export async function POST(
       data.items.map((item, i) =>
         prisma.documentRequirement.create({
           data: {
-            orderId: params.id,
+            orderId: id,
             companyId: user.companyId,
             name: item.name,
             description: item.description ?? null,
@@ -96,7 +98,7 @@ export async function POST(
     // 写操作日志
     await prisma.orderLog.create({
       data: {
-        orderId: params.id,
+        orderId: id,
         companyId: user.companyId,
         userId: user.userId,
         action: '添加资料需求',

@@ -17,9 +17,10 @@ import { z } from 'zod'
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
@@ -34,7 +35,7 @@ export async function POST(
 
     // 查找订单
     const order = await prisma.order.findFirst({
-      where: { id: params.id, companyId: user.companyId },
+      where: { id: id, companyId: user.companyId },
     })
     if (!order) throw new AppError('NOT_FOUND', '订单不存在', 404)
 
@@ -72,13 +73,13 @@ export async function POST(
     // 执行转单（同一事务）
     await prisma.$transaction(async (tx) => {
       await tx.order.update({
-        where: { id: params.id },
+        where: { id: id },
         data: updateData,
       })
 
       await tx.orderLog.create({
         data: {
-          orderId: params.id,
+          orderId: id,
           companyId: user.companyId,
           userId: user.userId,
           action,
@@ -91,7 +92,7 @@ export async function POST(
         data: {
           companyId: user.companyId,
           userId: targetUser.id,
-          orderId: params.id,
+          orderId: id,
           type: 'ORDER_NEW',
           title: '收到转单',
           content: `${user.username} 将订单 ${order.orderNo} (${order.customerName}) 转交给您${data.reason ? `，原因：${data.reason}` : ''}`,

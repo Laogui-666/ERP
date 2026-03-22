@@ -14,9 +14,10 @@ import { z } from 'zod'
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
@@ -27,7 +28,7 @@ export async function POST(
     const { reason } = schema.parse(body)
 
     const order = await prisma.order.findFirst({
-      where: { id: params.id, companyId: user.companyId },
+      where: { id: id, companyId: user.companyId },
     })
     if (!order) throw new AppError('NOT_FOUND', '订单不存在', 404)
 
@@ -37,7 +38,7 @@ export async function POST(
 
     await prisma.$transaction(async (tx) => {
       await tx.order.update({
-        where: { id: params.id },
+        where: { id: id },
         data: {
           status: 'REJECTED',
           completedAt: new Date(),
@@ -46,7 +47,7 @@ export async function POST(
 
       await tx.orderLog.create({
         data: {
-          orderId: params.id,
+          orderId: id,
           companyId: user.companyId,
           userId: user.userId,
           action: '取消订单',
@@ -67,7 +68,7 @@ export async function POST(
           data: Array.from(notifyUserIds).map((uid) => ({
             companyId: user.companyId,
             userId: uid,
-            orderId: params.id,
+            orderId: id,
             type: 'STATUS_CHANGE' as const,
             title: '订单已取消',
             content: `订单 ${order.orderNo} 已被取消，原因：${reason}`,

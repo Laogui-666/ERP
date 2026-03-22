@@ -6,14 +6,15 @@ import { prisma } from '@/lib/prisma'
 // PATCH /api/notifications/[id] - 标记单条已读
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
     const notification = await prisma.notification.findFirst({
-      where: { id: params.id, userId: user.userId },
+      where: { id: id, userId: user.userId },
     })
 
     if (!notification) {
@@ -21,7 +22,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.notification.update({
-      where: { id: params.id },
+      where: { id: id },
       data: { isRead: true },
     })
 

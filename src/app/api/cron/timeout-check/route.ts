@@ -57,13 +57,16 @@ export async function POST(request: NextRequest) {
       })
 
       for (const order of overdueOrders) {
+        // 幂等性：精确到日期级别去重（同一天同订单只发一次超时预警）
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
         // 检查今天是否已发过超时通知
         const existing = await prisma.notification.findFirst({
           where: {
             orderId: order.id,
             type: 'SYSTEM',
             title: { contains: '超时预警' },
-            createdAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
+            createdAt: { gte: today },
           },
         })
 

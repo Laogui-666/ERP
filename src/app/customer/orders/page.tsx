@@ -1,12 +1,13 @@
+'use client'
+
 /**
- * 客户端订单页 — M3 阶段待实现
+ * 客户端订单页
  *
- * 当前为静态 UI 占位，需对接以下 API：
+ * 对接 API：
  * - GET /api/orders (CUSTOMER 角色自动过滤为自己订单)
  * - GET /api/orders/[id] (订单详情含资料/材料)
  * - POST /api/documents/upload (客户上传资料)
  */
-'use client'
 
 import { useEffect, useState, useCallback } from 'react'
 import { apiFetch } from '@/lib/api-client'

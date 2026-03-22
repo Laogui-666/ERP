@@ -14,9 +14,10 @@ const statusSchema = z.object({
 // POST /api/orders/[id]/status - 状态流转
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
@@ -26,7 +27,7 @@ export async function POST(
     const { toStatus, detail } = statusSchema.parse(body)
 
     await transitionOrder({
-      orderId: params.id,
+      orderId: id,
       toStatus: toStatus as OrderStatus,
       userId: user.userId,
       userRole: user.role,

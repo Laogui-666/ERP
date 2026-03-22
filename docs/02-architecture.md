@@ -2,10 +2,10 @@
 
 # 架构实现方案
 
-> **文档版本**: V4.4  
+> **文档版本**: V4.5  
 > **生成日期**: 2026-03-19  
-> **最后更新**: 2026-03-22 10:25  
-> **技术栈**: Next.js 14 + React 18 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
+> **最后更新**: 2026-03-22 11:17  
+> **技术栈**: Next.js 15.5.14 + React 19.2.4 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
 > **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
 ---
@@ -207,8 +207,8 @@ ERP/
 
 | 层 | 技术 | 版本 | 选型理由 |
 |---|---|---|---|
-| 全栈框架 | Next.js (App Router) | 14.x | SSR/RSC/API Routes 一体化，Server Actions 简化表单 |
-| 前端 UI | React | 18.x | 成熟生态，RSC 性能优势 |
+| 全栈框架 | Next.js (App Router) | 15.5.14 | SSR/RSC/API Routes 一体化，Server Actions 简化表单 |
+| 前端 UI | React | 19.2.4 | 成熟生态，RSC 性能优势 |
 | ORM | Prisma | 5.x | 类型安全，MySQL 完善支持，事务/迁移内置 |
 | 数据库 | 阿里云 RDS MySQL | 8.0 | 托管服务，自动备份，高可用 |
 | 样式 | Tailwind CSS | 3.x | 原子化 CSS，配合玻璃拟态自定义 |
@@ -1536,11 +1536,11 @@ npm run build
 # 2. 数据库迁移
 npx prisma migrate deploy
 
-# 3. PM2 进程管理（Custom Server + Socket.io）
-pm2 start tsx --name "erp" -- server.ts
+# 3. PM2 进程管理（使用 ecosystem.config.json）
+pm2 start ecosystem.config.json
 
-# 或使用 npm script
-# pm2 start npm --name "erp" -- start
+# 或使用自动化部署脚本
+bash scripts/deploy.sh
 
 # 4. Nginx 反向代理
 server {

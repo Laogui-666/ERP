@@ -8,9 +8,10 @@ import { uploadFile, buildOssKey } from '@/lib/oss'
 // GET /api/orders/[id]/materials - 获取签证材料列表
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
@@ -18,12 +19,12 @@ export async function GET(
 
     const scopeFilter = getDataScopeFilter(user)
     const order = await prisma.order.findFirst({
-      where: { id: params.id, ...scopeFilter },
+      where: { id: id, ...scopeFilter },
     })
     if (!order) throw new AppError('NOT_FOUND', '订单不存在', 404)
 
     const materials = await prisma.visaMaterial.findMany({
-      where: { orderId: params.id },
+      where: { orderId: id },
       orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
     })
 
@@ -39,9 +40,10 @@ export async function GET(
 // POST /api/orders/[id]/materials - 上传签证材料
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
@@ -74,13 +76,13 @@ export async function POST(
     // 验证订单
     const scopeFilter = getDataScopeFilter(user)
     const order = await prisma.order.findFirst({
-      where: { id: params.id, ...scopeFilter },
+      where: { id: id, ...scopeFilter },
     })
     if (!order) throw new AppError('NOT_FOUND', '订单不存在', 404)
 
     // 获取最新版本号
     const lastMaterial = await prisma.visaMaterial.findFirst({
-      where: { orderId: params.id },
+      where: { orderId: id },
       orderBy: { version: 'desc' },
       select: { version: true },
     })
@@ -90,7 +92,7 @@ export async function POST(
     const buffer = Buffer.from(await file.arrayBuffer())
     const ossKey = buildOssKey({
       companyId: user.companyId,
-      orderId: params.id,
+      orderId: id,
       type: 'materials',
       subId: `v${newVersion}`,
       fileName: file.name,
@@ -104,7 +106,7 @@ export async function POST(
     const material = await prisma.$transaction(async (tx) => {
       const mat = await tx.visaMaterial.create({
         data: {
-          orderId: params.id,
+          orderId: id,
           companyId: user.companyId,
           fileName: file.name,
           fileSize: file.size,
@@ -120,13 +122,13 @@ export async function POST(
       // 状态流转：MAKING_MATERIALS → PENDING_DELIVERY
       if (order.status === 'MAKING_MATERIALS') {
         await tx.order.update({
-          where: { id: params.id },
+          where: { id: id },
           data: { status: 'PENDING_DELIVERY' },
         })
 
         await tx.orderLog.create({
           data: {
-            orderId: params.id,
+            orderId: id,
             companyId: user.companyId,
             userId: user.userId,
             action: '上传签证材料',
@@ -138,7 +140,7 @@ export async function POST(
       } else {
         await tx.orderLog.create({
           data: {
-            orderId: params.id,
+            orderId: id,
             companyId: user.companyId,
             userId: user.userId,
             action: '上传签证材料',
@@ -157,7 +159,7 @@ export async function POST(
         data: {
           companyId: user.companyId,
           userId: order.collectorId,
-          orderId: params.id,
+          orderId: id,
           type: isInitial ? 'MATERIAL_UPLOADED' : 'MATERIAL_FEEDBACK',
           title: isInitial ? '签证材料已上传' : '签证材料已更新',
           content: `订单 ${order.orderNo} 的签证材料${isInitial ? '已上传' : '已更新'}，请查看并确认交付`,
@@ -171,7 +173,7 @@ export async function POST(
         data: {
           companyId: user.companyId,
           userId: order.customerId,
-          orderId: params.id,
+          orderId: id,
           type: 'MATERIAL_UPLOADED',
           title: '签证材料已制作完成',
           content: `您的订单 ${order.orderNo} 签证材料已制作完成，请在平台查看`,

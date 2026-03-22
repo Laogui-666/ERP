@@ -2,9 +2,9 @@
 
 # 产品需求文档 (PRD)
 
-> **文档版本**: V4.4  
+> **文档版本**: V4.5  
 > **生成日期**: 2026-03-19  
-> **最后更新**: 2026-03-22 10:25  
+> **最后更新**: 2026-03-22 11:17  
 > **所属公司**: 沐海旅行  
 > **产品定位**: 签证办理行业专属 SaaS 多租户 ERP 系统  
 
@@ -43,7 +43,7 @@
 | **行业** | 签证办理 / 出入境服务 |
 | **模式** | SaaS 多租户，支持多家签证公司入驻 |
 | **部署** | 阿里云 ECS + 阿里云 RDS MySQL |
-| **技术栈** | Next.js 14 (App Router) + React 18 + Prisma ORM + MySQL + Tailwind CSS + Zustand + Socket.io |
+| **技术栈** | Next.js 15.5.14 (App Router) + React 19.2.4 + Prisma ORM + MySQL + Tailwind CSS + Zustand + Socket.io |
 | **短信** | 暂搁置，预留端口和接口定义 |
 
 ### 1.3 核心价值

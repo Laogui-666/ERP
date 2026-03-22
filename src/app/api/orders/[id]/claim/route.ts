@@ -8,9 +8,10 @@ import { AppError, createSuccessResponse } from '@/types/api'
 // POST /api/orders/[id]/claim - 从公共池接单
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
@@ -19,7 +20,7 @@ export async function POST(
     // 验证订单在公共池中（未被分配）
     const order = await prisma.order.findFirst({
       where: {
-        id: params.id,
+        id: id,
         companyId: user.companyId,
       },
     })
@@ -32,7 +33,7 @@ export async function POST(
         throw new AppError('INVALID_STATE', `订单当前状态为 ${order.status}，无法接单`, 400)
       }
       await transitionOrder({
-        orderId: params.id,
+        orderId: id,
         toStatus: 'CONNECTED',
         userId: user.userId,
         userRole: user.role,
@@ -46,7 +47,7 @@ export async function POST(
         throw new AppError('INVALID_STATE', `订单当前状态为 ${order.status}，无法接单`, 400)
       }
       await transitionOrder({
-        orderId: params.id,
+        orderId: id,
         toStatus: 'UNDER_REVIEW',
         userId: user.userId,
         userRole: user.role,

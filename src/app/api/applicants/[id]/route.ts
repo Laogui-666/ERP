@@ -25,9 +25,10 @@ const updateSchema = z.object({
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
@@ -38,7 +39,7 @@ export async function PATCH(
 
     // 查找申请人（校验 companyId）
     const applicant = await prisma.applicant.findFirst({
-      where: { id: params.id, companyId: user.companyId },
+      where: { id: id, companyId: user.companyId },
       include: {
         order: {
           select: {
@@ -72,7 +73,7 @@ export async function PATCH(
 
       // 更新申请人
       const updated = await tx.applicant.update({
-        where: { id: params.id },
+        where: { id: id },
         data: updateData,
       })
 

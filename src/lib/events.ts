@@ -1,4 +1,5 @@
 import { ORDER_STATUS_LABELS } from '@/types/order'
+import { logApiError } from '@/lib/logger'
 
 export const EVENTS = {
   ORDER_CREATED: 'order:created',
@@ -35,7 +36,7 @@ class EventBus {
         try {
           handler(data)
         } catch (error) {
-          console.error(`Event handler error for ${event}:`, error)
+          logApiError(`event:${event}`, error, { event })
         }
       })
     }

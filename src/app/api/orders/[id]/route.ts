@@ -26,6 +26,7 @@ export async function GET(
         customer: { select: { id: true, realName: true } },
         collector: { select: { id: true, realName: true } },
         operator: { select: { id: true, realName: true } },
+        creator: { select: { id: true, realName: true } },
         applicants: { orderBy: { sortOrder: 'asc' } },
         documentRequirements: {
           include: { files: true },

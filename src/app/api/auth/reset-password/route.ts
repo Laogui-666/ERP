@@ -74,9 +74,13 @@ export async function POST(request: NextRequest) {
         email: user.email,
         role: user.role,
         companyId: user.companyId,
+        departmentId: user.departmentId,
         company: { id: user.company.id, name: user.company.name },
         avatar: user.avatar,
-        lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+        status: user.status,
+        lastLoginAt: new Date().toISOString(),
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
       },
     }))
   } catch (error) {

@@ -135,6 +135,7 @@ export interface OrderDetail extends Order {
   customer: { id: string; realName: string } | null
   collector: { id: string; realName: string } | null
   operator: { id: string; realName: string } | null
+  creator: { id: string; realName: string } | null
   applicants: Applicant[]
   documentRequirements: DocumentRequirement[]
   visaMaterials: VisaMaterial[]

@@ -2,9 +2,9 @@
 
 # 架构实现方案
 
-> **文档版本**: V5.0  
-> **生成日期**: 2026-03-19  
-> **最后更新**: 2026-03-22 12:00  
+> **文档版本**: V6.0
+> **生成日期**: 2026-03-19
+> **最后更新**: 2026-03-23 01:00  
 > **技术栈**: Next.js 15.5.14 + React 19.2.4 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
 > **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
@@ -761,7 +761,17 @@ model VisaTemplate {
 |---|---|---|---|
 | PATCH | `/api/applicants/[id]` | 更新申请人结果/资料状态（含自动终态判断） | Lv5-7 |
 
-### 4.11 SMS 预留模块
+### 4.11 M3 新增模块（客户端资料交互）
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| POST | `/api/documents/presign` | 获取预签名上传 URL | Lv9 (CUSTOMER) |
+| POST | `/api/documents/confirm` | 确认文件已上传，写入数据库 | Lv9 (CUSTOMER) |
+| DELETE | `/api/documents/files/[id]` | 删除单个文件（OSS+DB） | Lv2,5-7,9 |
+| POST | `/api/orders/[id]/submit` | 客户确认提交资料，通知资料员 | Lv9 (CUSTOMER) |
+| POST | `/api/auth/change-password` | 修改密码 | 已登录 |
+
+### 4.12 SMS 预留模块
 
 | 方法 | 路径 | 说明 | 状态 |
 |---|---|---|---|
@@ -1245,9 +1255,12 @@ socket.to(`order:${orderId}`).emit('order:status', {
 ### 9.3 前端集成
 
 ```typescript
-// src/hooks/use-socket.ts
+// src/hooks/use-socket-client.ts（M3 已实现）
+// 客户端不传 auth.token（HttpOnly Cookie 无法读取）
+// 服务端 socket.ts 同时检查 Cookie 'access_token' 作为 fallback
 const socket = io({
-  auth: { token: accessToken },
+  transports: ['websocket', 'polling'],
+  reconnection: true,
 })
 
 socket.on('notification', (data) => {

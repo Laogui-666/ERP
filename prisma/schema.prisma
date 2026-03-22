@@ -308,7 +308,7 @@ model DocumentFile {
   ossUrl          String   @db.Text @map("oss_url")
   uploadedBy      String   @map("uploaded_by")
   sortOrder       Int      @default(0) @map("sort_order")       // 排序序号
-  label           String?  @db.VarChar(100)                     // 自定义标签 "房产证1"
+  label           String?  @db.VarChar(100) @map("label")                      // 自定义标签 "房产证1"
   createdAt       DateTime @default(now()) @map("created_at")
 
   requirement     DocumentRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)

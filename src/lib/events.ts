@@ -1,5 +1,6 @@
 import { ORDER_STATUS_LABELS } from '@/types/order'
 import { logApiError } from '@/lib/logger'
+import { emitToUser } from '@/lib/socket'
 
 export const EVENTS = {
   ORDER_CREATED: 'order:created',
@@ -92,4 +93,14 @@ eventBus.on(EVENTS.ORDER_STATUS_CHANGED, async (data) => {
       content: `${order.customerName} 的订单状态：${fromLabel} → ${toLabel}`,
     })),
   })
+
+  // Socket.io 实时推送通知（异步，不阻塞主流程）
+  for (const userId of notifyUserIds) {
+    emitToUser(userId, 'notification', {
+      type: 'STATUS_CHANGE',
+      title: `订单 ${order.orderNo} ${action}`,
+      orderId,
+      orderNo: order.orderNo,
+    })
+  }
 })

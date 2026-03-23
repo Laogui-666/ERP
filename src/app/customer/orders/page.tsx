@@ -5,17 +5,27 @@
  *
  * 对接 API：
  * - GET /api/orders (CUSTOMER 角色自动过滤为自己订单)
- * - GET /api/orders/[id] (订单详情含资料/材料)
- * - POST /api/documents/upload (客户上传资料)
  */
 
 import { useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
 import { apiFetch } from '@/lib/api-client'
 import { GlassCard } from '@/components/layout/glass-card'
 import { StatusBadge } from '@/components/orders/status-badge'
 import { formatDate } from '@/lib/utils'
 import { ORDER_STATUS_LABELS } from '@/types/order'
 import type { Order } from '@/types/order'
+
+// 状态 → 待办提示
+const STATUS_HINTS: Record<string, string> = {
+  COLLECTING_DOCS: '📤 有资料待上传',
+  PENDING_DELIVERY: '📥 签证材料已制作完成，请下载查看',
+  DELIVERED: '📥 签证材料已交付，请确认出签结果',
+}
+
+// 状态进度条映射
+const STATUS_STEPS = ['PENDING_CONNECTION', 'CONNECTED', 'COLLECTING_DOCS', 'UNDER_REVIEW', 'MAKING_MATERIALS', 'DELIVERED'] as const
+const STEP_LABELS = ['待对接', '已对接', '资料收集', '审核', '制作', '交付']
 
 export default function CustomerOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -58,52 +68,89 @@ export default function CustomerOrdersPage() {
           <p className="text-xs text-[var(--color-text-placeholder)] mt-1">客服录入后会自动显示在这里</p>
         </GlassCard>
       ) : (
-        orders.map((order, i) => (
-          <GlassCard key={order.id} className="p-5 animate-fade-in-up" style={{ animationDelay: `${i * 50}ms` }}>
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-mono text-[var(--color-primary-light)]">{order.orderNo}</span>
-              <StatusBadge status={order.status} />
-            </div>
+        orders.map((order, i) => {
+          const hint = STATUS_HINTS[order.status]
+          const statusIndex = STATUS_STEPS.indexOf(order.status as typeof STATUS_STEPS[number])
+          const isTerminal = ['APPROVED', 'REJECTED', 'PARTIAL'].includes(order.status)
 
-            <div className="space-y-1.5 mb-3 text-sm">
-              <div className="flex items-center gap-2 text-[var(--color-text-secondary)]">
-                <span>🌍</span>
-                <span>{order.targetCountry}</span>
-                <span className="text-[var(--color-text-placeholder)]">·</span>
-                <span>{order.visaType}</span>
-              </div>
-              <div className="flex items-center gap-2 text-[var(--color-text-placeholder)] text-xs">
-                <span>创建于 {formatDate(order.createdAt)}</span>
-              </div>
-            </div>
-
-            {/* 状态流程指示 */}
-            <div className="flex items-center gap-1 text-xs">
-              {['待对接', '已对接', '资料收集', '审核', '制作', '交付'].map((step, i) => {
-                const statusMap = ['PENDING_CONNECTION', 'CONNECTED', 'COLLECTING_DOCS', 'UNDER_REVIEW', 'MAKING_MATERIALS', 'DELIVERED']
-                const statusIndex = statusMap.indexOf(order.status)
-                const isDone = i <= statusIndex || ['APPROVED', 'REJECTED', 'PARTIAL'].includes(order.status)
-                return (
-                  <div key={step} className="flex items-center gap-1">
-                    <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
-                      isDone ? 'bg-[var(--color-primary)] text-white' : 'bg-white/10 text-[var(--color-text-placeholder)]'
-                    }`}>
-                      {i + 1}
+          return (
+            <Link key={order.id} href={`/customer/orders/${order.id}`}>
+              <GlassCard
+                className="p-5 animate-fade-in-up cursor-pointer"
+                style={{ animationDelay: `${i * 50}ms` }}
+              >
+                {/* 订单号 + 状态 */}
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-mono text-[var(--color-primary-light)]">
+                      {order.orderNo}
                     </span>
-                    {i < 5 && (
-                      <div className={`h-px w-5 ${i < statusIndex ? 'bg-[var(--color-primary)]' : 'bg-white/10'}`} />
+                    {order.applicantCount > 1 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-accent)]/15 text-[var(--color-accent)]">
+                        👥 {order.applicantCount}人
+                      </span>
                     )}
                   </div>
-                )
-              })}
-            </div>
+                  <StatusBadge status={order.status} />
+                </div>
 
-            {/* 当前状态说明 */}
-            <p className="mt-3 text-xs text-[var(--color-text-secondary)]">
-              当前状态：{ORDER_STATUS_LABELS[order.status]}
-            </p>
-          </GlassCard>
-        ))
+                {/* 签证信息 */}
+                <div className="space-y-1.5 mb-3 text-sm">
+                  <div className="flex items-center gap-2 text-[var(--color-text-secondary)]">
+                    <span>🌍</span>
+                    <span>{order.targetCountry}</span>
+                    <span className="text-[var(--color-text-placeholder)]">·</span>
+                    <span>{order.visaType}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[var(--color-text-placeholder)] text-xs">
+                    <span>创建于 {formatDate(order.createdAt)}</span>
+                  </div>
+                </div>
+
+                {/* 状态流程指示 */}
+                <div className="flex items-center gap-1 text-xs">
+                  {STEP_LABELS.map((_, si) => {
+                    const isDone = isTerminal || (statusIndex >= 0 && si <= statusIndex)
+                    return (
+                      <div key={si} className="flex items-center gap-1">
+                        <span
+                          className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
+                            isDone
+                              ? 'bg-[var(--color-primary)] text-white'
+                              : 'bg-white/10 text-[var(--color-text-placeholder)]'
+                          }`}
+                        >
+                          {si + 1}
+                        </span>
+                        {si < STEP_LABELS.length - 1 && (
+                          <div
+                            className={`h-px w-5 ${
+                              isDone && si < (isTerminal ? STEP_LABELS.length : statusIndex)
+                                ? 'bg-[var(--color-primary)]'
+                                : 'bg-white/10'
+                            }`}
+                          />
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* 当前状态说明 */}
+                <p className="mt-3 text-xs text-[var(--color-text-secondary)]">
+                  当前状态：{ORDER_STATUS_LABELS[order.status]}
+                </p>
+
+                {/* 待办提示 */}
+                {hint && (
+                  <div className="mt-2 px-3 py-2 rounded-lg bg-[var(--color-primary)]/10 text-xs text-[var(--color-primary-light)] font-medium">
+                    {hint}
+                  </div>
+                )}
+              </GlassCard>
+            </Link>
+          )
+        })
       )}
     </div>
   )

@@ -2,11 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
+import { useNotificationStore } from '@/stores/notification-store'
 import { cn } from '@/lib/utils'
 
 const TABS = [
   { href: '/customer/orders', label: '订单', icon: '📋' },
+  { href: '/customer/notifications', label: '消息', icon: '💬' },
+  { href: '/customer/profile', label: '我的', icon: '👤' },
 ]
 
 export default function CustomerLayout({
@@ -16,6 +20,14 @@ export default function CustomerLayout({
 }) {
   const { user, logout } = useAuth()
   const pathname = usePathname()
+  const { unreadCount, fetchUnreadCount } = useNotificationStore()
+
+  // 轮询未读通知数（30s）
+  useEffect(() => {
+    fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [fetchUnreadCount])
 
   return (
     <div className="min-h-screen">
@@ -44,44 +56,39 @@ export default function CustomerLayout({
         {children}
       </main>
 
-      {/* 底部Tab栏（已路由化的Tab + 待M3实现的Tab） */}
+      {/* 底部Tab栏 */}
       <nav className="glass-topbar fixed bottom-0 left-0 right-0 z-50">
         <div className="mx-auto flex max-w-lg justify-around py-2">
           {TABS.map((tab) => {
             const isActive = pathname === tab.href || pathname.startsWith(tab.href + '/')
+            const showBadge = tab.href === '/customer/notifications' && unreadCount > 0
+
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
                 className={cn(
-                  'flex flex-col items-center gap-1 px-4 py-1 transition-colors',
+                  'relative flex flex-col items-center gap-1 px-4 py-1 transition-colors',
                   isActive
                     ? 'text-[var(--color-primary-light)]'
                     : 'text-[var(--color-text-placeholder)]',
                 )}
               >
-                <span className="text-lg">{tab.icon}</span>
+                <span className="relative">
+                  <span className="text-lg">{tab.icon}</span>
+                  {showBadge && (
+                    <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 rounded-full bg-[var(--color-error)] text-[10px] text-white flex items-center justify-center px-1">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </span>
                 <span className="text-xs">{tab.label}</span>
-                {isActive && <span className="w-4 h-0.5 rounded-full bg-[var(--color-primary)]" />}
+                {isActive && (
+                  <span className="absolute -bottom-0.5 w-4 h-0.5 rounded-full bg-[var(--color-primary)]" />
+                )}
               </Link>
             )
           })}
-          {/* 待 M3 实现的 Tab（暂为静态占位） */}
-          {[
-            { icon: '💬', label: '消息' },
-            { icon: '👤', label: '我的' },
-          ].map((tab) => (
-            <button
-              key={tab.label}
-              className="flex flex-col items-center gap-1 px-4 py-1 opacity-40 cursor-not-allowed"
-              disabled
-            >
-              <span className="text-lg">{tab.icon}</span>
-              <span className="text-xs text-[var(--color-text-placeholder)]">
-                {tab.label}
-              </span>
-            </button>
-          ))}
         </div>
       </nav>
     </div>

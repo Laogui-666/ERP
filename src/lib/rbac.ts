@@ -72,8 +72,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ],
 
   CUSTOMER: [
-    { resource: 'orders', actions: ['read'] },
-    { resource: 'documents', actions: ['read', 'create'] },
+    { resource: 'orders', actions: ['read', 'transition'] },
+    { resource: 'documents', actions: ['read', 'create', 'delete'] },
     { resource: 'materials', actions: ['read'] },
     { resource: 'notifications', actions: ['read', 'update'] },
   ],

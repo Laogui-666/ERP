@@ -20,7 +20,7 @@ app.prepare().then(() => {
   initSocketServer(server)
 
   server.listen(port, hostname, () => {
-    console.log(`🚀 Server ready on http://${hostname}:${port}`)
-    console.log(`🔌 Socket.io enabled`)
+    process.stdout.write(`🚀 Server ready on http://${hostname}:${port}\n`)
+    process.stdout.write(`🔌 Socket.io enabled\n`)
   })
 })

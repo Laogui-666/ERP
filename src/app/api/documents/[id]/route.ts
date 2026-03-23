@@ -122,8 +122,9 @@ export async function DELETE(
     })
     if (files.length > 0) {
       const { deleteFiles } = await import('@/lib/oss')
-      await deleteFiles(files.map((f) => f.ossKey)).catch((err) => {
-        console.error('[OSS] 删除文件失败:', err)
+      const { logApiError } = await import('@/lib/logger')
+      await deleteFiles(files.map((f) => f.ossKey)).catch((err: unknown) => {
+        logApiError('oss-delete', err)
       })
     }
 

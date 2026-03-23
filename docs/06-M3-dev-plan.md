@@ -1,9 +1,9 @@
 # 沐海旅行 ERP - M3 全知开发手册（V4.0 终版）
 
-> **文档版本**: V4.0
-> **更新日期**: 2026-03-23 03:00
+> **文档版本**: V5.0
+> **更新日期**: 2026-03-23 18:20
 > **用途**: M3 阶段唯一开发指南。即使丢失所有上下文，拿到本文件 + Git 仓库即可完整恢复开发。
-> **前置条件**: M1 ✅ + M2 ✅ + M5 ✅ 全部完成（100 源文件 / 11183 行 / 30 API 路由 / 15 页面 / 22 组件 / 74 测试用例）
+> **前置条件**: M1 ✅ + M2 ✅ + M5 ✅ 全部完成（102 源文件 / 11518 行 / 30 API 路由 / 15 页面 / 23 组件 / 74 测试用例）
 > **核心交付**: 客户端门户完整可用 + 两类资料交互闭环 + 实时通信接入 + 全链路通知闭环
 > **分析基础**: 三轮深度分析（逐文件审查全部 100 个源文件 + 30 个 API 路由 + 工作流文档 + 客户材料清单 + 实际工作流比对）
 
@@ -51,7 +51,7 @@
 | M1 基础架构 | ✅ 100% |
 | M2 核心工作流 | ✅ 100% (19/19) |
 | M5 多申请人+看板 | ✅ 100% (8/8 批次) |
-| M3 文件与客户端 | ⬜ 0%（本手册） |
+| M3 文件与客户端 | 🔄 12.5%（批次1/8完成） |
 
 ### 1.3 关键文件位置速查
 
@@ -62,12 +62,12 @@ erp-project/                                    ← 项目根目录
 ├── src/
 │   ├── app/
 │   │   ├── customer/                           ← M3 主战场
-│   │   │   ├── layout.tsx                      ← 修改：补全3个Tab + Socket + 角标
+│   │   │   ├── layout.tsx                      ← ✅已改：3个Tab + 未读角标轮询
 │   │   │   ├── orders/
-│   │   │   │   ├── page.tsx                    ← 修改：卡片可点击 + 待办提示
+│   │   │   │   ├── page.tsx                    ← ✅已改：Link可点击 + 待办提示 + 多人标记
 │   │   │   │   └── [id]/
 │   │   │   │       ├── page.tsx                ← 新建：客户订单详情页 ⭐核心
-│   │   │   │       └── loading.tsx             ← 新建：加载骨架屏
+│   │   │   │       └── loading.tsx             ← ✅已建：加载骨架屏
 │   │   │   ├── notifications/page.tsx          ← 新建：通知中心
 │   │   │   └── profile/page.tsx                ← 新建：个人中心
 │   │   ├── api/
@@ -84,14 +84,14 @@ erp-project/                                    ← 项目根目录
 │   │   │       └── change-password/route.ts    ← 新建：修改密码
 │   ├── components/
 │   │   ├── orders/
-│   │   │   ├── status-timeline.tsx             ← 新建：6步进度条
+│   │   │   ├── status-timeline.tsx             ← ✅已建：6步进度条
 │   │   │   └── material-checklist.tsx          ← 新建：B类材料下载面板
 │   │   └── documents/
 │   │       └── customer-upload.tsx             ← 新建：客户上传组件 ⭐核心
 │   ├── hooks/
 │   │   └── use-socket-client.ts                ← 新建：Socket.io 客户端
 │   ├── lib/
-│   │   ├── rbac.ts                             ← 修改：CUSTOMER 加 delete
+│   │   ├── rbac.ts                             ← ✅已改：CUSTOMER 加 delete + transition
 │   │   └── socket.ts                           ← 修改：支持 Cookie 认证
 │   └── types/
 │       └── order.ts                            ← 修改：加 DOCS_SUBMITTED 类型
@@ -498,7 +498,7 @@ const TABS = [
 ]
 ```
 
-验收：[ ] 3个Tab可点击路由切换 [ ] 当前Tab高亮 [ ] 浏览器前进后退正常
+验收：✅ 3个Tab可点击路由切换 ✅ 当前Tab高亮 ✅ 浏览器前进后退正常 ✅ 未读角标轮询30s
 
 ---
 
@@ -513,7 +513,7 @@ const TABS = [
 4. 多人订单显示 "👥 N人同行"
 5. 状态进度条保留现有实现
 
-验收：[ ] 卡片点击跳转详情 [ ] 待办提示文案正确 [ ] 多人标记
+验收：✅ 卡片点击跳转详情 ✅ COLLECTING_DOCS/PENDING_DELIVERY/DELIVERED待办提示正确 ✅ 多人👥标记
 
 ---
 
@@ -537,7 +537,7 @@ interface StatusTimelineProps {
 - 终态（APPROVED/REJECTED/PARTIAL）全部点亮
 - 移动端纵向排列，桌面端可选横向
 
-验收：[ ] 进度条正确反映状态 [ ] 每步有时间 [ ] 终态全亮
+验收：✅ 6步进度条正确反映状态 ✅ orderLogs提取完成时间 ✅ 当前步骤pulse动画 ✅ 终态全部点亮
 
 ---
 
@@ -553,7 +553,7 @@ interface StatusTimelineProps {
 { resource: 'documents', actions: ['read', 'create', 'delete'] }
 ```
 
-验收：[ ] CUSTOMER 可调用 DELETE /api/documents/files/[id]
+验收：✅ CUSTOMER 有 delete + transition 权限
 
 ---
 
@@ -1210,31 +1210,31 @@ for (const chunk of chunks) {
 
 ### 新建文件（14 个）
 
-| # | 文件 | 说明 | 行数估计 |
+| # | 文件 | 说明 | 状态 |
 |---|---|---|:---:|
-| 1 | `src/app/customer/orders/[id]/page.tsx` | 客户订单详情页 ⭐ | ~350 |
-| 2 | `src/app/customer/orders/[id]/loading.tsx` | 加载骨架屏 | ~30 |
-| 3 | `src/app/customer/notifications/page.tsx` | 通知中心 | ~150 |
-| 4 | `src/app/customer/profile/page.tsx` | 个人中心 | ~120 |
-| 5 | `src/app/api/documents/presign/route.ts` | 预签名直传 URL | ~60 |
-| 6 | `src/app/api/documents/confirm/route.ts` | 上传确认写库 | ~90 |
-| 7 | `src/app/api/documents/files/[id]/route.ts` | 文件级删除 | ~60 |
-| 8 | `src/app/api/orders/[id]/submit/route.ts` | 客户确认提交+通知 | ~80 |
-| 9 | `src/app/api/auth/change-password/route.ts` | 修改密码 | ~50 |
-| 10 | `src/components/orders/status-timeline.tsx` | 状态时间线 | ~80 |
-| 11 | `src/components/documents/customer-upload.tsx` | 客户上传组件 ⭐ | ~250 |
-| 12 | `src/components/orders/material-checklist.tsx` | B类材料下载面板 | ~60 |
-| 13 | `src/hooks/use-socket-client.ts` | Socket.io 客户端 | ~50 |
-| 14 | (prisma migration) | DOCS_SUBMITTED 枚举值 | 自动生成 |
+| 1 | `src/app/customer/orders/[id]/page.tsx` | 客户订单详情页 ⭐ | ⬜ |
+| 2 | `src/app/customer/orders/[id]/loading.tsx` | 加载骨架屏 | ✅ 已创建 |
+| 3 | `src/app/customer/notifications/page.tsx` | 通知中心 | ⬜ |
+| 4 | `src/app/customer/profile/page.tsx` | 个人中心 | ⬜ |
+| 5 | `src/app/api/documents/presign/route.ts` | 预签名直传 URL | ⬜ |
+| 6 | `src/app/api/documents/confirm/route.ts` | 上传确认写库 | ⬜ |
+| 7 | `src/app/api/documents/files/[id]/route.ts` | 文件级删除 | ⬜ |
+| 8 | `src/app/api/orders/[id]/submit/route.ts` | 客户确认提交+通知 | ⬜ |
+| 9 | `src/app/api/auth/change-password/route.ts` | 修改密码 | ⬜ |
+| 10 | `src/components/orders/status-timeline.tsx` | 状态时间线 | ✅ 已创建 |
+| 11 | `src/components/documents/customer-upload.tsx` | 客户上传组件 ⭐ | ⬜ |
+| 12 | `src/components/orders/material-checklist.tsx` | B类材料下载面板 | ⬜ |
+| 13 | `src/hooks/use-socket-client.ts` | Socket.io 客户端 | ⬜ |
+| 14 | (prisma migration) | DOCS_SUBMITTED 枚举值 | ⬜ |
 
 ### 修改文件（7 个）
 
 | # | 文件 | 变更 | 风险 |
 |---|---|---|:---:|
-| 1 | `src/app/customer/layout.tsx` | 补全 Tab + Socket + 角标 | 🟡 |
-| 2 | `src/app/customer/orders/page.tsx` | 卡片点击 + 待办提示 | 🟢 |
+| 1 | `src/app/customer/layout.tsx` | 补全 Tab + 角标轮询 | ✅ 已完成 |
+| 2 | `src/app/customer/orders/page.tsx` | Link包裹 + 待办提示 + 多人标记 | ✅ 已完成 |
 | 3 | `src/app/api/orders/[id]/documents/route.ts` | POST 加通知客户（首次+追加） | 🟢 |
-| 4 | `src/lib/rbac.ts` | CUSTOMER 加 delete | 🟢 |
+| 4 | `src/lib/rbac.ts` | CUSTOMER 加 delete + transition | ✅ 已完成 |
 | 5 | `src/lib/socket.ts` | Cookie 认证改造 | 🟡 |
 | 6 | `src/types/order.ts` | 加 DOCS_SUBMITTED 类型 | 🟢 |
 | 7 | `src/components/documents/document-panel.tsx` | 文件删除 + 并发上传 | 🟢 |
@@ -1258,14 +1258,15 @@ for (const chunk of chunks) {
 ## 15. 执行计划（8 批次 / 25h）
 
 ```
-批次 1（3h）— 基础框架        [无依赖]
-  ├── M3-1   Tab 导航路由化（layout.tsx）
-  ├── M3-2   订单列表增强（orders/page.tsx）
-  ├── M3-3   状态时间线组件（status-timeline.tsx）
-  └── M3-4   权限补全（rbac.ts: CUSTOMER+delete）
-  验收: Tab切换 | 卡片跳转 | 时间线 | tsc 0错误
+批次 1（3h）— 基础框架        [无依赖] ✅ 已完成 2026-03-23
+  ├── M3-1   Tab 导航路由化（layout.tsx）✅
+  ├── M3-2   订单列表增强（orders/page.tsx）✅
+  ├── M3-3   状态时间线组件（status-timeline.tsx）✅
+  ├── M3-4   权限补全（rbac.ts: CUSTOMER+delete+transition）✅
+  └── 额外   loading.tsx骨架屏 + server.ts/console.log修复 + documents/[id] console.error修复
+  验收: ✅ Tab切换 | ✅ 卡片跳转 | ✅ 时间线 | ✅ tsc 0错误 | ✅ build 0警告
 
-批次 2（4h）— A 类资料上传核心 ⭐  [依赖批次1]
+批次 2（4h）— A 类资料上传核心 ⭐  [依赖批次1] ⬜ 下一步
   ├── M3-5   预签名直传 API（presign/route.ts）
   ├── M3-6   上传确认 API（confirm/route.ts）
   ├── M3-7   文件删除 API（files/[id]/route.ts）
@@ -1409,18 +1410,20 @@ for (const chunk of chunks) {
 
 ## 18. 开发 Checklist
 
-### 批次 1 开发前
-- [ ] `git pull origin main` 拉取最新代码
-- [ ] `npx tsc --noEmit` 确认 0 错误
-- [ ] 阅读 `customer/layout.tsx` 当前实现
+### 批次 1 开发前 ✅ 已完成
+- [x] `git pull origin main` 拉取最新代码
+- [x] `npx tsc --noEmit` 确认 0 错误
+- [x] 阅读 `customer/layout.tsx` 当前实现
 
-### 批次 1 完成后
-- [ ] 3 个 Tab 可点击路由切换
-- [ ] Tab 高亮 + 浏览器前进后退正常
-- [ ] 订单卡片可点击跳转详情
-- [ ] 待办提示文案正确
-- [ ] 状态时间线正确显示
-- [ ] `npx tsc --noEmit` = 0 错误
+### 批次 1 完成后 ✅ 已验收
+- [x] 3 个 Tab 可点击路由切换
+- [x] Tab 高亮 + 浏览器前进后退正常
+- [x] 订单卡片可点击跳转详情
+- [x] 待办提示文案正确（COLLECTING_DOCS/PENDING_DELIVERY/DELIVERED）
+- [x] 状态时间线正确显示（6步+终态+pulse动画）
+- [x] `npx tsc --noEmit` = 0 错误
+- [x] `npm run build` = 0 警告
+- [x] 额外：loading骨架屏 + server.ts/console.log修复 + documents/[id] console.error修复
 
 ### 批次 2 开发前
 - [ ] 阅读 `oss.ts` 的 `generatePresignedPutUrl` 函数

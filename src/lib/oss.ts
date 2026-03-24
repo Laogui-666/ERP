@@ -5,7 +5,7 @@ import type { Readable } from 'stream'
 
 let ossClient: OSS | null = null
 
-function getOssClient(): OSS {
+export function getOssClient(): OSS {
   if (!ossClient) {
     const region = process.env.OSS_REGION
     const accessKeyId = process.env.OSS_ACCESS_KEY_ID

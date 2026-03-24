@@ -66,6 +66,7 @@ enum NotificationType {
   ORDER_CREATED      // 订单已创建（通知客户）
   STATUS_CHANGE      // 状态变更
   DOC_REVIEWED       // 资料审核结果
+  DOCS_SUBMITTED     // 客户已提交资料（通知资料员）
   MATERIAL_UPLOADED  // 签证材料已上传
   MATERIAL_FEEDBACK  // 签证材料反馈
   APPOINTMENT_REMIND // 预约提醒

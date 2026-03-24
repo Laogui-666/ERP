@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { requirePermission, getDataScopeFilter } from '@/lib/rbac'
 import { AppError, createSuccessResponse } from '@/types/api'
+import { emitToUser } from '@/lib/socket'
 import { z } from 'zod'
 
 // GET /api/orders/[id]/documents - 获取订单资料清单
@@ -105,6 +106,31 @@ export async function POST(
         detail: `添加了 ${data.items.length} 项资料需求`,
       },
     })
+
+    // 通知客户：资料清单已更新
+    const orderWithCustomer = await prisma.order.findUnique({
+      where: { id },
+      select: { customerId: true, orderNo: true },
+    })
+    if (orderWithCustomer?.customerId) {
+      await prisma.notification.create({
+        data: {
+          companyId: user.companyId,
+          userId: orderWithCustomer.customerId,
+          orderId: id,
+          type: 'DOC_REVIEWED',
+          title: `订单 ${orderWithCustomer.orderNo} 资料清单已更新`,
+          content: `资料员为您新增了 ${data.items.length} 项资料需求，请及时上传`,
+        },
+      })
+
+      emitToUser(orderWithCustomer.customerId, 'notification', {
+        type: 'DOC_REVIEWED',
+        title: '资料清单已更新',
+        orderId: id,
+        orderNo: orderWithCustomer.orderNo,
+      })
+    }
 
     return NextResponse.json(createSuccessResponse(created), { status: 201 })
   } catch (error) {

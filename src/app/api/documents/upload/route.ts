@@ -4,21 +4,8 @@ import { getCurrentUser } from '@/lib/auth'
 import { requirePermission } from '@/lib/rbac'
 import { AppError, createSuccessResponse } from '@/types/api'
 import { uploadFile, buildOssKey } from '@/lib/oss'
+import { ALLOWED_FILE_TYPES, MAX_FILE_SIZE } from '@/lib/file-types'
 import { z } from 'zod'
-
-// 文件类型白名单
-const ALLOWED_TYPES = [
-  'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif',
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed',
-  'text/plain',
-]
-
-const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
 
 // POST /api/documents/upload - 上传文件
 export async function POST(request: NextRequest) {
@@ -37,7 +24,7 @@ export async function POST(request: NextRequest) {
     if (!requirementId) throw new AppError('VALIDATION_ERROR', '未指定资料需求ID', 400)
 
     // 文件类型校验
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
       throw new AppError('INVALID_FILE_TYPE', `不支持的文件类型: ${file.type}`, 400)
     }
 

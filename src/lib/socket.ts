@@ -4,6 +4,16 @@ import { verifyAccessToken } from '@/lib/auth'
 
 let io: Server | null = null
 
+function parseCookies(header: string | undefined): Record<string, string> {
+  if (!header) return {}
+  return Object.fromEntries(
+    header.split(';').map(c => {
+      const [k, ...v] = c.trim().split('=')
+      return [k, v.join('=')]
+    })
+  )
+}
+
 export function initSocketServer(httpServer: HttpServer): Server {
   io = new Server(httpServer, {
     cors: {
@@ -13,9 +23,15 @@ export function initSocketServer(httpServer: HttpServer): Server {
     },
   })
 
-  // Authentication middleware
+  // Authentication middleware — 同时支持 auth.token 和 HttpOnly Cookie
   io.use(async (socket: Socket, next) => {
-    const token = socket.handshake.auth.token as string | undefined
+    // 优先使用 auth.token（如果客户端显式传递）
+    const authToken = socket.handshake.auth.token as string | undefined
+    // fallback：从 Cookie 读取（HttpOnly Cookie 浏览器自动携带到握手请求）
+    const cookies = parseCookies(socket.handshake.headers.cookie)
+    const cookieToken = cookies['access_token']
+    const token = authToken || cookieToken
+
     if (!token) {
       return next(new Error('Authentication required'))
     }

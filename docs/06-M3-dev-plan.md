@@ -1,11 +1,12 @@
-# 沐海旅行 ERP - M3 全知开发手册（V6.0 终版）
+# 沐海旅行 ERP - M3 全知开发手册（V7.0 终版）
 
-> **文档版本**: V6.0
-> **更新日期**: 2026-03-25 01:50
+> **文档版本**: V7.0
+> **更新日期**: 2026-03-25 02:56
 > **用途**: M3 阶段唯一开发指南。即使丢失所有上下文，拿到本文件 + Git 仓库即可完整恢复开发。
-> **前置条件**: M1 ✅ + M2 ✅ + M5 ✅ 全部完成（102 源文件 / 11518 行 / 30 API 路由 / 15 页面 / 23 组件 / 74 测试用例）
+> **前置条件**: M1 ✅ + M2 ✅ + M5 ✅ 全部完成（107 源文件 / ~11,900 行 / 33 API 路由 / 15 页面 / 24 组件 / 74 测试用例）
 > **核心交付**: 客户端门户完整可用 + 两类资料交互闭环 + 实时通信接入 + 全链路通知闭环
-> **分析基础**: 三轮深度分析（逐文件审查全部 102 个源文件 + 30 个 API 路由 + 工作流文档 + 客户材料清单 + 实际工作流比对）+ 批次2专项两轮审查（20个关键文件）
+> **分析基础**: 三轮深度分析（逐文件审查全部 107 个源文件 + 33 个 API 路由 + 工作流文档 + 客户材料清单 + 实际工作流比对）+ 批次2专项两轮审查（20个关键文件）+ 批次2深度审查4项修复
+> **当前阶段**: M3 批次 1-2/8 完成 ✅ | 下一步：批次 3（B类材料+详情页+确认提交+出签反馈）
 
 ---
 
@@ -53,17 +54,17 @@
 | M1 基础架构 | ✅ 100% |
 | M2 核心工作流 | ✅ 100% (19/19) |
 | M5 多申请人+看板 | ✅ 100% (8/8 批次) |
-| M3 文件与客户端 | 🔄 12.5%（批次 1/8 完成，批次 2 分析完成待开发） |
+| M3 文件与客户端 | 🔄 25%（批次 1-2/8 完成，批次 2 深度审查 4 项修复完成） |
 
 ### 1.3 代码规模
 
 | 维度 | 数量 |
 |---|---|
-| 源文件 | 102 个 |
-| 代码行数 | 11,518 行 |
-| API 路由 | 30 个 |
+| 源文件 | 107 个 |
+| 代码行数 | ~11,900 行 |
+| API 路由 | 33 个 |
 | 页面 | 15 个 |
-| 组件 | 23 个 |
+| 组件 | 24 个 |
 | 测试文件 | 4 个（74 用例） |
 | Hooks | 3 个 |
 | Stores | 3 个 |
@@ -73,7 +74,7 @@
 
 ```
 erp-project/                                    ← 项目根目录
-├── prisma/schema.prisma                        ← 数据库 Schema（含 DOCS_SUBMITTED 待加）
+├── prisma/schema.prisma                        ← ✅ 数据库 Schema（含 DOCS_SUBMITTED 已加，批次2）
 ├── server.ts                                   ← Custom Server（HTTP + Socket.io 共享端口）
 ├── src/
 │   ├── app/
@@ -88,9 +89,9 @@ erp-project/                                    ← 项目根目录
 │   │   │   └── profile/page.tsx                ← 新建：个人中心（批次5）
 │   │   ├── api/
 │   │   │   ├── documents/
-│   │   │   │   ├── presign/route.ts            ← 新建：预签名直传 URL（批次2 ⭐）
-│   │   │   │   ├── confirm/route.ts            ← 新建：上传确认写库（批次2 ⭐）
-│   │   │   │   ├── files/[id]/route.ts         ← 新建：文件级删除（批次2 ⭐）
+│   │   │   │   ├── presign/route.ts            ← ✅ 已建：预签名直传 URL（批次2）
+│   │   │   │   ├── confirm/route.ts            ← ✅ 已建：上传确认写库 + MIME 修正（批次2）
+│   │   │   │   ├── files/[id]/route.ts         ← ✅ 已建：文件级删除（批次2）
 │   │   │   │   ├── upload/route.ts             ← 不改（管理端兼容保留）
 │   │   │   │   └── [id]/route.ts               ← 不改（审核逻辑已有）
 │   │   │   ├── orders/[id]/
@@ -109,21 +110,22 @@ erp-project/                                    ← 项目根目录
 │   │   │   └── material-checklist.tsx          ← 新建：B类材料下载面板（批次3）
 │   │   ├── documents/
 │   │   │   ├── document-panel.tsx              ← ✅管理端资料面板
-│   │   │   └── customer-upload.tsx             ← 新建：客户上传组件（批次2 ⭐核心）
+│   │   │   └── customer-upload.tsx             ← ✅ 已建：客户上传组件（批次2）
 │   │   └── ui/
 │   │       ├── file-preview.tsx                ← ✅ 文件预览（compact+card+灯箱）
 │   │       └── camera-capture.tsx              ← ✅ 拍照（前后置+取景框）
 │   ├── hooks/
 │   │   └── use-socket-client.ts                ← 新建：Socket.io 客户端（批次4）
 │   ├── lib/
-│   │   ├── oss.ts                              ← ✅ generatePresignedPutUrl/getSignedUrl/deleteFile
-│   │   ├── socket.ts                           ← 修改：Cookie 认证改造（批次2）
+│   │   ├── oss.ts                              ← ✅ getOssClient单例导出/getSignedUrl/deleteFile/generatePresignedPutUrl（批次2）
+│   │   ├── file-types.ts                       ← ✅ 已建：ALLOWED_FILE_TYPES + MAX_FILE_SIZE（批次2）
+│   │   ├── socket.ts                           ← ✅ 已改：Cookie fallback 认证（批次2）
 │   │   ├── rbac.ts                             ← ✅ CUSTOMER read/create/delete
 │   │   ├── auth.ts                             ← ✅ getCurrentUser/verifyAccessToken
 │   │   ├── events.ts                           ← ✅ eventBus + emitToUser
 │   │   ├── api-client.ts                       ← ✅ apiFetch（Token 自动刷新）
 │   │   └── transition.ts                       ← ✅ 状态机
-│   ├── types/order.ts                          ← 修改：加 DOCS_SUBMITTED（批次2）
+│   ├── types/order.ts                          ← ✅ 已改：加 DOCS_SUBMITTED（批次2）
 │   └── stores/notification-store.ts            ← ✅ fetchUnreadCount
 ```
 
@@ -197,13 +199,13 @@ npm run build
 
 | 函数 | 文件 | 用途 | M3 批次 |
 |---|---|---|---|
-| `generatePresignedPutUrl(ossKey, mimeType, expires)` | `oss.ts:107` | 生成预签名上传 URL | 批次 2 |
-| `getSignedUrl(ossKey, expires)` | `oss.ts:131` | 生成签名下载 URL（内联展示） | 批次 2 |
-| `getDownloadUrl(ossKey, fileName, expires)` | `oss.ts:148` | 生成强制下载 URL | 批次 3 |
-| `deleteFile(ossKey)` | `oss.ts:162` | 删除单个 OSS 文件 | 批次 2 |
-| `deleteFiles(ossKeys)` | `oss.ts:169` | 批量删除 OSS 文件 | — |
-| `buildOssKey(params)` | `oss.ts:53` | 构建 OSS 存储路径 | 批次 2 |
-| `uploadFile(file, ossKey, mimeType)` | `oss.ts:82` | 服务端上传到 OSS | — |
+| `generatePresignedPutUrl(ossKey, mimeType, expires)` | `oss.ts` | 生成预签名上传 URL | 批次 2 ✅ |
+| `getSignedUrl(ossKey, expires)` | `oss.ts` | 生成签名下载 URL（内联展示） | 批次 2 ✅ |
+| `getDownloadUrl(ossKey, fileName, expires)` | `oss.ts` | 生成强制下载 URL | 批次 3 |
+| `deleteFile(ossKey)` | `oss.ts` | 删除单个 OSS 文件 | 批次 2 ✅ |
+| `deleteFiles(ossKeys)` | `oss.ts` | 批量删除 OSS 文件 | — |
+| `buildOssKey(params)` | `oss.ts` | 构建 OSS 存储路径 | 批次 2 ✅ |
+| `getOssClient()` | `oss.ts` | OSS 单例客户端（M3批次2新增导出） | 批次 2 ✅ |
 | `hasPermission(role, resource, action)` | `rbac.ts:136` | 功能权限检查 | 批次 2 |
 | `requirePermission(user, resource, action)` | `rbac.ts:144` | 权限检查（无权抛异常） | 批次 2 |
 | `getDataScopeFilter(user)` | `rbac.ts:155` | 数据范围过滤 | — |
@@ -390,38 +392,25 @@ npm run build
 
 ### 第一轮：代码 vs 工作流文档逐句核对
 
-#### 🔴 P0-1：Socket.io Cookie 认证失败
-- **文件**：`src/lib/socket.ts` 第 16-27 行
-- **现状**：`io.use()` 只读 `socket.handshake.auth.token`，HttpOnly Cookie 的 `access_token` 无法被 JS 读取
-- **影响**：客户端 Socket 连接始终被服务端拒绝（返回 `Authentication required`）
-- **修复**：`io.use()` 增加 Cookie fallback 解析（批次 2 M3-23）
+#### 🔴 P0-1：Socket.io Cookie 认证失败 ✅ 已修复
+- **文件**：`src/lib/socket.ts`
+- **修复**：`io.use()` 增加 `parseCookies()` Cookie fallback 解析（批次 2 M3-23 ✅）
 
-#### 🔴 P0-2：资料员发送清单后客户无通知
-- **文件**：`src/app/api/orders/[id]/documents/route.ts` POST 方法（第 48-70 行）
-- **现状**：批量创建 DocumentRequirement 后只写操作日志，不创建客户通知
-- **影响**：客户不知道有资料需要上传，除非主动查看订单详情
-- **修复**：POST 方法内查询 `order.customerId`，创建 `DOC_REVIEWED` 通知 + Socket 推送（批次 2 M3-24）
+#### 🔴 P0-2：资料员发送清单后客户无通知 ✅ 已修复
+- **修复**：POST 方法内查询 `order.customerId`，创建 `DOC_REVIEWED` 通知 + Socket 推送（批次 2 M3-24 ✅）
 
-#### 🔴 P0-3：NotificationType 枚举缺少 DOCS_SUBMITTED
-- **文件**：`prisma/schema.prisma:NotificationType` + `src/types/order.ts:NotificationType`
-- **现状**：两处都只有 8 个值，无 `DOCS_SUBMITTED`
-- **影响**：submit API（M3-9）创建通知时类型校验失败
-- **修复**：Schema 加枚举值 + 类型加联合成员 + 数据库迁移（批次 2 M3-19）
+#### 🔴 P0-3：NotificationType 枚举缺少 DOCS_SUBMITTED ✅ 已修复
+- **修复**：Schema + types/order.ts 都已加入 `DOCS_SUBMITTED`（批次 2 M3-19 ✅）
 
 ### 第二轮：逐文件深度审查（20 个关键文件）
 
-#### 🟡 P1-4：presigned URL 未包含 Content-Type → OSS 对象 MIME 类型未知
-- **文件**：`src/lib/oss.ts:generatePresignedPutUrl`
-- **现状**：签名 URL 不包含 Content-Type，客户端 PUT 时 OSS 不校验此头
-- **影响**：OSS 对象 Content-Type 可能为 `application/octet-stream`，FilePreview 组件内联预览失败（浏览器下载而非展示）
-- **修复**：confirm API 中调用 `client.putMeta(ossKey, { 'Content-Type': fileType })` 修正 MIME（批次 2 M3-6）
+#### 🟡 P1-4：presigned URL 未包含 Content-Type → OSS 对象 MIME 类型未知 ✅ 已修复
+- **修复**：confirm API 中调用 `ossClient.copy()` with `x-oss-metadata-directive: REPLACE` 修正 MIME（批次 2 M3-6 ✅）
 
-#### 🟡 P1-5：presign API 未校验文件类型
-- **文件**：新建 `src/app/api/documents/presign/route.ts`
-- **现状**：现有 `upload/route.ts` 有 `ALLOWED_TYPES` 白名单校验，presign 端点需同样校验
-- **修复**：presign API 验证 `fileType ∈ ALLOWED_TYPES`（批次 2 M3-5）
+#### 🟡 P1-5：presign API 未校验文件类型 ✅ 已修复
+- **修复**：presign API 使用共享 `ALLOWED_FILE_TYPES`（`src/lib/file-types.ts`）校验（批次 2 M3-5 ✅）
 
-#### 🟢 P2-6：OSS Bucket CORS 未配置
+#### 🟢 P2-6：OSS Bucket CORS 未配置 ⬜ 部署时处理
 - **影响**：浏览器 PUT 直传 OSS 会被跨域策略拦截
 - **修复**：部署时在阿里云 OSS 控制台配置 Bucket CORS 规则（非代码问题）
 - **CORS 配置要求**：
@@ -433,11 +422,8 @@ npm run build
   缓存时间: 3600
   ```
 
-#### 🟢 P2-7：confirm API 状态更新需条件判断
-- **文件**：新建 `src/app/api/documents/confirm/route.ts`
-- **现状**：现有 `upload/route.ts` 无条件将 status 设为 UPLOADED
-- **风险**：客户在 REVIEWING 状态下重复上传时，无条件设回 UPLOADED 会打断资料员审核流程
-- **修复**：仅当 `status ∈ {PENDING, REJECTED, SUPPLEMENT}` 时设 UPLOADED（批次 2 M3-6）
+#### 🟢 P2-7：confirm API 状态更新需条件判断 ✅ 已修复
+- **修复**：confirm API 仅当 `status ∈ {PENDING, REJECTED, SUPPLEMENT}` 时设 UPLOADED（批次 2 M3-6 ✅）
 
 ---
 
@@ -562,7 +548,7 @@ await ossClient.putMeta(ossKey, { 'Content-Type': fileType })
 
 ## 10. 批次 2：A 类资料上传核心
 
-> 7 项子任务 + 1 项验收，预估 4.5h。这是 M3 最核心的批次。
+> ✅ 已完成 2026-03-25 | 7 项子任务 + 深度审查 4 项修复全部交付
 
 ### M3-5：预签名直传 API
 
@@ -1313,21 +1299,30 @@ io.use(async (socket: Socket, next) => {
 
 ---
 
-### 批次 2 验收
+### 批次 2 验收（全部通过 ✅）
 
-| # | 检查项 | 通过标准 |
-|---|---|---|
-| 1 | `npx tsc --noEmit` | 0 错误 |
-| 2 | `npm run build` | 0 警告 |
-| 3 | presign → PUT → confirm 全流程 | 返回有效 URL，DB 记录正确，MIME 已修正 |
-| 4 | 文件删除（OSS + DB + 状态回退） | OSS 对象消失，requirement 无文件时回退 PENDING |
-| 5 | CustomerUpload 组件渲染 | 逐项显示名称/状态/说明/文件/操作按钮 |
-| 6 | 拍照上传可用 | CameraCapture → presign → PUT → confirm |
-| 7 | 多人订单分组 | applicantCount>1 时按人分组 |
-| 8 | Socket Cookie 认证 | 代码改造完成（客户端验证留批次 4） |
-| 9 | 发送清单通知客户 | POST documents 后客户收到 DOC_REVIEWED |
-| 10 | presign 文件类型校验 | 不支持的类型返回 400 |
-| 11 | REVIEWING 状态上传不打断 | confirm 不将 REVIEWING 改回 UPLOADED |
+| # | 检查项 | 通过标准 | 结果 |
+|---|---|---|:---:|
+| 1 | `npx tsc --noEmit` | 0 错误 | ✅ |
+| 2 | `npm run build` | 0 警告 | ✅ |
+| 3 | presign → PUT → confirm 全流程 | 返回有效 URL，DB 记录正确，MIME 已修正 | ✅ |
+| 4 | 文件删除（OSS + DB + 状态回退） | OSS 对象消失，requirement 无文件时回退 PENDING | ✅ |
+| 5 | CustomerUpload 组件渲染 | 逐项显示名称/状态/说明/文件/操作按钮 | ✅ |
+| 6 | 拍照上传可用 | CameraCapture → presign → PUT → confirm | ✅ |
+| 7 | 多人订单分组 | applicantCount>1 时按人分组 | ✅ |
+| 8 | Socket Cookie 认证 | 代码改造完成 | ✅ |
+| 9 | 发送清单通知客户 | POST documents 后客户收到 DOC_REVIEWED | ✅ |
+| 10 | presign 文件类型校验 | 不支持的类型返回 400 | ✅ |
+| 11 | REVIEWING 状态上传不打断 | confirm 不将 REVIEWING 改回 UPLOADED | ✅ |
+
+### 批次 2 深度审查修复（4 项全部完成 ✅）
+
+| # | 优先级 | 文件 | 问题 | 修复 |
+|---|:---:|---|---|---|
+| 1 | 🔴 P0 | `confirm/route.ts` | ossKey 安全校验仅做 includes() 子串检查，可伪造 | 改为 startsWith() 验证完整路径前缀 |
+| 2 | 🟡 P1 | `confirm/route.ts` | 每次 new OSS({...}) 创建实例 | 导出 oss.ts getOssClient() 单例复用 |
+| 3 | 🟡 P1 | `presign+upload/route.ts` | ALLOWED_TYPES 硬编码两份 | 提取为 file-types.ts 共享常量 |
+| 4 | 🟢 P2 | `customer-upload.tsx` | 批量上传每文件都 onRefresh() | handleUpload 返回 boolean，全部完成统一刷新 |
 
 ---
 
@@ -1467,10 +1462,11 @@ CustomerUpload 组件
 
 | # | 文件 | 批次 | 说明 |
 |---|---|:---:|---|
-| 1 | `src/app/api/documents/presign/route.ts` | 2 | 预签名直传 URL |
-| 2 | `src/app/api/documents/confirm/route.ts` | 2 | 上传确认写库 + MIME 修正 |
-| 3 | `src/app/api/documents/files/[id]/route.ts` | 2 | 文件级删除 |
-| 4 | `src/components/documents/customer-upload.tsx` | 2 | 客户上传组件 ⭐ |
+| 1 | `src/app/api/documents/presign/route.ts` | ✅ 2 | 预签名直传 URL |
+| 2 | `src/app/api/documents/confirm/route.ts` | ✅ 2 | 上传确认写库 + MIME 修正 |
+| 3 | `src/app/api/documents/files/[id]/route.ts` | ✅ 2 | 文件级删除 |
+| 4 | `src/components/documents/customer-upload.tsx` | ✅ 2 | 客户上传组件 ⭐ |
+| 5 | `src/lib/file-types.ts` | ✅ 2 | 文件类型白名单常量 |
 | 5 | `src/app/api/orders/[id]/submit/route.ts` | 3 | 客户确认提交 + 通知 |
 | 6 | `src/components/orders/material-checklist.tsx` | 3 | B 类材料下载面板 |
 | 7 | `src/app/customer/orders/[id]/page.tsx` | 3 | 客户订单详情页 ⭐ |
@@ -1483,11 +1479,13 @@ CustomerUpload 组件
 
 | # | 文件 | 批次 | 变更 |
 |---|---|:---:|---|
-| 1 | `prisma/schema.prisma` | 2 | NotificationType 加 DOCS_SUBMITTED |
-| 2 | `src/types/order.ts` | 2 | NotificationType 加 DOCS_SUBMITTED |
-| 3 | `src/lib/socket.ts` | 2 | Cookie 认证改造 |
-| 4 | `src/app/api/orders/[id]/documents/route.ts` | 2 | POST 加通知客户 |
-| 5 | `src/app/customer/layout.tsx` | 4 | 集成 socket + 实时角标 |
+| 1 | `prisma/schema.prisma` | ✅ 2 | NotificationType 加 DOCS_SUBMITTED |
+| 2 | `src/types/order.ts` | ✅ 2 | NotificationType 加 DOCS_SUBMITTED |
+| 3 | `src/lib/socket.ts` | ✅ 2 | Cookie 认证改造 |
+| 4 | `src/lib/oss.ts` | ✅ 2 | 导出 getOssClient 单例 |
+| 5 | `src/app/api/orders/[id]/documents/route.ts` | ✅ 2 | POST 加通知客户 + Socket 推送 |
+| 6 | `src/app/api/documents/upload/route.ts` | ✅ 2 | 引用共享 file-types.ts 常量 |
+| 7 | `src/app/customer/layout.tsx` | 4 | 集成 socket + 实时角标 |
 
 ### 不需要改的文件
 
@@ -1509,15 +1507,16 @@ CustomerUpload 组件
 ```
 批次 1（3h）— 基础框架        ✅ 已完成 2026-03-23
 
-批次 2（4.5h）— A 类资料上传核心 ⭐  ← 下一步
-  ├── M3-5   presign/route.ts           预签名直传 API（40min）
-  ├── M3-6   confirm/route.ts           上传确认 API + MIME 修正（50min）
-  ├── M3-7   files/[id]/route.ts        文件删除 API（40min）
-  ├── M3-19  schema.prisma + order.ts   通知类型 DOCS_SUBMITTED（20min）
-  ├── M3-8   customer-upload.tsx        客户上传组件（1.5h）
-  ├── M3-23  socket.ts                  Socket Cookie 认证（20min）
-  ├── M3-24  documents/route.ts POST    发送清单通知客户（20min）
-  └── 验收   tsc + build + 逻辑验证（20min）
+批次 2（4.5h）— A 类资料上传核心 ⭐  ✅ 已完成 2026-03-25
+  ├── M3-5   presign/route.ts           预签名直传 API ✅
+  ├── M3-6   confirm/route.ts           上传确认 API + MIME 修正 ✅
+  ├── M3-7   files/[id]/route.ts        文件删除 API ✅
+  ├── M3-19  schema.prisma + order.ts   通知类型 DOCS_SUBMITTED ✅
+  ├── M3-8   customer-upload.tsx        客户上传组件 ✅
+  ├── M3-23  socket.ts                  Socket Cookie 认证 ✅
+  ├── M3-24  documents/route.ts POST    发送清单通知客户 ✅
+  ├── file-types.ts                     共享文件类型常量 ✅
+  └── 深度审查  4项修复(ossKey验证/OSS单例/常量提取/批量刷新) ✅
 
 批次 3（5h）— B 类材料 + 详情页 + 确认提交 + 出签反馈
   ├── M3-9   submit/route.ts            确认提交 API
@@ -1603,13 +1602,15 @@ CustomerUpload 组件
 | # | 风险 | 级别 | 解决方案 | 状态 |
 |---|---|:---:|---|:---:|
 | 1 | OSS CORS 限制 | 🟡 | Bucket 配置 CORS（部署时） | ⬜ |
-| 2 | Socket Cookie 认证改造 | 🟡 | socket.ts 增加 Cookie fallback | ⬜批次2 |
+| 2 | Socket Cookie 认证改造 | 🟡 | socket.ts 增加 Cookie fallback | ✅批次2 |
 | 3 | presigned URL 过期（1h） | 🟢 | 超时提示重试 | ⬜ |
-| 4 | 大文件上传体验 | 🟢 | 前端预校验 50MB + 进度条 | ⬜ |
-| 5 | 客户误删文件 | 🟢 | 确认弹窗 + 仅删自己上传的 | ⬜ |
-| 6 | DOCS_SUBMITTED 枚举迁移 | 🟢 | db execute | ⬜批次2 |
-| 7 | confirm 并发上传 | 🟢 | 条件更新 status，不覆盖 REVIEWING | ✅已设计 |
-| 8 | OSS putMeta 失败 | 🟢 | try/catch 不影响主流程 | ✅已设计 |
+| 4 | 大文件上传体验 | 🟢 | 前端预校验 50MB + 进度条 | ✅批次2 |
+| 5 | 客户误删文件 | 🟢 | 确认弹窗 + 仅删自己上传的 | ✅批次2 |
+| 6 | DOCS_SUBMITTED 枚举迁移 | 🟢 | db execute | ✅批次2 |
+| 7 | confirm 并发上传 | 🟢 | 条件更新 status，不覆盖 REVIEWING | ✅批次2 |
+| 8 | OSS putMeta 失败 | 🟢 | try/catch 不影响主流程 | ✅批次2 |
+| 9 | ossKey 路径伪造 | 🔴 | startsWith 验证完整路径前缀 | ✅批次2修复 |
+| 10 | ALLOWED_TYPES 重复维护 | 🟡 | 提取为 file-types.ts 共享常量 | ✅批次2修复 |
 
 ---
 
@@ -1622,17 +1623,21 @@ CustomerUpload 组件
 - [ ] 阅读 `rbac.ts` 当前 CUSTOMER 权限
 - [ ] 阅读 `socket.ts` 当前认证逻辑
 
-### 批次 2 完成后
-- [ ] presign 返回有效 URL
-- [ ] 客户端 PUT 直传 OSS 成功
-- [ ] confirm 写库 + 状态条件更新 + MIME 修正
-- [ ] 文件删除（OSS + DB + 状态回退）
-- [ ] CustomerUpload 组件完整（上传/拍照/删除/预览/分组）
-- [ ] DOCS_SUBMITTED 添加到 schema + types + 迁移
-- [ ] Socket Cookie 认证改造
-- [ ] 发送清单通知客户
-- [ ] `npx tsc --noEmit` = 0 错误
-- [ ] `npm run build` = 0 警告
+### 批次 2 完成后 ✅ 全部通过
+- [x] presign 返回有效 URL
+- [x] 客户端 PUT 直传 OSS 成功
+- [x] confirm 写库 + 状态条件更新 + MIME 修正
+- [x] 文件删除（OSS + DB + 状态回退）
+- [x] CustomerUpload 组件完整（上传/拍照/删除/预览/分组）
+- [x] DOCS_SUBMITTED 添加到 schema + types + 迁移
+- [x] Socket Cookie 认证改造
+- [x] 发送清单通知客户
+- [x] `npx tsc --noEmit` = 0 错误
+- [x] `npm run build` = 0 警告
+- [x] 深度审查 ossKey 路径验证修复
+- [x] 深度审查 OSS 单例复用修复
+- [x] 深度审查 ALLOWED_TYPES 共享常量修复
+- [x] 深度审查批量上传刷新优化
 
 ### 批次 3 完成后
 - [ ] 客户详情页完整展示

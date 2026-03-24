@@ -2,9 +2,9 @@
 
 # 架构实现方案
 
-> **文档版本**: V9.0
+> **文档版本**: V10.0
 > **生成日期**: 2026-03-19
-> **最后更新**: 2026-03-25 01:50
+> **最后更新**: 2026-03-25 02:56
 > **技术栈**: Next.js 15.5.14 + React 19.2.4 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
 > **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
@@ -765,15 +765,15 @@ model VisaTemplate {
 
 | 方法 | 路径 | 说明 | 权限 | 状态 |
 |---|---|---|---|:---:|
-| POST | `/api/documents/presign` | 获取预签名上传 URL（客户端直传 OSS） | Lv9 (CUSTOMER) | ⬜M3-5 |
-| POST | `/api/documents/confirm` | 确认文件已上传，写入 DB + 更新需求状态 | Lv9 (CUSTOMER) | ⬜M3-6 |
-| DELETE | `/api/documents/files/[id]` | 删除单个文件（OSS+DB，客户仅删自己上传的） | Lv2,5-7,9 | ⬜M3-7 |
+| POST | `/api/documents/presign` | 获取预签名上传 URL（客户端直传 OSS） | Lv9 (CUSTOMER) | ✅ M3-5 |
+| POST | `/api/documents/confirm` | 确认文件已上传，写入 DB + 更新需求状态 | Lv9 (CUSTOMER) | ✅ M3-6 |
+| DELETE | `/api/documents/files/[id]` | 删除单个文件（OSS+DB，客户仅删自己上传的） | Lv2,5-7,9 | ✅ M3-7 |
 | POST | `/api/orders/[id]/submit` | 客户确认提交（基于有文件判断→REVIEWING→通知资料员 DOCS_SUBMITTED） | Lv9 (CUSTOMER) | ⬜M3-9 |
 | POST | `/api/auth/change-password` | 修改密码（旧密码校验+新密码规则） | 已登录 | ⬜M3-17 |
 
-**Socket.io 改造**：`src/lib/socket.ts` — io.use() 增加 Cookie fallback 认证（M3-13）
+**Socket.io 改造**：`src/lib/socket.ts` — io.use() 增加 Cookie fallback 认证（M3-23 ✅ 已完成）
 
-**NotificationType 扩展**：新增 `DOCS_SUBMITTED` 枚举值（客户已提交资料）
+**NotificationType 扩展**：新增 `DOCS_SUBMITTED` 枚举值（客户已提交资料）（M3-19 ✅ 已完成）
 
 ### 4.12 SMS 预留模块
 

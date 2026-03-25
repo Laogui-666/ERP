@@ -1,12 +1,12 @@
 # 沐海旅行 ERP - M3 全知开发手册（V9.0 终版）
 
-> **文档版本**: V10.0
-> **更新日期**: 2026-03-26 00:38
+> **文档版本**: V11.0
+> **更新日期**: 2026-03-26 01:26
 > **用途**: M3 阶段唯一开发指南。即使丢失所有上下文，拿到本文件 + Git 仓库即可完整恢复开发。
-> **前置条件**: M1 ✅ + M2 ✅ + M5 ✅ 全部完成（113 源文件 / ~13,069 行 / 34 API 路由 / 17 页面 / 25 组件 / 74 测试用例）
+> **前置条件**: M1 ✅ + M2 ✅ + M5 ✅ 全部完成（115 源文件 / ~13,460 行 / 35 API 路由 / 18 页面 / 25 组件 / 74 测试用例）
 > **核心交付**: 客户端门户完整可用 + 两类资料交互闭环 + 实时通信接入 + 全链路通知闭环
-> **分析基础**: 三轮深度分析（逐文件审查全部 113 个源文件 + 34 个 API 路由 + 工作流文档 + 客户材料清单 + 实际工作流比对）+ 批次2专项两轮审查 + 批次2深度审查4项修复 + 批次3完整实现+验收 + 批次4深度分析8缺口修复
-> **当前阶段**: M3 批次 1-5/8 完成 ✅ | 下一步：批次 6（通知闭环+管理端增强）
+> **分析基础**: 三轮深度分析（逐文件审查全部 115 个源文件 + 35 个 API 路由 + 工作流文档 + 客户材料清单 + 实际工作流比对）+ 批次2专项两轮审查 + 批次2深度审查4项修复 + 批次3完整实现+验收 + 批次4深度分析8缺口修复
+> **当前阶段**: M3 批次 1-6/8 完成 ✅ | 下一步：批次 7（全量验收）
 
 ---
 
@@ -54,7 +54,7 @@
 | M1 基础架构 | ✅ 100% |
 | M2 核心工作流 | ✅ 100% (19/19) |
 | M5 多申请人+看板 | ✅ 100% (8/8 批次) |
-| M3 文件与客户端 | 🔄 50%（批次 1-4/8 完成，25h 计划） |
+| M3 文件与客户端 | 🔄 75%（批次 1-6/8 完成，25h 计划） |
 
 ### 1.3 代码规模
 
@@ -1925,9 +1925,9 @@ export async function POST(request: NextRequest) {
 
 ---
 
-## 14. 批次 6：通知闭环 + 管理端增强
+## 14. 批次 6：通知闭环 + 管理端增强 ✅ 已完成
 
-> 2.5h，依赖批次 2+3。
+> 2.5h，依赖批次 2+3。完成于 2026-03-26
 
 - M3-18 已在批次 2（M3-24）修复 ✅（发送清单通知客户）
 - M3-21：文件删除集成到 DocumentPanel
@@ -2061,7 +2061,7 @@ async function handleBatchUpload(requirementId: string, files: FileList) {
 | 11 | `src/app/customer/notifications/page.tsx` | ✅ 4 | 通知中心页面 ⭐ |
 | 12 | `src/app/customer/profile/page.tsx` | ✅ 5 | 个人中心（用户信息+修改密码+退出登录） |
 
-### 修改文件（7 个）
+### 修改文件（14 个）
 
 | # | 文件 | 批次 | 变更 |
 |---|---|:---:|---|
@@ -2073,6 +2073,12 @@ async function handleBatchUpload(requirementId: string, files: FileList) {
 | 6 | `src/stores/notification-store.ts` | ✅ 4 | NotificationItem 加 orderId 字段 |
 | 7 | `src/app/customer/layout.tsx` | ✅ 4 | Socket 实时角标 + isConnected 轮询 fallback |
 | 8 | `src/components/notifications/notification-bell.tsx` | ✅ 4 | 复用 NOTIFICATION_ICONS 共享常量 |
+| 9 | `src/components/ui/file-preview.tsx` | ✅ 6 | +onDelete prop + 删除按钮（compact+card 模式） |
+| 10 | `src/components/documents/document-panel.tsx` | ✅ 6 | +canDeleteFile + handleFileDelete + 并发上传(3路) |
+| 11 | `src/app/api/documents/[id]/route.ts` | ✅ 6 | +emitToUser DOC_REVIEWED → 客户 |
+| 12 | `src/app/api/orders/[id]/materials/route.ts` | ✅ 6 | +emitToUser MATERIAL_UPLOADED → 资料员+客户 |
+| 13 | `src/app/api/orders/[id]/cancel/route.ts` | ✅ 6 | +emitToUser STATUS_CHANGE → 相关人员 |
+| 14 | `src/app/api/orders/[id]/reassign/route.ts` | ✅ 6 | +emitToUser ORDER_NEW → 目标用户 |
 
 ### 不需要改的文件
 
@@ -2124,10 +2130,10 @@ async function handleBatchUpload(requirementId: string, files: FileList) {
   ├── M3-16  profile/page.tsx           个人中心 ✅ (220行-用户信息+修改密码+密码强度+退出)
   └── M3-17  change-password/route.ts   修改密码 ✅ (64行-旧密码校验+空密码检测+PRD合规规则)
 
-批次 6（2.5h）— 通知闭环 + 管理端
-  ├── M3-21  document-panel.tsx         文件删除集成
-  ├── M3-22  document-panel.tsx         批量上传并发优化
-  └── M3-20  全链路通知验证（9节点）
+批次 6（2.5h）— 通知闭环 + 管理端  ✅ 已完成 2026-03-26
+  ├── M3-21  document-panel.tsx         文件删除集成 ✅ (canDeleteFile+handleFileDelete+FilePreview onDelete)
+  ├── M3-22  document-panel.tsx         批量上传并发优化 ✅ (3路并发池+按批进度)
+  └── M3-20  通知链9节点Socket推送补全 ✅ (4个API路由+emitToUser)
 
 批次 7（2h）— 全量验收
   └── tsc + build + test + 全量检查

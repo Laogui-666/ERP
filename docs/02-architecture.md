@@ -2,9 +2,9 @@
 
 # 架构实现方案
 
-> **文档版本**: V11.0
+> **文档版本**: V12.0
 > **生成日期**: 2026-03-19
-> **最后更新**: 2026-03-25 02:56
+> **最后更新**: 2026-03-26 01:26
 > **技术栈**: Next.js 15.5.14 + React 19.2.4 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
 > **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
@@ -769,11 +769,21 @@ model VisaTemplate {
 | POST | `/api/documents/confirm` | 确认文件已上传，写入 DB + 更新需求状态 | Lv9 (CUSTOMER) | ✅ M3-6 |
 | DELETE | `/api/documents/files/[id]` | 删除单个文件（OSS+DB，客户仅删自己上传的） | Lv2,5-7,9 | ✅ M3-7 |
 | POST | `/api/orders/[id]/submit` | 客户确认提交（基于有文件判断→REVIEWING→通知资料员 DOCS_SUBMITTED） | Lv9 (CUSTOMER) | ⬜M3-9 |
-| POST | `/api/auth/change-password` | 修改密码（旧密码校验+新密码规则） | 已登录 | ⬜M3-17 |
+| POST | `/api/auth/change-password` | 修改密码（旧密码校验+新密码规则） | 已登录 | ✅M3-17 |
 
 **Socket.io 改造**：`src/lib/socket.ts` — io.use() 增加 Cookie fallback 认证（M3-23 ✅ 已完成）
 
 **NotificationType 扩展**：新增 `DOCS_SUBMITTED` 枚举值（客户已提交资料）（M3-19 ✅ 已完成）
+
+**Socket 推送补全（M3-20 ✅）**：4 个 API 路由补充 `emitToUser` 实时推送
+- `documents/[id] PATCH`：DOC_REVIEWED → 客户
+- `orders/[id]/materials POST`：MATERIAL_UPLOADED/MATERIAL_FEEDBACK → 资料员+客户
+- `orders/[id]/cancel POST`：STATUS_CHANGE → 相关人员
+- `orders/[id]/reassign POST`：ORDER_NEW → 目标用户
+
+**管理端增强（M3-21/22 ✅）**：
+- DocumentPanel 集成文件删除（canDeleteFile 权限 + `DELETE /api/documents/files/[id]`）
+- 批量上传并发优化（3 路并发池 + 按批进度更新）
 
 ### 4.12 SMS 预留模块
 

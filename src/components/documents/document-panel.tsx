@@ -38,6 +38,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
   const canEdit = ['DOC_COLLECTOR', 'VISA_ADMIN', 'COMPANY_OWNER', 'SUPER_ADMIN'].includes(userRole)
   const canReview = ['DOC_COLLECTOR', 'VISA_ADMIN', 'OPERATOR', 'OUTSOURCE'].includes(userRole)
   const canUpload = ['CUSTOMER', 'DOC_COLLECTOR', 'VISA_ADMIN'].includes(userRole)
+  const canDeleteFile = ['DOC_COLLECTOR', 'OPERATOR', 'VISA_ADMIN', 'COMPANY_OWNER', 'SUPER_ADMIN'].includes(userRole)
 
   // 添加资料需求项
   const handleAddItem = async () => {
@@ -100,24 +101,33 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     setUploadProgress({ current: 0, total: fileArray.length })
     try {
       let successCount = 0
-      for (let i = 0; i < fileArray.length; i++) {
-        const file = fileArray[i]
-        setUploadProgress({ current: i + 1, total: fileArray.length })
+      const CONCURRENCY = 3
 
+      // 单文件上传函数
+      const uploadSingle = async (file: File): Promise<boolean> => {
         const formData = new FormData()
         formData.append('file', file)
-        formData.append('requirementId', targetReqId)
+        formData.append('requirementId', targetReqId!)
 
         const res = await apiFetch('/api/documents/upload', {
           method: 'POST',
           body: formData,
         })
         const json = await res.json()
-        if (json.success) {
-          successCount++
-        } else {
+        if (!json.success) {
           toast('error', `${file.name} 上传失败: ${json.error?.message ?? '未知错误'}`)
         }
+        return json.success as boolean
+      }
+
+      // 并发池：最多 CONCURRENCY 个同时上传
+      let completed = 0
+      for (let i = 0; i < fileArray.length; i += CONCURRENCY) {
+        const batch = fileArray.slice(i, i + CONCURRENCY)
+        const results = await Promise.all(batch.map(uploadSingle))
+        completed += batch.length
+        setUploadProgress({ current: completed, total: fileArray.length })
+        successCount += results.filter(Boolean).length
       }
 
       if (successCount > 0) {
@@ -160,6 +170,23 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       toast('error', '上传失败')
     } finally {
       setUploadingId(null)
+    }
+  }
+
+  // 删除文件
+  const handleFileDelete = async (fileId: string) => {
+    if (!confirm('确定删除该文件？')) return
+    try {
+      const res = await apiFetch(`/api/documents/files/${fileId}`, { method: 'DELETE' })
+      const json = await res.json()
+      if (json.success) {
+        toast('success', '已删除')
+        onRefresh()
+      } else {
+        toast('error', json.error?.message ?? '删除失败')
+      }
+    } catch {
+      toast('error', '删除失败')
     }
   }
 
@@ -321,6 +348,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                       req={req}
                       canUpload={canUpload && ['PENDING', 'REJECTED', 'SUPPLEMENT'].includes(req.status)}
                       canReview={canReview && req.status === 'UPLOADED'}
+                      canDeleteFile={canDeleteFile}
                       isUploading={uploadingId === req.id}
                       uploadProgress={uploadingId === req.id ? uploadProgress : null}
                       isReviewing={reviewingId === req.id}
@@ -330,6 +358,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                       onCamera={() => setCameraTargetId(req.id)}
                       onApprove={() => handleReview(req.id, 'APPROVED')}
                       onReject={(status) => handleReview(req.id, status)}
+                      onDeleteFile={handleFileDelete}
                     />
                   ))}
                 </div>
@@ -363,12 +392,13 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
 
 // 单条资料需求
 function DocumentItem({
-  req, canUpload, canReview, isUploading, uploadProgress, isReviewing,
-  reviewReason, onReviewReasonChange, onUpload, onCamera, onApprove, onReject,
+  req, canUpload, canReview, canDeleteFile, isUploading, uploadProgress, isReviewing,
+  reviewReason, onReviewReasonChange, onUpload, onCamera, onApprove, onReject, onDeleteFile,
 }: {
   req: DocumentRequirement
   canUpload: boolean
   canReview: boolean
+  canDeleteFile: boolean
   isUploading: boolean
   uploadProgress: { current: number; total: number } | null
   isReviewing: boolean
@@ -378,6 +408,7 @@ function DocumentItem({
   onCamera: () => void
   onApprove: () => void
   onReject: (status: 'REJECTED' | 'SUPPLEMENT') => void
+  onDeleteFile: (fileId: string) => void
 }) {
   const [showReviewForm, setShowReviewForm] = useState(false)
 
@@ -425,6 +456,7 @@ function DocumentItem({
                   ossUrl={file.ossUrl}
                   fileSize={file.fileSize}
                   compact
+                  {...(canDeleteFile ? { onDelete: () => onDeleteFile(file.id) } : {})}
                 />
               ))}
             </div>

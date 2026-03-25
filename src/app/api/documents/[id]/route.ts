@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { requirePermission } from '@/lib/rbac'
 import { AppError, createSuccessResponse } from '@/types/api'
+import { emitToUser } from '@/lib/socket'
 import { z } from 'zod'
 import type { DocReqStatus } from '@/types/order'
 
@@ -79,6 +80,11 @@ export async function PATCH(
             title: '资料审核结果',
             content: `您的资料"${requirement.name}"${data.status === 'REJECTED' ? '需要修改' : '需要补充'}${data.rejectReason ? `：${data.rejectReason}` : ''}`,
           },
+        })
+        emitToUser(order.customerId, 'notification', {
+          type: 'DOC_REVIEWED',
+          title: '资料审核结果',
+          orderId: requirement.orderId,
         })
       }
     }

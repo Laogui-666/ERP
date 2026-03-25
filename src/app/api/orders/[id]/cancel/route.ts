@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { requirePermission } from '@/lib/rbac'
 import { AppError, createSuccessResponse } from '@/types/api'
+import { emitToUser } from '@/lib/socket'
 import { z } from 'zod'
 
 /**
@@ -36,6 +37,12 @@ export async function POST(
       throw new AppError('INVALID_STATUS', '终态订单不可取消', 400)
     }
 
+    // 收集需通知的用户
+    const notifyUserIds = new Set<string>()
+    if (order.collectorId) notifyUserIds.add(order.collectorId)
+    if (order.operatorId) notifyUserIds.add(order.operatorId)
+    if (order.customerId) notifyUserIds.add(order.customerId)
+
     await prisma.$transaction(async (tx) => {
       await tx.order.update({
         where: { id: id },
@@ -58,11 +65,6 @@ export async function POST(
       })
 
       // 通知相关人员
-      const notifyUserIds = new Set<string>()
-      if (order.collectorId) notifyUserIds.add(order.collectorId)
-      if (order.operatorId) notifyUserIds.add(order.operatorId)
-      if (order.customerId) notifyUserIds.add(order.customerId)
-
       if (notifyUserIds.size > 0) {
         await tx.notification.createMany({
           data: Array.from(notifyUserIds).map((uid) => ({
@@ -76,6 +78,16 @@ export async function POST(
         })
       }
     })
+
+    // Socket 实时推送
+    for (const uid of notifyUserIds) {
+      emitToUser(uid, 'notification', {
+        type: 'STATUS_CHANGE',
+        title: '订单已取消',
+        orderId: id,
+        orderNo: order.orderNo,
+      })
+    }
 
     return NextResponse.json(createSuccessResponse({ message: '订单已取消' }))
   } catch (error) {

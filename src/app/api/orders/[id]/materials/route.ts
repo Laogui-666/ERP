@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { requirePermission, getDataScopeFilter } from '@/lib/rbac'
 import { AppError, createSuccessResponse } from '@/types/api'
 import { uploadFile, buildOssKey } from '@/lib/oss'
+import { emitToUser } from '@/lib/socket'
 
 // GET /api/orders/[id]/materials - 获取签证材料列表
 export async function GET(
@@ -165,6 +166,12 @@ export async function POST(
           content: `订单 ${order.orderNo} 的签证材料${isInitial ? '已上传' : '已更新'}，请查看并确认交付`,
         },
       })
+      emitToUser(order.collectorId, 'notification', {
+        type: isInitial ? 'MATERIAL_UPLOADED' : 'MATERIAL_FEEDBACK',
+        title: isInitial ? '签证材料已上传' : '签证材料已更新',
+        orderId: id,
+        orderNo: order.orderNo,
+      })
     }
 
     // 通知客户（状态变为待交付时）
@@ -178,6 +185,12 @@ export async function POST(
           title: '签证材料已制作完成',
           content: `您的订单 ${order.orderNo} 签证材料已制作完成，请在平台查看`,
         },
+      })
+      emitToUser(order.customerId, 'notification', {
+        type: 'MATERIAL_UPLOADED',
+        title: '签证材料已制作完成',
+        orderId: id,
+        orderNo: order.orderNo,
       })
     }
 

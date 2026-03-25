@@ -8,6 +8,7 @@ interface NotificationItem {
   title: string
   content: string | null
   isRead: boolean
+  orderId: string | null
   createdAt: string
 }
 

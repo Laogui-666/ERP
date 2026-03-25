@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { useNotificationStore } from '@/stores/notification-store'
+import { useSocketClient } from '@/hooks/use-socket-client'
 import { cn } from '@/lib/utils'
 
 const TABS = [
@@ -22,12 +23,23 @@ export default function CustomerLayout({
   const pathname = usePathname()
   const { unreadCount, fetchUnreadCount } = useNotificationStore()
 
-  // 轮询未读通知数（30s）
+  // Socket.io 实时通知 → 即时刷新角标
+  const { isConnected } = useSocketClient({
+    onNotification: () => {
+      fetchUnreadCount()
+    },
+  })
+
+  // 初始加载 + Socket 断连时的 fallback 轮询（30s）
   useEffect(() => {
     fetchUnreadCount()
+  }, [fetchUnreadCount])
+
+  useEffect(() => {
+    if (isConnected) return // Socket 正常时不轮询
     const interval = setInterval(fetchUnreadCount, 30000)
     return () => clearInterval(interval)
-  }, [fetchUnreadCount])
+  }, [isConnected, fetchUnreadCount])
 
   return (
     <div className="min-h-screen">
@@ -42,7 +54,9 @@ export default function CustomerLayout({
               {user?.realName ?? ''}
             </span>
             <button
-              onClick={() => { void logout() }}
+              onClick={() => {
+                void logout()
+              }}
               className="text-xs text-[var(--color-text-placeholder)] hover:text-[var(--color-error)] transition-colors"
             >
               退出
@@ -52,16 +66,16 @@ export default function CustomerLayout({
       </header>
 
       {/* 内容区域 */}
-      <main className="mx-auto max-w-lg px-4 py-4 pb-20">
-        {children}
-      </main>
+      <main className="mx-auto max-w-lg px-4 py-4 pb-20">{children}</main>
 
       {/* 底部Tab栏 */}
       <nav className="glass-topbar fixed bottom-0 left-0 right-0 z-50">
         <div className="mx-auto flex max-w-lg justify-around py-2">
           {TABS.map((tab) => {
-            const isActive = pathname === tab.href || pathname.startsWith(tab.href + '/')
-            const showBadge = tab.href === '/customer/notifications' && unreadCount > 0
+            const isActive =
+              pathname === tab.href || pathname.startsWith(tab.href + '/')
+            const showBadge =
+              tab.href === '/customer/notifications' && unreadCount > 0
 
             return (
               <Link

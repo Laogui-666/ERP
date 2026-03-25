@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNotifications } from '@/hooks/use-notifications'
 import { formatDateTime } from '@/lib/utils'
+import { NOTIFICATION_ICONS } from '@/lib/notification-icons'
 
 export function NotificationBell() {
   const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead } = useNotifications()
@@ -75,6 +76,9 @@ export function NotificationBell() {
                   onClick={() => { void markAsRead(n.id) }}
                 >
                   <div className="flex items-start gap-2">
+                    <span className="text-sm shrink-0 mt-0.5">
+                      {NOTIFICATION_ICONS[n.type] ?? '🔔'}
+                    </span>
                     {!n.isRead && (
                       <span className="w-2 h-2 bg-[var(--color-info)] rounded-full mt-1.5 shrink-0" />
                     )}

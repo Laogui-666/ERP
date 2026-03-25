@@ -1,12 +1,12 @@
-# 沐海旅行 ERP - M3 全知开发手册（V7.0 终版）
+# 沐海旅行 ERP - M3 全知开发手册（V8.0 终版）
 
-> **文档版本**: V7.0
-> **更新日期**: 2026-03-25 02:56
+> **文档版本**: V8.0
+> **更新日期**: 2026-03-25 11:30
 > **用途**: M3 阶段唯一开发指南。即使丢失所有上下文，拿到本文件 + Git 仓库即可完整恢复开发。
-> **前置条件**: M1 ✅ + M2 ✅ + M5 ✅ 全部完成（107 源文件 / ~11,900 行 / 33 API 路由 / 15 页面 / 24 组件 / 74 测试用例）
+> **前置条件**: M1 ✅ + M2 ✅ + M5 ✅ 全部完成（110 源文件 / ~12,740 行 / 34 API 路由 / 16 页面 / 25 组件 / 74 测试用例）
 > **核心交付**: 客户端门户完整可用 + 两类资料交互闭环 + 实时通信接入 + 全链路通知闭环
-> **分析基础**: 三轮深度分析（逐文件审查全部 107 个源文件 + 33 个 API 路由 + 工作流文档 + 客户材料清单 + 实际工作流比对）+ 批次2专项两轮审查（20个关键文件）+ 批次2深度审查4项修复
-> **当前阶段**: M3 批次 1-2/8 完成 ✅ | 下一步：批次 3（B类材料+详情页+确认提交+出签反馈）
+> **分析基础**: 三轮深度分析（逐文件审查全部 110 个源文件 + 34 个 API 路由 + 工作流文档 + 客户材料清单 + 实际工作流比对）+ 批次2专项两轮审查（20个关键文件）+ 批次2深度审查4项修复 + 批次3完整实现+验收
+> **当前阶段**: M3 批次 1-3/8 完成 ✅ | 下一步：批次 4（通知中心+Socket客户端+Tab角标）
 
 ---
 
@@ -54,17 +54,17 @@
 | M1 基础架构 | ✅ 100% |
 | M2 核心工作流 | ✅ 100% (19/19) |
 | M5 多申请人+看板 | ✅ 100% (8/8 批次) |
-| M3 文件与客户端 | 🔄 25%（批次 1-2/8 完成，批次 2 深度审查 4 项修复完成） |
+| M3 文件与客户端 | 🔄 37.5%（批次 1-3/8 完成，25h 计划） |
 
 ### 1.3 代码规模
 
 | 维度 | 数量 |
 |---|---|
-| 源文件 | 107 个 |
-| 代码行数 | ~11,900 行 |
-| API 路由 | 33 个 |
-| 页面 | 15 个 |
-| 组件 | 24 个 |
+| 源文件 | 110 个 |
+| 代码行数 | ~12,740 行 |
+| API 路由 | 34 个 |
+| 页面 | 16 个 |
+| 组件 | 25 个 |
 | 测试文件 | 4 个（74 用例） |
 | Hooks | 3 个 |
 | Stores | 3 个 |
@@ -228,6 +228,7 @@ npm run build
 | `GlassCard` | `layout/glass-card.tsx` | 玻璃拟态卡片 | 批次 2 |
 | `StatusBadge` | `orders/status-badge.tsx` | 订单状态徽章 | 批次 3 |
 | `StatusTimeline` | `orders/status-timeline.tsx` | 6 步进度条 | 批次 3 |
+| `MaterialChecklist` | `orders/material-checklist.tsx` | B类材料下载面板（MAKING_MATERIALS制作中提示+PENDING_DELIVERY+下载） | ✅批次3 |
 | `Toast` | `ui/toast.tsx` | Toast 通知 | 批次 2 |
 | `Badge` | `ui/badge.tsx` | 徽章组件 | 批次 2 |
 | `DocumentPanel` | `documents/document-panel.tsx` | 管理端资料面板（含分组逻辑） | 参考分组逻辑 |
@@ -1328,70 +1329,139 @@ io.use(async (socket: Socket, next) => {
 
 ## 11. 批次 3：B 类材料 + 详情页 + 确认提交 + 出签反馈
 
-> 5h，依赖批次 1+2。
+> ✅ 已完成 2026-03-25 | 3 项子任务全部交付
 
-### M3-9：客户确认提交 API
+### M3-9：客户确认提交 API ✅
 
-**新建** `src/app/api/orders/[id]/submit/route.ts`
+**新建** `src/app/api/orders/[id]/submit/route.ts`（117 行）
 
 ```
 端点：POST /api/orders/[id]/submit
 认证：getCurrentUser(request)
 ```
 
-**处理逻辑**：
-1. 认证
-2. 查询订单（`id === orderId && customerId === user.userId`）
-3. 验证 `status === COLLECTING_DOCS`
-4. 事务内：
-   a. 查询有文件的 requirements：`findMany({ where: { orderId, files: { some: {} } } })`
-   b. 验证至少一个 requirement 有文件（否则抛 400）
-   c. 将所有有文件的 requirement → REVIEWING
-   d. 写操作日志："客户确认提交资料"
-   e. 创建通知给 `order.collectorId`：
-      ```typescript
-      type: 'DOCS_SUBMITTED',
-      title: `订单 ${orderNo} 客户已提交资料`,
-      content: `${customerName} 已上传资料并确认提交，请及时审核`,
-      ```
-   f. Socket 推送：`emitToUser(collectorId, 'notification', { type: 'DOCS_SUBMITTED', ... })`
+**请求体**：无（纯 POST，无需 body）
 
-### M3-10：B 类材料说明面板
+**处理逻辑（完整实现）**：
+1. 认证 + 校验 `customerId === user.userId`（只能提交自己的订单）
+2. 查询订单含 `documentRequirements`（含 `_count.files`）+ `collectorId` + `orderNo`
+3. 验证 `status === COLLECTING_DOCS`（否则抛 400 `INVALID_STATUS`）
+4. 筛选有文件的 requirements：`r._count.files > 0`
+5. 验证至少一个有文件（否则抛 400 `NO_FILES`）
+6. **幂等处理**：所有有文件的已是 REVIEWING → 直接返回成功
+7. 事务内：
+   a. 遍历有文件的 req，`status !== REVIEWING && !== APPROVED` → 设 REVIEWING
+   b. 写操作日志：`action='客户确认提交资料'`, `detail='提交了 N 项资料'`
+   c. 创建通知给 `order.collectorId`：`type=DOCS_SUBMITTED`, 含需求项名称列表
+8. 事务后：`emitToUser(collectorId, 'notification', {...})` Socket 推送
 
-**新建** `src/components/orders/material-checklist.tsx`
+**错误码**：401 未登录 / 404 订单不存在 / 400 状态不可提交 / 400 无文件
 
-显示逻辑：
-- MAKING_MATERIALS：显示"签证材料正在制作中，请耐心等待..."提示
-- PENDING_DELIVERY+：显示材料下载列表（预览+下载）
+**关键设计**：
+- 不改变订单状态（仍为 COLLECTING_DOCS），等资料员全部 APPROVED 后手动推 PENDING_REVIEW
+- 无文件的 requirement 保持 PENDING，资料员可继续追加需求
+- 幂等：重复提交不会报错，返回"已提交"消息
 
-### M3-11：客户订单详情页 ⭐
+### M3-10：B 类材料说明面板 ✅
 
-**新建** `src/app/customer/orders/[id]/page.tsx`
+**新建** `src/components/orders/material-checklist.tsx`（93 行）
 
-页面结构：
-```
-← 返回   HX2026...   状态徽章
-🌍 法国 · 旅游签证
-StatusTimeline（6步进度条）
-
-📤 我需要上传的资料
-CustomerUpload 组件
-[✅ 确认提交] ← COLLECTING_DOCS 且有文件时可点击
-
-📥 签证材料（为您制作）
-← MAKING_MATERIALS: 制作中提示
-← PENDING_DELIVERY+: MaterialChecklist
-
-🎫 签证结果反馈 ← 仅 DELIVERED 状态
-[✅ 已出签]  [❌ 被拒签]
-
-📋 订单信息
-📜 操作记录
+**Props**：
+```typescript
+interface MaterialChecklistProps {
+  status: OrderStatus
+  materials: VisaMaterial[]
+}
 ```
 
-数据获取：`GET /api/orders/${orderId}`（返回含 documentRequirements+files, visaMaterials, orderLogs, applicants）
+**渲染逻辑**：
+- `status === MAKING_MATERIALS`：居中显示"签证材料正在制作中，请耐心等待..." + 加载动画 + "制作完成后会第一时间通知您"
+- `status ∈ {PENDING_DELIVERY, DELIVERED, APPROVED, REJECTED, PARTIAL}`：
+  - 材料列表，每个材料显示：FilePreview(compact) + 下载按钮 + 版本号 + 创建时间 + 备注
+  - 下载链接用 `mat.ossUrl`（DB 中已存的签名 URL，7天有效）
+  - 空列表显示"暂无签证材料"
+- 其他状态：不渲染（return null）
 
-出签反馈：调用 `POST /api/orders/[id]/status` body: `{ toStatus: 'APPROVED' | 'REJECTED' }`
+**注意**：客户端组件不能调用 `getDownloadUrl()`（服务端函数），使用 DB 中存储的 `ossUrl` 签名链接。
+
+### M3-11：客户订单详情页 ⭐ ✅
+
+**新建** `src/app/customer/orders/[id]/page.tsx`（352 行）
+
+**数据获取**：`apiFetch('/api/orders/${orderId}')` → `OrderDetail`（含 applicants/documentRequirements+files/visaMaterials/orderLogs）
+
+**页面结构（完整实现）**：
+```
+[头部]
+← 返回按钮    HX2026XXXXX    [StatusBadge 状态徽章]
+
+[签证概要]
+🌍 法国 · 旅游签证 👥 2人（多人时显示）
+
+[状态时间线]
+GlassCard 包裹 StatusTimeline 组件（竖向6步+完成时间+终态）
+
+━━━ 分隔线 ━━━
+
+[📤 我需要上传的资料]
+CustomerUpload 组件（已实现，直接复用）
+  requirements={order.documentRequirements}
+  applicantCount={order.applicantCount}
+  applicants={order.applicants}
+  onRefresh={fetchOrder}
+
+[✅ 确认提交资料] 按钮
+  显示条件：status === COLLECTING_DOCS && 有文件
+  禁用态：提交中显示 spinner
+  提交后：toast 成功 + fetchOrder 刷新
+  已提交提示：所有 REVIEWING/APPROVED → "资料已提交，正在审核中"
+
+━━━ 分隔线 ━━━
+
+[📥 签证材料（为您制作）]
+MaterialChecklist 组件
+  status={order.status}
+  materials={order.visaMaterials}
+  仅 MAKING_MATERIALS+ 状态显示
+
+━━━ 分隔线 ━━━
+
+[🎫 签证结果] ← 仅 DELIVERED 状态
+  初始：[确认签证结果] 按钮
+  点击后展开：
+    [✅ 已出签] [❌ 被拒签] [取消]
+  反馈 API：POST /api/orders/[id]/status body: { toStatus: 'APPROVED'|'REJECTED' }
+
+━━━ 分隔线 ━━━
+
+[📋 订单信息] GlassCard
+  InfoRow 显示：目标国家/签证类型/签证类别/出行日期/金额/支付方式/预约日期/指纹采集/送签城市/创建时间
+
+[📜 操作记录] GlassCard（非空时显示）
+  竖线+圆点时间线：操作人 + 时间 + 操作内容 + 详情
+```
+
+**状态判断**：
+- `canSubmit = status === 'COLLECTING_DOCS' && documentRequirements.some(r => r.files.length > 0)`
+- `canFeedback = status === 'DELIVERED'`
+- `showMaterials = status ∈ {MAKING_MATERIALS, PENDING_DELIVERY, DELIVERED, APPROVED, REJECTED, PARTIAL}`
+- `showDocuments = documentRequirements.length > 0`
+
+**加载态**：骨架屏复用 `loading.tsx` 风格
+
+**空态**：订单不存在 → 提示 + 返回订单列表按钮
+
+### 批次 3 验收（全部通过 ✅）
+
+| # | 检查项 | 结果 |
+|---|---|:---:|
+| 1 | `npx tsc --noEmit` | ✅ 0 错误 |
+| 2 | `npm run build` | ✅ 0 警告 0 错误 |
+| 3 | `npm run test` | ✅ 74/74 通过 |
+| 4 | `as any` / `console.log` / `TODO` | ✅ 全部 0 |
+| 5 | `'use client'` 首行 | ✅ 全部正确 |
+| 6 | 确认提交 API 幂等性 | ✅ REVIEWING 不重复更新 |
+| 7 | MaterialChecklist 无服务端依赖 | ✅ 用 DB ossUrl 非 getDownloadUrl |
 
 ---
 
@@ -1403,13 +1473,313 @@ CustomerUpload 组件
 
 **新建** `src/hooks/use-socket-client.ts`
 
+**功能**：封装 Socket.io 客户端连接，Cookie 自动认证，事件订阅。
+
+**完整代码模板**：
+```typescript
+'use client'
+
+import { useEffect, useRef, useCallback } from 'react'
+import { io, Socket } from 'socket.io-client'
+
+interface UseSocketOptions {
+  onNotification?: (data: {
+    type: string
+    title: string
+    orderId?: string
+    orderNo?: string
+  }) => void
+}
+
+let socketInstance: Socket | null = null
+
+export function useSocketClient(options: UseSocketOptions = {}) {
+  const optionsRef = useRef(options)
+  optionsRef.current = options
+
+  useEffect(() => {
+    // 已有连接则复用
+    if (socketInstance?.connected) {
+      return () => { /* 不断开，其他页面复用 */ }
+    }
+
+    const socket = io({
+      // 不传 auth.token，依赖 HttpOnly Cookie 自动携带
+      // socket.ts 服务端已改造为 Cookie fallback 认证
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+    })
+
+    socketInstance = socket
+
+    socket.on('connect', () => {
+      console.log('[socket] connected', socket.id)
+    })
+
+    socket.on('notification', (data) => {
+      optionsRef.current.onNotification?.(data)
+    })
+
+    socket.on('disconnect', (reason) => {
+      console.log('[socket] disconnected', reason)
+    })
+
+    socket.on('connect_error', (err) => {
+      console.log('[socket] connect_error', err.message)
+    })
+
+    return () => {
+      // 不断开，页面切换时保持连接
+      // socket.disconnect()
+      // socketInstance = null
+    }
+  }, [])
+
+  const emit = useCallback((event: string, data: unknown) => {
+    socketInstance?.emit(event, data)
+  }, [])
+
+  return { socket: socketInstance, emit }
+}
+```
+
+**关键设计**：
+- 单例模式：全局只有一个 socket 连接，页面切换不断开
+- Cookie 认证：不传 `auth.token`，浏览器自动携带 HttpOnly Cookie
+- `onNotification` 回调：通知到达时触发（布局层用它更新角标）
+
+### M3-13：通知 API 已存在
+
+**已实现端点**（M2 阶段，可直接复用）：
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/notifications` | 通知列表（含 `unreadCount`，按时间倒序，支持分页） |
+| PATCH | `/api/notifications/[id]` | 标记单条已读 |
+| POST | `/api/notifications/mark-all-read` | 全部已读 |
+
+**响应格式**：
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "...",
+      "type": "DOCS_SUBMITTED",
+      "title": "订单 HX2026... 客户已提交资料",
+      "content": "张三 已上传 5 项资料并确认提交",
+      "isRead": false,
+      "orderId": "...",
+      "createdAt": "2026-03-25T10:00:00.000Z"
+    }
+  ],
+  "meta": { "unreadCount": 3, "total": 12, "page": 1, "pageSize": 20, "totalPages": 1 }
+}
+```
+
 ### M3-14：通知中心页面
 
 **新建** `src/app/customer/notifications/page.tsx`
 
-### M3-15：Tab 通知角标
+**功能**：
+- 通知列表（分页加载）
+- 未读/已读视觉区分
+- 点击跳转对应订单
+- 标记单条已读
+- "全部已读"按钮
 
-**修改** `src/app/customer/layout.tsx`（集成 socket + 实时角标）
+**完整代码模板**：
+```typescript
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { apiFetch } from '@/lib/api-client'
+import { GlassCard } from '@/components/layout/glass-card'
+import { useToast } from '@/components/ui/toast'
+import { formatDateTime } from '@/lib/utils'
+
+interface Notification {
+  id: string
+  type: string
+  title: string
+  content: string
+  isRead: boolean
+  orderId: string | null
+  createdAt: string
+}
+
+const TYPE_ICONS: Record<string, string> = {
+  ORDER_NEW: '🆕',
+  ORDER_CREATED: '📋',
+  STATUS_CHANGE: '🔄',
+  DOC_REVIEWED: '📄',
+  DOCS_SUBMITTED: '📤',
+  MATERIAL_UPLOADED: '📥',
+  MATERIAL_FEEDBACK: '📝',
+  APPOINTMENT_REMIND: '⏰',
+  SYSTEM: '🔔',
+}
+
+export default function CustomerNotificationsPage() {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await apiFetch('/api/notifications?page=1&pageSize=50')
+      const json = await res.json()
+      if (json.success) {
+        setNotifications(json.data)
+        setUnreadCount(json.meta?.unreadCount ?? 0)
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { fetchNotifications() }, [fetchNotifications])
+
+  const handleMarkAsRead = async (id: string) => {
+    const res = await apiFetch(`/api/notifications/${id}`, { method: 'PATCH' })
+    const json = await res.json()
+    if (json.success) {
+      setNotifications((prev) =>
+        prev.map((n) => n.id === id ? { ...n, isRead: true } : n)
+      )
+      setUnreadCount((prev) => Math.max(0, prev - 1))
+    }
+  }
+
+  const handleMarkAllRead = async () => {
+    const res = await apiFetch('/api/notifications/mark-all-read', { method: 'POST' })
+    const json = await res.json()
+    if (json.success) {
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+      setUnreadCount(0)
+      toast('success', '已全部标记为已读')
+    }
+  }
+
+  const handleClick = async (notification: Notification) => {
+    // 标记已读
+    if (!notification.isRead) {
+      await handleMarkAsRead(notification.id)
+    }
+    // 跳转订单
+    if (notification.orderId) {
+      router.push(`/customer/orders/${notification.orderId}`)
+    }
+  }
+
+  return (
+    <div className="space-y-4 pb-20">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+          消息
+          {unreadCount > 0 && (
+            <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-[var(--color-error)] text-white">
+              {unreadCount}
+            </span>
+          )}
+        </h2>
+        {unreadCount > 0 && (
+          <button
+            onClick={handleMarkAllRead}
+            className="text-xs text-[var(--color-info)] hover:underline"
+          >
+            全部已读
+          </button>
+        )}
+      </div>
+
+      {isLoading ? (
+        <GlassCard className="p-8 text-center">
+          <div className="inline-block w-6 h-6 border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin" />
+        </GlassCard>
+      ) : notifications.length === 0 ? (
+        <GlassCard className="p-8 text-center">
+          <p className="text-sm text-[var(--color-text-secondary)]">暂无消息</p>
+        </GlassCard>
+      ) : (
+        <div className="space-y-2">
+          {notifications.map((n) => (
+            <GlassCard
+              key={n.id}
+              className={`p-4 cursor-pointer transition-colors ${
+                !n.isRead ? 'border-l-2 border-l-[var(--color-primary)]' : ''
+              }`}
+              onClick={() => handleClick(n)}
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-lg shrink-0">{TYPE_ICONS[n.type] ?? '🔔'}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-sm truncate ${!n.isRead ? 'font-semibold text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'}`}>
+                      {n.title}
+                    </span>
+                    {!n.isRead && (
+                      <span className="w-2 h-2 rounded-full bg-[var(--color-primary)] shrink-0" />
+                    )}
+                  </div>
+                  <p className="text-xs text-[var(--color-text-placeholder)] mt-1 line-clamp-2">
+                    {n.content}
+                  </p>
+                  <span className="text-[10px] text-[var(--color-text-placeholder)] mt-1 block">
+                    {formatDateTime(n.createdAt)}
+                  </span>
+                </div>
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+**设计要点**：
+- 未读通知左侧蓝色边框 + 右侧蓝点
+- 点击自动标记已读 + 跳转订单详情
+- 通知类型图标映射（9 种 NotificationType）
+- "全部已读"按钮仅在有未读时显示
+
+### M3-15：Tab 通知角标集成
+
+**修改** `src/app/customer/layout.tsx`
+
+**当前状态**：已有 `useNotificationStore` 30s 轮询 `unreadCount`。需改为 Socket 实时推送触发。
+
+**修改内容**：
+1. 导入 `useSocketClient`
+2. `onNotification` 回调中调用 `fetchUnreadCount()` 立即刷新角标
+3. 保留 30s 轮询作为 fallback（Socket 断连时兜底）
+
+**修改后的关键代码**（在现有 layout.tsx 中添加）：
+```typescript
+import { useSocketClient } from '@/hooks/use-socket-client'
+
+// 在组件内添加：
+const { fetchUnreadCount } = useNotificationStore()
+
+useSocketClient({
+  onNotification: () => {
+    // 收到新通知立即刷新角标
+    fetchUnreadCount()
+  },
+})
+```
+
+**验收**：
+- Socket 连接成功（Cookie 认证）
+- 收到通知时角标数字实时更新
+- Socket 断连时 30s 轮询兜底
 
 ---
 
@@ -1421,9 +1791,258 @@ CustomerUpload 组件
 
 **新建** `src/app/customer/profile/page.tsx`
 
+**功能**：
+- 用户信息展示（头像/姓名/手机/邮箱/角色）
+- 修改密码入口
+- 订单入口（跳转 /customer/orders）
+- 退出登录按钮
+
+**完整代码模板**：
+```typescript
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/use-auth'
+import { GlassCard } from '@/components/layout/glass-card'
+import { useToast } from '@/components/ui/toast'
+import { apiFetch } from '@/lib/api-client'
+
+export default function CustomerProfilePage() {
+  const router = useRouter()
+  const { user, logout } = useAuth()
+  const { toast } = useToast()
+
+  // 修改密码
+  const [showPwForm, setShowPwForm] = useState(false)
+  const [oldPassword, setOldPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+
+  const handleChangePassword = async () => {
+    if (!oldPassword || !newPassword) {
+      toast('error', '请填写完整')
+      return
+    }
+    if (newPassword.length < 6) {
+      toast('error', '新密码至少6位')
+      return
+    }
+    if (newPassword !== confirmPw) {
+      toast('error', '两次输入不一致')
+      return
+    }
+    setIsSaving(true)
+    try {
+      const res = await apiFetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldPassword, newPassword }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        toast('success', '密码修改成功')
+        setShowPwForm(false)
+        setOldPassword('')
+        setNewPassword('')
+        setConfirmPw('')
+      } else {
+        toast('error', json.error?.message ?? '修改失败')
+      }
+    } catch {
+      toast('error', '修改失败')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  if (!user) return null
+
+  return (
+    <div className="space-y-4 pb-20">
+      <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">我的</h2>
+
+      {/* 用户信息 */}
+      <GlassCard className="p-5">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-[var(--color-primary)]/15 flex items-center justify-center text-xl font-bold text-[var(--color-primary)]">
+            {user.realName?.[0] ?? user.username[0]}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+              {user.realName ?? user.username}
+            </p>
+            <p className="text-xs text-[var(--color-text-placeholder)] mt-0.5">
+              {user.phone}
+            </p>
+            {user.email && (
+              <p className="text-xs text-[var(--color-text-placeholder)]">{user.email}</p>
+            )}
+          </div>
+        </div>
+      </GlassCard>
+
+      {/* 菜单 */}
+      <GlassCard className="divide-y divide-white/[0.06]">
+        <MenuItem
+          icon="📋"
+          label="我的订单"
+          onClick={() => router.push('/customer/orders')}
+        />
+        <MenuItem
+          icon="🔒"
+          label="修改密码"
+          onClick={() => setShowPwForm(!showPwForm)}
+        />
+      </GlassCard>
+
+      {/* 修改密码表单 */}
+      {showPwForm && (
+        <GlassCard className="p-5 space-y-3">
+          <input
+            type="password"
+            placeholder="当前密码"
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-placeholder)] focus:outline-none focus:border-[var(--color-primary)]/50"
+          />
+          <input
+            type="password"
+            placeholder="新密码（至少6位）"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-placeholder)] focus:outline-none focus:border-[var(--color-primary)]/50"
+          />
+          <input
+            type="password"
+            placeholder="确认新密码"
+            value={confirmPw}
+            onChange={(e) => setConfirmPw(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-placeholder)] focus:outline-none focus:border-[var(--color-primary)]/50"
+          />
+          <button
+            onClick={handleChangePassword}
+            disabled={isSaving}
+            className="w-full py-2.5 rounded-xl bg-[var(--color-primary)] text-white text-sm font-medium disabled:opacity-50"
+          >
+            {isSaving ? '提交中...' : '确认修改'}
+          </button>
+        </GlassCard>
+      )}
+
+      {/* 退出登录 */}
+      <button
+        onClick={() => { void logout() }}
+        className="w-full py-3 rounded-xl border border-[var(--color-error)]/30 text-[var(--color-error)] text-sm font-medium hover:bg-[var(--color-error)]/10 transition-colors"
+      >
+        退出登录
+      </button>
+    </div>
+  )
+}
+
+function MenuItem({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.03] transition-colors"
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-lg">{icon}</span>
+        <span className="text-sm text-[var(--color-text-primary)]">{label}</span>
+      </div>
+      <svg className="w-4 h-4 text-[var(--color-text-placeholder)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+  )
+}
+```
+
 ### M3-17：修改密码 API
 
 **新建** `src/app/api/auth/change-password/route.ts`
+
+```
+端点：POST /api/auth/change-password
+认证：getCurrentUser(request)
+```
+
+**请求体（Zod 校验）**：
+```typescript
+const changePasswordSchema = z.object({
+  oldPassword: z.string().min(1),
+  newPassword: z.string().min(6).max(50),
+})
+```
+
+**处理逻辑**：
+1. 认证（所有已登录用户可调用）
+2. Zod 校验
+3. 查询用户（`id === user.userId`）
+4. `bcrypt.compare(oldPassword, user.passwordHash)` 验证旧密码
+5. `bcrypt.hash(newPassword, 10)` 哈希新密码
+6. 更新 `passwordHash`
+7. 返回成功
+
+**错误码**：401 未登录 / 400 参数校验失败 / 401 旧密码错误
+
+**完整代码模板**：
+```typescript
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { getCurrentUser } from '@/lib/auth'
+import { AppError, createSuccessResponse } from '@/types/api'
+import bcrypt from 'bcryptjs'
+import { z } from 'zod'
+
+const changePasswordSchema = z.object({
+  oldPassword: z.string().min(1, '请输入当前密码'),
+  newPassword: z.string().min(6, '新密码至少6位').max(50, '新密码最多50位'),
+})
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await getCurrentUser(request)
+    if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
+
+    const body = await request.json()
+    const data = changePasswordSchema.parse(body)
+
+    // 查询当前密码
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { passwordHash: true },
+    })
+    if (!dbUser) throw new AppError('NOT_FOUND', '用户不存在', 404)
+
+    // 验证旧密码
+    const isOldValid = await bcrypt.compare(data.oldPassword, dbUser.passwordHash)
+    if (!isOldValid) throw new AppError('INVALID_PASSWORD', '当前密码错误', 401)
+
+    // 更新密码
+    const newHash = await bcrypt.hash(data.newPassword, 10)
+    await prisma.user.update({
+      where: { id: user.userId },
+      data: { passwordHash: newHash },
+    })
+
+    return NextResponse.json(createSuccessResponse({ message: '密码修改成功' }))
+  } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json(error.toJSON(), { status: error.statusCode })
+    }
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        new AppError('VALIDATION_ERROR', '参数校验失败', 400, error.errors).toJSON(),
+        { status: 400 }
+      )
+    }
+    throw error
+  }
+}
+```
 
 ---
 
@@ -1431,10 +2050,98 @@ CustomerUpload 组件
 
 > 2.5h，依赖批次 2+3。
 
-- M3-18 已在批次 2（M3-24）修复 ✅
+- M3-18 已在批次 2（M3-24）修复 ✅（发送清单通知客户）
 - M3-21：文件删除集成到 DocumentPanel
 - M3-22：批量上传并发优化
 - M3-20：全链路通知验证（9 节点）
+
+### M3-21：文件删除集成到 DocumentPanel
+
+**修改** `src/components/documents/document-panel.tsx`
+
+**当前状态**：管理端 DocumentPanel 支持上传/审核/预览，但没有文件级删除按钮。
+
+**修改内容**：
+1. 在每个文件行添加"删除"按钮（仅 `OPERATOR`/`DOC_COLLECTOR`/`VISA_ADMIN` 可见）
+2. 删除逻辑复用 `DELETE /api/documents/files/${fileId}`
+3. 删除后 `onRefresh()` 刷新
+
+**关键代码片段**（在文件列表渲染处添加）：
+```tsx
+{canDelete && (
+  <button
+    onClick={async () => {
+      if (!confirm('确定删除该文件？')) return
+      const res = await apiFetch(`/api/documents/files/${file.id}`, { method: 'DELETE' })
+      const json = await res.json()
+      if (json.success) {
+        toast('success', '已删除')
+        onRefresh?.()
+      } else {
+        toast('error', json.error?.message ?? '删除失败')
+      }
+    }}
+    className="text-xs text-[#B87C7C] hover:text-[#B87C7C]/80"
+  >
+    删除
+  </button>
+)}
+```
+
+**`canDelete` 判断**：`['DOC_COLLECTOR', 'OPERATOR', 'VISA_ADMIN', 'COMPANY_OWNER'].includes(user.role)`
+
+### M3-22：批量上传并发优化
+
+**修改** `src/components/documents/document-panel.tsx`（上传逻辑）
+
+**当前问题**：多文件上传是串行的（逐个上传），大文件多时体验差。
+
+**优化方案**：改为并发上传（最多 3 个同时），带整体进度。
+
+**关键代码片段**：
+```typescript
+async function handleBatchUpload(requirementId: string, files: FileList) {
+  const fileArray = Array.from(files)
+  const CONCURRENCY = 3
+  let completed = 0
+
+  // 并发池
+  const pool = async (file: File) => {
+    const ok = await handleSingleUpload(requirementId, file)
+    completed++
+    setBatchProgress({ current: completed, total: fileArray.length })
+    return ok
+  }
+
+  // 分批执行
+  const results: boolean[] = []
+  for (let i = 0; i < fileArray.length; i += CONCURRENCY) {
+    const batch = fileArray.slice(i, i + CONCURRENCY)
+    const batchResults = await Promise.all(batch.map(pool))
+    results.push(...batchResults)
+  }
+
+  if (results.some(Boolean)) onRefresh?.()
+}
+```
+
+### M3-20：全链路通知验证（9 节点）
+
+手动走一遍端到端流程，验证每个通知节点：
+
+| # | 节点 | 触发方式 | 接收者 | 验证方法 |
+|---|---|---|---|---|
+| 1 | ORDER_NEW | 客服创建订单 | 资料员 | 登录资料员账号检查通知 |
+| 2 | ORDER_CREATED | 客服创建订单 | 客户 | 登录客户账号检查通知 |
+| 3 | STATUS_CHANGE | 任何状态流转 | 相关人员 | 接单/审核/交付时检查 |
+| 4 | DOC_REVIEWED | 资料员发送清单 | 客户 | 客户检查通知+详情页有需求项 |
+| 5 | DOCS_SUBMITTED | 客户确认提交 | 资料员 | 资料员检查通知+需求项变 REVIEWING |
+| 6 | DOC_REVIEWED | 资料审核驳回 | 客户 | 客户检查驳回原因 |
+| 7 | MATERIAL_UPLOADED | 操作员上传材料 | 资料员+客户 | 双方检查通知 |
+| 8 | STATUS_CHANGE | 取消订单 | 相关人员 | 检查通知 |
+| 9 | STATUS_CHANGE | 转单 | 目标用户 | 检查通知 |
+
+**验收标准**：9 个节点全部触发，通知内容准确（中文），Socket 推送实时到达。
 
 ---
 
@@ -1467,13 +2174,13 @@ CustomerUpload 组件
 | 3 | `src/app/api/documents/files/[id]/route.ts` | ✅ 2 | 文件级删除 |
 | 4 | `src/components/documents/customer-upload.tsx` | ✅ 2 | 客户上传组件 ⭐ |
 | 5 | `src/lib/file-types.ts` | ✅ 2 | 文件类型白名单常量 |
-| 5 | `src/app/api/orders/[id]/submit/route.ts` | 3 | 客户确认提交 + 通知 |
-| 6 | `src/components/orders/material-checklist.tsx` | 3 | B 类材料下载面板 |
-| 7 | `src/app/customer/orders/[id]/page.tsx` | 3 | 客户订单详情页 ⭐ |
-| 8 | `src/hooks/use-socket-client.ts` | 4 | Socket 客户端 Hook |
-| 9 | `src/app/customer/notifications/page.tsx` | 4 | 通知中心 |
-| 10 | `src/app/customer/profile/page.tsx` | 5 | 个人中心 |
-| 11 | `src/app/api/auth/change-password/route.ts` | 5 | 修改密码 |
+| 6 | `src/app/api/orders/[id]/submit/route.ts` | ✅ 3 | 客户确认提交 + 通知 |
+| 7 | `src/components/orders/material-checklist.tsx` | ✅ 3 | B 类材料下载面板 |
+| 8 | `src/app/customer/orders/[id]/page.tsx` | ✅ 3 | 客户订单详情页 ⭐ |
+| 9 | `src/hooks/use-socket-client.ts` | 4 | Socket 客户端 Hook |
+| 10 | `src/app/customer/notifications/page.tsx` | 4 | 通知中心 |
+| 11 | `src/app/customer/profile/page.tsx` | 5 | 个人中心 |
+| 12 | `src/app/api/auth/change-password/route.ts` | 5 | 修改密码 |
 
 ### 修改文件（5 个）
 
@@ -1518,11 +2225,11 @@ CustomerUpload 组件
   ├── file-types.ts                     共享文件类型常量 ✅
   └── 深度审查  4项修复(ossKey验证/OSS单例/常量提取/批量刷新) ✅
 
-批次 3（5h）— B 类材料 + 详情页 + 确认提交 + 出签反馈
-  ├── M3-9   submit/route.ts            确认提交 API
-  ├── M3-10  material-checklist.tsx     B 类材料面板
-  ├── M3-11  orders/[id]/page.tsx       客户详情页 ⭐
-  └── 集成 CustomerUpload + MaterialChecklist + StatusTimeline
+批次 3（5h）— B 类材料 + 详情页 + 确认提交 + 出签反馈  ✅ 已完成 2026-03-25
+  ├── M3-9   submit/route.ts            确认提交 API ✅
+  ├── M3-10  material-checklist.tsx     B 类材料面板 ✅
+  ├── M3-11  orders/[id]/page.tsx       客户详情页 ⭐ ✅
+  └── 验收：tsc 0错误 / build 0警告 / test 74通过 ✅
 
 批次 4（3h）— 通知 + Socket
   ├── M3-12  use-socket-client.ts       Socket 客户端 Hook
@@ -1639,14 +2346,18 @@ CustomerUpload 组件
 - [x] 深度审查 ALLOWED_TYPES 共享常量修复
 - [x] 深度审查批量上传刷新优化
 
-### 批次 3 完成后
-- [ ] 客户详情页完整展示
-- [ ] A 类可上传
-- [ ] B 类可下载（PENDING_DELIVERY+）
-- [ ] MAKING_MATERIALS 显示制作中提示
-- [ ] 确认提交通知资料员
-- [ ] 出签反馈 UI 可用
-- [ ] `npx tsc --noEmit` = 0 错误
+### 批次 3 完成后 ✅ 全部通过
+- [x] 客户详情页完整展示
+- [x] A 类可上传（复用 CustomerUpload）
+- [x] B 类可下载（PENDING_DELIVERY+）
+- [x] MAKING_MATERIALS 显示制作中提示
+- [x] 确认提交通知资料员（DOCS_SUBMITTED + Socket 推送）
+- [x] 出签反馈 UI 可用（DELIVERED 状态可点）
+- [x] 确认提交幂等（REVIEWING 不重复更新）
+- [x] MaterialChecklist 无服务端依赖（用 DB ossUrl）
+- [x] `npx tsc --noEmit` = 0 错误
+- [x] `npm run build` = 0 警告
+- [x] 74 tests pass
 
 ### 批次 7（最终验收）
 - [ ] 全部 9 项全局检查通过
@@ -1656,4 +2367,4 @@ CustomerUpload 组件
 
 ---
 
-*文档结束 — M3 全知手册 V6.0（两轮深度分析终版 + 批次2完整规格）*
+*文档结束 — M3 全知手册 V8.0（批次1-3完成版 + 批次4-6完整规格）*

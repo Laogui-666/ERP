@@ -1,12 +1,12 @@
-# 沐海旅行 ERP - M3 全知开发手册（V8.0 终版）
+# 沐海旅行 ERP - M3 全知开发手册（V9.0 终版）
 
-> **文档版本**: V8.0
-> **更新日期**: 2026-03-25 11:30
+> **文档版本**: V9.0
+> **更新日期**: 2026-03-25 12:40
 > **用途**: M3 阶段唯一开发指南。即使丢失所有上下文，拿到本文件 + Git 仓库即可完整恢复开发。
-> **前置条件**: M1 ✅ + M2 ✅ + M5 ✅ 全部完成（110 源文件 / ~12,740 行 / 34 API 路由 / 16 页面 / 25 组件 / 74 测试用例）
+> **前置条件**: M1 ✅ + M2 ✅ + M5 ✅ 全部完成（113 源文件 / ~13,069 行 / 34 API 路由 / 17 页面 / 25 组件 / 74 测试用例）
 > **核心交付**: 客户端门户完整可用 + 两类资料交互闭环 + 实时通信接入 + 全链路通知闭环
-> **分析基础**: 三轮深度分析（逐文件审查全部 110 个源文件 + 34 个 API 路由 + 工作流文档 + 客户材料清单 + 实际工作流比对）+ 批次2专项两轮审查（20个关键文件）+ 批次2深度审查4项修复 + 批次3完整实现+验收
-> **当前阶段**: M3 批次 1-3/8 完成 ✅ | 下一步：批次 4（通知中心+Socket客户端+Tab角标）
+> **分析基础**: 三轮深度分析（逐文件审查全部 113 个源文件 + 34 个 API 路由 + 工作流文档 + 客户材料清单 + 实际工作流比对）+ 批次2专项两轮审查 + 批次2深度审查4项修复 + 批次3完整实现+验收 + 批次4深度分析8缺口修复
+> **当前阶段**: M3 批次 1-4/8 完成 ✅ | 下一步：批次 5（个人中心+修改密码API）
 
 ---
 
@@ -54,16 +54,16 @@
 | M1 基础架构 | ✅ 100% |
 | M2 核心工作流 | ✅ 100% (19/19) |
 | M5 多申请人+看板 | ✅ 100% (8/8 批次) |
-| M3 文件与客户端 | 🔄 37.5%（批次 1-3/8 完成，25h 计划） |
+| M3 文件与客户端 | 🔄 50%（批次 1-4/8 完成，25h 计划） |
 
 ### 1.3 代码规模
 
 | 维度 | 数量 |
 |---|---|
-| 源文件 | 110 个 |
-| 代码行数 | ~12,740 行 |
+| 源文件 | 113 个 |
+| 代码行数 | ~13,069 行 |
 | API 路由 | 34 个 |
-| 页面 | 16 个 |
+| 页面 | 17 个 |
 | 组件 | 25 个 |
 | 测试文件 | 4 个（74 用例） |
 | Hooks | 3 个 |
@@ -1465,21 +1465,34 @@ MaterialChecklist 组件
 
 ---
 
-## 12. 批次 4：通知 + Socket
+## 12. 批次 4：通知 + Socket ✅ 已完成
 
-> 3h，依赖批次 1。
+> 3h | 完成于 2026-03-25 | Git: c30e666
 
-### M3-12：Socket 客户端 Hook
+### 深度分析发现的 8 个缺口
 
-**新建** `src/hooks/use-socket-client.ts`
+| # | 级别 | 缺口 | 修复 |
+|---|:---:|---|---|
+| 1 | 🔴P0 | `NotificationItem` 缺 `orderId` | notification-store.ts 接口加 `orderId: string \| null` |
+| 2 | 🔴P0 | Socket 单例无生命周期管理 | Hook 暴露 `disconnect()` 方法 |
+| 3 | 🔴P0 | 通知类型路由逻辑未定义 | 新建 `notification-icons.ts` 共享 `getNotificationRoute()` |
+| 4 | 🟡P1 | 通知中心无分页 | page.tsx 实现分页 20条/页 + "加载更多"按钮 |
+| 5 | 🟡P1 | 双重轮询浪费 | layout.tsx Socket 实时 + `isConnected` 控制轮询 fallback |
+| 6 | 🟡P1 | 通知图标映射重复 | 提取 `notification-icons.ts` 共享常量 |
+| 7 | 🟡P1 | Socket 断连无 UI 反馈 | Hook 返回 `isConnected` 状态 |
+| 8 | 🟢P2 | 角标更新延迟 | store 内 `markAsRead` 已即时更新，验证通过 |
 
-**功能**：封装 Socket.io 客户端连接，Cookie 自动认证，事件订阅。
+### 交付清单
 
-**完整代码模板**：
+#### M3-12：Socket 客户端 Hook ✅
+
+**文件**：`src/hooks/use-socket-client.ts`（72 行）
+
+**实际实现**（完整代码）：
 ```typescript
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { io, Socket } from 'socket.io-client'
 
 interface UseSocketOptions {
@@ -1491,295 +1504,161 @@ interface UseSocketOptions {
   }) => void
 }
 
+// 全局单例：跨页面复用
 let socketInstance: Socket | null = null
 
 export function useSocketClient(options: UseSocketOptions = {}) {
+  const [isConnected, setIsConnected] = useState(socketInstance?.connected ?? false)
   const optionsRef = useRef(options)
   optionsRef.current = options
 
   useEffect(() => {
-    // 已有连接则复用
+    // 已有连接且存活 → 复用，只更新回调
     if (socketInstance?.connected) {
-      return () => { /* 不断开，其他页面复用 */ }
+      setIsConnected(true)
+      return
+    }
+
+    // 如果有残留的断开连接，先清理
+    if (socketInstance) {
+      socketInstance.removeAllListeners()
+      socketInstance.disconnect()
+      socketInstance = null
     }
 
     const socket = io({
-      // 不传 auth.token，依赖 HttpOnly Cookie 自动携带
-      // socket.ts 服务端已改造为 Cookie fallback 认证
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 10,
     })
 
     socketInstance = socket
 
-    socket.on('connect', () => {
-      console.log('[socket] connected', socket.id)
-    })
+    socket.on('connect', () => { setIsConnected(true) })
+    socket.on('disconnect', () => { setIsConnected(false) })
+    socket.on('connect_error', () => { setIsConnected(false) })
 
     socket.on('notification', (data) => {
       optionsRef.current.onNotification?.(data)
     })
 
-    socket.on('disconnect', (reason) => {
-      console.log('[socket] disconnected', reason)
-    })
-
-    socket.on('connect_error', (err) => {
-      console.log('[socket] connect_error', err.message)
-    })
+    // Tab 恢复前台时主动重连
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !socket.connected) {
+        socket.connect()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
-      // 不断开，页面切换时保持连接
-      // socket.disconnect()
-      // socketInstance = null
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
 
-  const emit = useCallback((event: string, data: unknown) => {
-    socketInstance?.emit(event, data)
+  // 手动断开（登出时调用）
+  const disconnect = useCallback(() => {
+    if (socketInstance) {
+      socketInstance.removeAllListeners()
+      socketInstance.disconnect()
+      socketInstance = null
+      setIsConnected(false)
+    }
   }, [])
 
-  return { socket: socketInstance, emit }
+  return { isConnected, disconnect }
 }
 ```
 
 **关键设计**：
-- 单例模式：全局只有一个 socket 连接，页面切换不断开
+- 单例模式：全局 `socketInstance`，页面切换不断开
 - Cookie 认证：不传 `auth.token`，浏览器自动携带 HttpOnly Cookie
-- `onNotification` 回调：通知到达时触发（布局层用它更新角标）
+- `isConnected` 状态：布局层可据此切换轮询/实时模式
+- `disconnect()` 方法：登出时清理连接
+- `visibilitychange` 监听：Tab 恢复前台时自动重连
 
-### M3-13：通知 API 已存在
+#### M3-14：通知中心页面 ✅
 
-**已实现端点**（M2 阶段，可直接复用）：
+**文件**：`src/app/customer/notifications/page.tsx`（185 行）
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `/api/notifications` | 通知列表（含 `unreadCount`，按时间倒序，支持分页） |
-| PATCH | `/api/notifications/[id]` | 标记单条已读 |
-| POST | `/api/notifications/mark-all-read` | 全部已读 |
+**功能清单**：
+- 通知列表按时间倒序展示（20条/页）
+- 未读通知：左侧蓝色边框 + 右侧蓝点
+- 通知类型图标（复用 `NOTIFICATION_ICONS` 共享常量）
+- 点击自动标记已读 + 跳转对应订单（`getNotificationRoute()`）
+- "全部已读"按钮（仅未读 > 0 时显示）
+- "加载更多"分页按钮（触底加载下一页）
+- 空态：铃铛图标 + "暂无消息" + "订单状态变更时会通知您"
+- 加载态：旋转动画
 
-**响应格式**：
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "...",
-      "type": "DOCS_SUBMITTED",
-      "title": "订单 HX2026... 客户已提交资料",
-      "content": "张三 已上传 5 项资料并确认提交",
-      "isRead": false,
-      "orderId": "...",
-      "createdAt": "2026-03-25T10:00:00.000Z"
-    }
-  ],
-  "meta": { "unreadCount": 3, "total": 12, "page": 1, "pageSize": 20, "totalPages": 1 }
-}
-```
+#### M3-15：Tab 通知角标集成 ✅
 
-### M3-14：通知中心页面
+**修改文件**：`src/app/customer/layout.tsx`
 
-**新建** `src/app/customer/notifications/page.tsx`
+**变更内容**：
+1. 导入 `useSocketClient` Hook
+2. `onNotification` 回调中调用 `fetchUnreadCount()` 即时刷新角标
+3. 用 `isConnected` 状态控制轮询策略：
+   - Socket 已连接 → 不轮询（靠实时推送）
+   - Socket 断连 → 启动 30s 轮询作为 fallback
 
-**功能**：
-- 通知列表（分页加载）
-- 未读/已读视觉区分
-- 点击跳转对应订单
-- 标记单条已读
-- "全部已读"按钮
-
-**完整代码模板**：
+**关键代码**：
 ```typescript
-'use client'
-
-import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { apiFetch } from '@/lib/api-client'
-import { GlassCard } from '@/components/layout/glass-card'
-import { useToast } from '@/components/ui/toast'
-import { formatDateTime } from '@/lib/utils'
-
-interface Notification {
-  id: string
-  type: string
-  title: string
-  content: string
-  isRead: boolean
-  orderId: string | null
-  createdAt: string
-}
-
-const TYPE_ICONS: Record<string, string> = {
-  ORDER_NEW: '🆕',
-  ORDER_CREATED: '📋',
-  STATUS_CHANGE: '🔄',
-  DOC_REVIEWED: '📄',
-  DOCS_SUBMITTED: '📤',
-  MATERIAL_UPLOADED: '📥',
-  MATERIAL_FEEDBACK: '📝',
-  APPOINTMENT_REMIND: '⏰',
-  SYSTEM: '🔔',
-}
-
-export default function CustomerNotificationsPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
-  const [isLoading, setIsLoading] = useState(true)
-
-  const fetchNotifications = useCallback(async () => {
-    try {
-      const res = await apiFetch('/api/notifications?page=1&pageSize=50')
-      const json = await res.json()
-      if (json.success) {
-        setNotifications(json.data)
-        setUnreadCount(json.meta?.unreadCount ?? 0)
-      }
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => { fetchNotifications() }, [fetchNotifications])
-
-  const handleMarkAsRead = async (id: string) => {
-    const res = await apiFetch(`/api/notifications/${id}`, { method: 'PATCH' })
-    const json = await res.json()
-    if (json.success) {
-      setNotifications((prev) =>
-        prev.map((n) => n.id === id ? { ...n, isRead: true } : n)
-      )
-      setUnreadCount((prev) => Math.max(0, prev - 1))
-    }
-  }
-
-  const handleMarkAllRead = async () => {
-    const res = await apiFetch('/api/notifications/mark-all-read', { method: 'POST' })
-    const json = await res.json()
-    if (json.success) {
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
-      setUnreadCount(0)
-      toast('success', '已全部标记为已读')
-    }
-  }
-
-  const handleClick = async (notification: Notification) => {
-    // 标记已读
-    if (!notification.isRead) {
-      await handleMarkAsRead(notification.id)
-    }
-    // 跳转订单
-    if (notification.orderId) {
-      router.push(`/customer/orders/${notification.orderId}`)
-    }
-  }
-
-  return (
-    <div className="space-y-4 pb-20">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
-          消息
-          {unreadCount > 0 && (
-            <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-[var(--color-error)] text-white">
-              {unreadCount}
-            </span>
-          )}
-        </h2>
-        {unreadCount > 0 && (
-          <button
-            onClick={handleMarkAllRead}
-            className="text-xs text-[var(--color-info)] hover:underline"
-          >
-            全部已读
-          </button>
-        )}
-      </div>
-
-      {isLoading ? (
-        <GlassCard className="p-8 text-center">
-          <div className="inline-block w-6 h-6 border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin" />
-        </GlassCard>
-      ) : notifications.length === 0 ? (
-        <GlassCard className="p-8 text-center">
-          <p className="text-sm text-[var(--color-text-secondary)]">暂无消息</p>
-        </GlassCard>
-      ) : (
-        <div className="space-y-2">
-          {notifications.map((n) => (
-            <GlassCard
-              key={n.id}
-              className={`p-4 cursor-pointer transition-colors ${
-                !n.isRead ? 'border-l-2 border-l-[var(--color-primary)]' : ''
-              }`}
-              onClick={() => handleClick(n)}
-            >
-              <div className="flex items-start gap-3">
-                <span className="text-lg shrink-0">{TYPE_ICONS[n.type] ?? '🔔'}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`text-sm truncate ${!n.isRead ? 'font-semibold text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'}`}>
-                      {n.title}
-                    </span>
-                    {!n.isRead && (
-                      <span className="w-2 h-2 rounded-full bg-[var(--color-primary)] shrink-0" />
-                    )}
-                  </div>
-                  <p className="text-xs text-[var(--color-text-placeholder)] mt-1 line-clamp-2">
-                    {n.content}
-                  </p>
-                  <span className="text-[10px] text-[var(--color-text-placeholder)] mt-1 block">
-                    {formatDateTime(n.createdAt)}
-                  </span>
-                </div>
-              </div>
-            </GlassCard>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-```
-
-**设计要点**：
-- 未读通知左侧蓝色边框 + 右侧蓝点
-- 点击自动标记已读 + 跳转订单详情
-- 通知类型图标映射（9 种 NotificationType）
-- "全部已读"按钮仅在有未读时显示
-
-### M3-15：Tab 通知角标集成
-
-**修改** `src/app/customer/layout.tsx`
-
-**当前状态**：已有 `useNotificationStore` 30s 轮询 `unreadCount`。需改为 Socket 实时推送触发。
-
-**修改内容**：
-1. 导入 `useSocketClient`
-2. `onNotification` 回调中调用 `fetchUnreadCount()` 立即刷新角标
-3. 保留 30s 轮询作为 fallback（Socket 断连时兜底）
-
-**修改后的关键代码**（在现有 layout.tsx 中添加）：
-```typescript
-import { useSocketClient } from '@/hooks/use-socket-client'
-
-// 在组件内添加：
-const { fetchUnreadCount } = useNotificationStore()
-
-useSocketClient({
-  onNotification: () => {
-    // 收到新通知立即刷新角标
-    fetchUnreadCount()
-  },
+const { isConnected } = useSocketClient({
+  onNotification: () => { fetchUnreadCount() },
 })
+
+useEffect(() => {
+  fetchUnreadCount()
+}, [fetchUnreadCount])
+
+useEffect(() => {
+  if (isConnected) return // Socket 正常时不轮询
+  const interval = setInterval(fetchUnreadCount, 30000)
+  return () => clearInterval(interval)
+}, [isConnected, fetchUnreadCount])
 ```
 
-**验收**：
-- Socket 连接成功（Cookie 认证）
-- 收到通知时角标数字实时更新
-- Socket 断连时 30s 轮询兜底
+#### 共享常量 ✅
+
+**新建**：`src/lib/notification-icons.ts`（17 行）
+
+```typescript
+// 通知类型 → 图标
+export const NOTIFICATION_ICONS: Record<string, string> = {
+  ORDER_NEW: '🆕', ORDER_CREATED: '📋', STATUS_CHANGE: '🔄',
+  DOC_REVIEWED: '📄', DOCS_SUBMITTED: '📤', MATERIAL_UPLOADED: '📥',
+  MATERIAL_FEEDBACK: '📝', APPOINTMENT_REMIND: '⏰', SYSTEM: '🔔',
+}
+
+// 根据通知获取跳转路由
+export function getNotificationRoute(orderId: string | null): string | null {
+  if (!orderId) return null
+  return `/customer/orders/${orderId}`
+}
+```
+
+被 `customer/notifications/page.tsx` 和 `notifications/notification-bell.tsx` 共同引用。
+
+#### Store 修复 ✅
+
+**修改**：`src/stores/notification-store.ts`
+
+`NotificationItem` 接口新增 `orderId: string | null` 字段。API 本身已返回此字段（Notification schema 有 `orderId`），之前只是 TypeScript 类型定义遗漏。
+
+### 批次 4 验收（全部通过 ✅）
+
+| # | 检查项 | 结果 |
+|---|---|:---:|
+| 1 | `npx tsc --noEmit` | ✅ 0 错误 |
+| 2 | `npm run build` | ✅ 0 警告 |
+| 3 | `npm run test` | ✅ 74/74 通过 |
+| 4 | `as any` / `console.log` / `TODO` | ✅ 全部 0 |
+| 5 | Socket 连接 + Cookie 认证 | ✅ 代码完成 |
+| 6 | 通知中心：加载/分页/已读/跳转 | ✅ |
+| 7 | Tab 角标：Socket 实时 + 断连 fallback | ✅ |
+| 8 | notification-bell 复用共享常量 | ✅ |
 
 ---
 
@@ -2177,12 +2056,12 @@ async function handleBatchUpload(requirementId: string, files: FileList) {
 | 6 | `src/app/api/orders/[id]/submit/route.ts` | ✅ 3 | 客户确认提交 + 通知 |
 | 7 | `src/components/orders/material-checklist.tsx` | ✅ 3 | B 类材料下载面板 |
 | 8 | `src/app/customer/orders/[id]/page.tsx` | ✅ 3 | 客户订单详情页 ⭐ |
-| 9 | `src/hooks/use-socket-client.ts` | 4 | Socket 客户端 Hook |
-| 10 | `src/app/customer/notifications/page.tsx` | 4 | 通知中心 |
-| 11 | `src/app/customer/profile/page.tsx` | 5 | 个人中心 |
-| 12 | `src/app/api/auth/change-password/route.ts` | 5 | 修改密码 |
+| 9 | `src/lib/notification-icons.ts` | ✅ 4 | 通知类型图标+路由映射共享常量 |
+| 10 | `src/hooks/use-socket-client.ts` | ✅ 4 | Socket 客户端 Hook ⭐ |
+| 11 | `src/app/customer/notifications/page.tsx` | ✅ 4 | 通知中心页面 ⭐ |
+| 12 | `src/app/customer/profile/page.tsx` | 5 | 个人中心 |
 
-### 修改文件（5 个）
+### 修改文件（7 个）
 
 | # | 文件 | 批次 | 变更 |
 |---|---|:---:|---|
@@ -2191,8 +2070,9 @@ async function handleBatchUpload(requirementId: string, files: FileList) {
 | 3 | `src/lib/socket.ts` | ✅ 2 | Cookie 认证改造 |
 | 4 | `src/lib/oss.ts` | ✅ 2 | 导出 getOssClient 单例 |
 | 5 | `src/app/api/orders/[id]/documents/route.ts` | ✅ 2 | POST 加通知客户 + Socket 推送 |
-| 6 | `src/app/api/documents/upload/route.ts` | ✅ 2 | 引用共享 file-types.ts 常量 |
-| 7 | `src/app/customer/layout.tsx` | 4 | 集成 socket + 实时角标 |
+| 6 | `src/stores/notification-store.ts` | ✅ 4 | NotificationItem 加 orderId 字段 |
+| 7 | `src/app/customer/layout.tsx` | ✅ 4 | Socket 实时角标 + isConnected 轮询 fallback |
+| 8 | `src/components/notifications/notification-bell.tsx` | ✅ 4 | 复用 NOTIFICATION_ICONS 共享常量 |
 
 ### 不需要改的文件
 
@@ -2231,10 +2111,14 @@ async function handleBatchUpload(requirementId: string, files: FileList) {
   ├── M3-11  orders/[id]/page.tsx       客户详情页 ⭐ ✅
   └── 验收：tsc 0错误 / build 0警告 / test 74通过 ✅
 
-批次 4（3h）— 通知 + Socket
-  ├── M3-12  use-socket-client.ts       Socket 客户端 Hook
-  ├── M3-14  notifications/page.tsx     通知中心
-  └── M3-15  layout.tsx                 Tab 通知角标
+批次 4（3h）— 通知 + Socket  ✅ 已完成 2026-03-25
+  ├── M3-12  use-socket-client.ts       Socket 客户端 Hook ✅
+  ├── M3-14  notifications/page.tsx     通知中心(分页+跳转) ✅
+  ├── M3-15  layout.tsx                 Tab 通知角标实时集成 ✅
+  ├── notification-icons.ts             共享常量 ✅
+  ├── notification-store.ts             +orderId字段 ✅
+  ├── notification-bell.tsx             复用共享图标 ✅
+  └── 深度审查  8项缺口修复 ✅
 
 批次 5（2.5h）— 个人中心
   ├── M3-16  profile/page.tsx           个人中心

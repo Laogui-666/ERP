@@ -1,12 +1,12 @@
 # 沐海旅行 ERP - M3 全知开发手册（V9.0 终版）
 
-> **文档版本**: V9.0
-> **更新日期**: 2026-03-25 12:40
+> **文档版本**: V10.0
+> **更新日期**: 2026-03-26 00:38
 > **用途**: M3 阶段唯一开发指南。即使丢失所有上下文，拿到本文件 + Git 仓库即可完整恢复开发。
 > **前置条件**: M1 ✅ + M2 ✅ + M5 ✅ 全部完成（113 源文件 / ~13,069 行 / 34 API 路由 / 17 页面 / 25 组件 / 74 测试用例）
 > **核心交付**: 客户端门户完整可用 + 两类资料交互闭环 + 实时通信接入 + 全链路通知闭环
 > **分析基础**: 三轮深度分析（逐文件审查全部 113 个源文件 + 34 个 API 路由 + 工作流文档 + 客户材料清单 + 实际工作流比对）+ 批次2专项两轮审查 + 批次2深度审查4项修复 + 批次3完整实现+验收 + 批次4深度分析8缺口修复
-> **当前阶段**: M3 批次 1-4/8 完成 ✅ | 下一步：批次 5（个人中心+修改密码API）
+> **当前阶段**: M3 批次 1-5/8 完成 ✅ | 下一步：批次 6（通知闭环+管理端增强）
 
 ---
 
@@ -2059,7 +2059,7 @@ async function handleBatchUpload(requirementId: string, files: FileList) {
 | 9 | `src/lib/notification-icons.ts` | ✅ 4 | 通知类型图标+路由映射共享常量 |
 | 10 | `src/hooks/use-socket-client.ts` | ✅ 4 | Socket 客户端 Hook ⭐ |
 | 11 | `src/app/customer/notifications/page.tsx` | ✅ 4 | 通知中心页面 ⭐ |
-| 12 | `src/app/customer/profile/page.tsx` | 5 | 个人中心 |
+| 12 | `src/app/customer/profile/page.tsx` | ✅ 5 | 个人中心（用户信息+修改密码+退出登录） |
 
 ### 修改文件（7 个）
 
@@ -2120,9 +2120,9 @@ async function handleBatchUpload(requirementId: string, files: FileList) {
   ├── notification-bell.tsx             复用共享图标 ✅
   └── 深度审查  8项缺口修复 ✅
 
-批次 5（2.5h）— 个人中心
-  ├── M3-16  profile/page.tsx           个人中心
-  └── M3-17  change-password/route.ts   修改密码
+批次 5（2.5h）— 个人中心  ✅ 已完成 2026-03-26
+  ├── M3-16  profile/page.tsx           个人中心 ✅ (220行-用户信息+修改密码+密码强度+退出)
+  └── M3-17  change-password/route.ts   修改密码 ✅ (64行-旧密码校验+空密码检测+PRD合规规则)
 
 批次 6（2.5h）— 通知闭环 + 管理端
   ├── M3-21  document-panel.tsx         文件删除集成

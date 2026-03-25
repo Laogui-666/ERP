@@ -174,6 +174,49 @@ export default function CustomerOrderDetailPage() {
         )}
       </div>
 
+      {/* ===== 申请人列表（多人订单） ===== */}
+      {order.applicantCount > 1 && order.applicants.length > 0 && (
+        <GlassCard className="p-4 animate-fade-in-up" style={{ animationDelay: '50ms' }}>
+          <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] mb-3 flex items-center gap-1.5">
+            <span>👥</span>
+            <span>申请人</span>
+            <span className="text-[10px] text-[var(--color-text-placeholder)] font-normal">
+              {order.applicants.filter((a) => a.documentsComplete).length}/{order.applicants.length} 资料齐全
+            </span>
+          </h3>
+          <div className="space-y-2">
+            {order.applicants.map((a) => (
+              <div key={a.id} className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-white/[0.02]">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-full bg-[var(--color-primary)]/15 flex items-center justify-center text-[11px] font-medium text-[var(--color-primary-light)] shrink-0">
+                    {a.name[0]}
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-sm text-[var(--color-text-primary)] truncate block">{a.name}</span>
+                    {a.passportNo && (
+                      <span className="text-[10px] text-[var(--color-text-placeholder)]">护照 {a.passportNo}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {a.documentsComplete ? (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-success)]/10 text-[var(--color-success)]">资料齐全 ✓</span>
+                  ) : (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[var(--color-text-placeholder)]">收集中</span>
+                  )}
+                  {a.visaResult === 'APPROVED' && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-success)]/15 text-[var(--color-success)]">出签 ✅</span>
+                  )}
+                  {a.visaResult === 'REJECTED' && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-error)]/15 text-[var(--color-error)]">拒签 ❌</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+      )}
+
       {/* ===== 状态时间线 ===== */}
       <GlassCard className="p-5">
         <StatusTimeline

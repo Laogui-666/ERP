@@ -334,7 +334,7 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
         multiple
         className="hidden"
         onChange={handleFileChange}
-        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.7z,.txt"
+        accept="image/*,.heic,.heif,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.7z,.txt"
       />
 
       {/* 拍照组件 */}

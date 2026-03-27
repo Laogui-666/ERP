@@ -4,11 +4,23 @@ import type { NextRequest } from 'next/server'
 import type { UserRole } from '@/types/user'
 
 const ACCESS_TOKEN_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? 'default-access-secret',
+  process.env.JWT_SECRET ?? (() => {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET environment variable is required in production')
+    }
+    console.warn('[SECURITY] Using default JWT_SECRET — NOT SECURE. Set JWT_SECRET in .env.local')
+    return 'default-access-secret-dev-only'
+  })(),
 )
 
 const REFRESH_TOKEN_SECRET = new TextEncoder().encode(
-  process.env.JWT_REFRESH_SECRET ?? 'default-refresh-secret',
+  process.env.JWT_REFRESH_SECRET ?? (() => {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_REFRESH_SECRET environment variable is required in production')
+    }
+    console.warn('[SECURITY] Using default JWT_REFRESH_SECRET — NOT SECURE. Set JWT_REFRESH_SECRET in .env.local')
+    return 'default-refresh-secret-dev-only'
+  })(),
 )
 
 const ACCESS_TOKEN_EXPIRES = '15m'

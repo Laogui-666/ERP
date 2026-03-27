@@ -28,16 +28,17 @@ export async function POST(request: NextRequest) {
     })
 
     if (!user) {
-      throw new AppError('NOT_FOUND', '未找到匹配的客户账号', 404)
+      // 不区分"不存在"和"已设置密码"，防止账号枚举
+      throw new AppError('RESET_FAILED', '未找到匹配的客户账号或密码已设置', 400)
     }
 
     if (user.status !== 'ACTIVE') {
-      throw new AppError('ACCOUNT_LOCKED', '账号已被禁用', 403)
+      throw new AppError('ACCOUNT_LOCKED', '未找到匹配的客户账号或密码已设置', 400)
     }
 
     // 仅允许空密码（首次登录）的客户重置
     if (user.passwordHash !== '') {
-      throw new AppError('ALREADY_SET', '密码已设置，请直接登录', 400)
+      throw new AppError('ALREADY_SET', '未找到匹配的客户账号或密码已设置', 400)
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 12)

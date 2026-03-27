@@ -347,7 +347,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                       key={req.id}
                       req={req}
                       canUpload={canUpload && ['PENDING', 'REJECTED', 'SUPPLEMENT'].includes(req.status)}
-                      canReview={canReview && req.status === 'UPLOADED'}
+                      canReview={canReview && ['UPLOADED', 'REVIEWING'].includes(req.status)}
                       canDeleteFile={canDeleteFile}
                       isUploading={uploadingId === req.id}
                       uploadProgress={uploadingId === req.id ? uploadProgress : null}

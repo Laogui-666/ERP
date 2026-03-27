@@ -2,9 +2,9 @@
 
 # 架构实现方案
 
-> **文档版本**: V13.0
+> **文档版本**: V14.0
 > **生成日期**: 2026-03-19
-> **最后更新**: 2026-03-26 02:16
+> **最后更新**: 2026-03-28 03:30
 > **技术栈**: Next.js 15.5.14 + React 19.2.4 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
 > **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
@@ -785,7 +785,14 @@ model VisaTemplate {
 - DocumentPanel 集成文件删除（canDeleteFile 权限 + `DELETE /api/documents/files/[id]`）
 - 批量上传并发优化（3 路并发池 + 按批进度更新）
 
-### 4.12 SMS 预留模块
+### 4.12 Shop API 预留模块
+
+| 方法 | 路径 | 说明 | 状态 |
+|---|---|---|---|
+| POST | `/api/shop/sync` | 店铺订单同步（一键同步网店订单到 ERP） | 返回 501，预留 |
+| POST | `/api/shop/webhook` | 店铺订单回调（接收网店平台推送的订单变更事件） | 返回 501，预留 |
+
+### 4.13 SMS 预留模块
 
 | 方法 | 路径 | 说明 | 状态 |
 |---|---|---|---|
@@ -1679,6 +1686,30 @@ const CSP = `
   font-src 'self' data:;
 `.replace(/\n/g, '')
 ```
+
+---
+
+### 附录：工作流完整性验证修复记录（2026-03-28）
+
+基于用户完整业务工作流描述，对比代码实现发现并修复的架构级缺口：
+
+**通知链补全**：`documents/[id]/route.ts` PATCH 方法
+- 原逻辑：操作员审核资料（REJECTED/SUPPLEMENT）→ 只通知客户
+- 修复后：同时通知资料员（含审核意见）；APPROVED 时也通知资料员（含进度 "3/5"）
+
+**状态流转增强**：`admin/orders/[id]/page.tsx` StatusTransitionModal
+- PENDING_DELIVERY → MAKING_MATERIALS 时备注必填
+- 根据操作类型动态 placeholder（打回材料→"请说明需要修改的内容"）
+- 根据 orderLogs 判断"提交复审" vs "提交审核" 文案
+
+**签证类型差异化**：`customer/orders/[id]/page.tsx`
+- 电子签证 → 客户端显示"结果由专员反馈"而非出签按钮
+- 申根签证 → 显示"申根签证"标签，客户可自行反馈
+- 全部资料 APPROVED → 绿色完成提示
+
+**预留接口**：
+- `/api/shop/sync` + `/api/shop/webhook` — 店铺订单同步（501）
+- `/api/sms/send` + `/api/sms/templates` — 短信服务（501）
 
 ---
 

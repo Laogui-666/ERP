@@ -33,9 +33,13 @@ export async function POST(request: NextRequest) {
       throw new AppError('DUPLICATE', '用户名已存在', 409)
     }
 
-    // 检查手机号是否已存在（同公司内）
-    // 注册时创建新公司，手机号不会冲突
-    // 全局唯一性由 username 保证
+    // 检查手机号是否已存在
+    const existingPhone = await prisma.user.findFirst({
+      where: { phone: data.user.phone },
+    })
+    if (existingPhone) {
+      throw new AppError('DUPLICATE', '手机号已被注册', 409)
+    }
 
     const passwordHash = await bcrypt.hash(data.user.password, 12)
 

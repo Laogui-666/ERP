@@ -64,12 +64,17 @@ export async function PATCH(
       },
     })
 
-    // 通知客户（如果被驳回）
+    // 通知相关方（如果被驳回/需补充）
     if (data.status === 'REJECTED' || data.status === 'SUPPLEMENT') {
       const order = await prisma.order.findUnique({
         where: { id: requirement.orderId },
-        select: { customerId: true },
+        select: { customerId: true, collectorId: true, orderNo: true },
       })
+
+      const statusText = data.status === 'REJECTED' ? '需要修改' : '需要补充'
+      const reasonText = data.rejectReason ? `：${data.rejectReason}` : ''
+
+      // 通知客户
       if (order?.customerId) {
         await prisma.notification.create({
           data: {
@@ -78,13 +83,67 @@ export async function PATCH(
             orderId: requirement.orderId,
             type: 'DOC_REVIEWED',
             title: '资料审核结果',
-            content: `您的资料"${requirement.name}"${data.status === 'REJECTED' ? '需要修改' : '需要补充'}${data.rejectReason ? `：${data.rejectReason}` : ''}`,
+            content: `您的资料"${requirement.name}"${statusText}${reasonText}`,
           },
         })
         emitToUser(order.customerId, 'notification', {
           type: 'DOC_REVIEWED',
           title: '资料审核结果',
           orderId: requirement.orderId,
+        })
+      }
+
+      // 通知资料员（操作员审核时资料员需要同步知道）
+      if (order?.collectorId && order.collectorId !== user.userId) {
+        await prisma.notification.create({
+          data: {
+            companyId: user.companyId,
+            userId: order.collectorId,
+            orderId: requirement.orderId,
+            type: 'DOC_REVIEWED',
+            title: `订单 ${order.orderNo} 资料审核反馈`,
+            content: `资料"${requirement.name}"${statusText}${reasonText}`,
+          },
+        })
+        emitToUser(order.collectorId, 'notification', {
+          type: 'DOC_REVIEWED',
+          title: '资料审核反馈',
+          orderId: requirement.orderId,
+          orderNo: order.orderNo,
+        })
+      }
+    }
+
+    // 通知资料员（合格时也通知，方便资料员跟踪进度）
+    if (data.status === 'APPROVED') {
+      const order = await prisma.order.findUnique({
+        where: { id: requirement.orderId },
+        select: { collectorId: true, orderNo: true },
+      })
+      if (order?.collectorId && order.collectorId !== user.userId) {
+        // 查看该订单是否全部合格
+        const allReqs = await prisma.documentRequirement.findMany({
+          where: { orderId: requirement.orderId },
+          select: { status: true },
+        })
+        const approvedCount = allReqs.filter(r => r.status === 'APPROVED').length
+        const totalCount = allReqs.length
+
+        await prisma.notification.create({
+          data: {
+            companyId: user.companyId,
+            userId: order.collectorId,
+            orderId: requirement.orderId,
+            type: 'DOC_REVIEWED',
+            title: `订单 ${order.orderNo} 资料审核通过`,
+            content: `资料"${requirement.name}"已合格（${approvedCount}/${totalCount}）`,
+          },
+        })
+        emitToUser(order.collectorId, 'notification', {
+          type: 'DOC_REVIEWED',
+          title: '资料审核通过',
+          orderId: requirement.orderId,
+          orderNo: order.orderNo,
         })
       }
     }

@@ -137,9 +137,15 @@ export default function CustomerOrderDetailPage() {
   const showMaterials = ['MAKING_MATERIALS', 'PENDING_DELIVERY', 'DELIVERED', 'APPROVED', 'REJECTED', 'PARTIAL'].includes(order.status)
   const showDocuments = order.documentRequirements.length > 0
 
+  // 签证类型判断
+  const isSchengen = ['法国','德国','意大利','西班牙','荷兰','瑞士','奥地利','比利时','葡萄牙','希腊','丹麦','挪威','瑞典','芬兰','冰岛','捷克','波兰','匈牙利','卢森堡','斯洛伐克','斯洛文尼亚','爱沙尼亚','拉脱维亚','立陶宛','马耳他'].some(c => order.targetCountry.includes(c))
+    || order.visaCategory?.includes('申根')
+  const isEVisa = order.visaCategory?.includes('电子') || order.visaType?.includes('电子')
+
   // 资料审核统计
   const approvedCount = order.documentRequirements.filter((r) => r.status === 'APPROVED').length
   const totalCount = order.documentRequirements.length
+  const allApproved = totalCount > 0 && approvedCount === totalCount
 
   return (
     <div className="space-y-5 pb-4">
@@ -259,12 +265,14 @@ export default function CustomerOrderDetailPage() {
             </button>
           )}
 
-          {/* 已提交提示 */}
+          {/* 已提交 / 全部合格提示 */}
           {order.status === 'COLLECTING_DOCS' && !canSubmit && totalCount > 0 && (
             <div className="text-center text-xs text-[var(--color-text-placeholder)] py-2">
               {order.documentRequirements.every((r) => r.status === 'REVIEWING' || r.status === 'APPROVED')
                 ? '✅ 资料已提交，正在审核中'
-                : '请先上传资料后再提交'}
+                : allApproved
+                  ? '✅ 所有资料已审核通过，等待资料员提交审核'
+                  : '请先上传资料后再提交'}
             </div>
           )}
         </>
@@ -286,8 +294,15 @@ export default function CustomerOrderDetailPage() {
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
               <span>🎫</span>
               <span>签证结果</span>
+              {isSchengen && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-info)]/15 text-[var(--color-info)]">申根签证</span>}
             </h3>
-            {showFeedback ? (
+            {isEVisa ? (
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 text-center">
+                <p className="text-xs text-[var(--color-text-secondary)]">
+                  电子签证结果将由送签专员反馈，届时会通知您
+                </p>
+              </div>
+            ) : showFeedback ? (
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 space-y-3">
                 <p className="text-xs text-[var(--color-text-secondary)]">
                   请确认您的签证结果：

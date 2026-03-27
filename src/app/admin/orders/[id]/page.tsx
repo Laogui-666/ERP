@@ -56,7 +56,11 @@ export default function OrderDetailPage() {
         break
       case 'COLLECTING_DOCS':
         if (['DOC_COLLECTOR', 'VISA_ADMIN'].includes(role)) {
-          actions.push({ toStatus: 'PENDING_REVIEW', label: '提交审核' })
+          // 检查是否为复审场景（操作员曾打回过）
+          const wasRejected = order.orderLogs?.some(
+            (l) => l.fromStatus === 'UNDER_REVIEW' && l.toStatus === 'COLLECTING_DOCS'
+          )
+          actions.push({ toStatus: 'PENDING_REVIEW', label: wasRejected ? '提交复审' : '提交审核' })
         }
         break
       case 'PENDING_REVIEW':
@@ -98,7 +102,20 @@ export default function OrderDetailPage() {
     return actions
   }, [currentOrder, user])
 
+  // 判断当前流转是否必须填写备注
+  const requiresDetail = (toStatus: OrderStatus): boolean => {
+    if (!currentOrder) return false
+    // 打回修改材料 → 必须说明哪里需要改
+    if (currentOrder.status === 'PENDING_DELIVERY' && toStatus === 'MAKING_MATERIALS') return true
+    // 打回补充资料 → 建议填写但非强制
+    return false
+  }
+
   const handleTransition = async (toStatus: OrderStatus) => {
+    if (requiresDetail(toStatus) && !transitionDetail.trim()) {
+      toast('error', '请填写修改意见')
+      return
+    }
     setIsTransitioning(true)
     try {
       await changeStatus(orderId, toStatus, transitionDetail || undefined)
@@ -422,6 +439,7 @@ export default function OrderDetailPage() {
           onClose={() => { setShowStatusModal(false); setTransitionDetail('') }}
           isSubmitting={isTransitioning}
           initialStatus={preselectedStatus}
+          detailRequired={preselectedStatus ? requiresDetail(preselectedStatus) : false}
         />
       )}
 
@@ -499,6 +517,7 @@ function StatusTransitionModal({
   onClose,
   isSubmitting,
   initialStatus,
+  detailRequired,
 }: {
   actions: { toStatus: OrderStatus; label: string }[]
   detail: string
@@ -507,8 +526,21 @@ function StatusTransitionModal({
   onClose: () => void
   isSubmitting: boolean
   initialStatus?: OrderStatus | null
+  detailRequired?: boolean
 }) {
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus>(initialStatus ?? actions[0]?.toStatus ?? 'CONNECTED')
+
+  // 根据选中操作动态生成 placeholder
+  const getDetailPlaceholder = (): string => {
+    const action = actions.find(a => a.toStatus === selectedStatus)
+    if (!action) return '操作说明...'
+    if (selectedStatus === 'MAKING_MATERIALS') return '请说明需要修改的内容...'
+    if (selectedStatus === 'COLLECTING_DOCS') return '请说明需要补充哪些资料...'
+    return `${action.label}的备注说明...`
+  }
+
+  // 当前选中操作是否需要必填备注
+  const currentRequired = detailRequired || selectedStatus === 'MAKING_MATERIALS'
 
   return (
     <Modal isOpen onClose={onClose} title="状态流转" size="md">
@@ -543,11 +575,13 @@ function StatusTransitionModal({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">备注（可选）</label>
+          <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+            备注{currentRequired ? ' *' : '（可选）'}
+          </label>
           <textarea
             className="glass-input w-full text-sm resize-none"
             rows={2}
-            placeholder="操作说明..."
+            placeholder={getDetailPlaceholder()}
             value={detail}
             onChange={(e) => onDetailChange(e.target.value)}
           />

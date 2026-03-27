@@ -5,6 +5,7 @@ import { requirePermission, getDataScopeFilter } from '@/lib/rbac'
 import { AppError, createSuccessResponse } from '@/types/api'
 import { emitToUser } from '@/lib/socket'
 import { z } from 'zod'
+import type { OrderStatus } from '@/types/order'
 
 // GET /api/orders/[id]/documents - 获取订单资料清单
 export async function GET(
@@ -80,55 +81,102 @@ export async function POST(
     })
     let nextSort = (lastReq?.sortOrder ?? 0) + 1
 
-    // 批量创建
-    const created = await prisma.$transaction(
-      data.items.map((item, i) =>
-        prisma.documentRequirement.create({
+    // 批量创建（含自动状态流转）
+    const created = await prisma.$transaction(async (tx) => {
+      // 创建资料需求项
+      const items = await Promise.all(
+        data.items.map((item, i) =>
+          tx.documentRequirement.create({
+            data: {
+              orderId: id,
+              companyId: user.companyId,
+              name: item.name,
+              description: item.description ?? null,
+              isRequired: item.isRequired,
+              sortOrder: nextSort + i,
+            },
+          })
+        )
+      )
+
+      // GAP-1 修复：CONNECTED → COLLECTING_DOCS 自动流转
+      // 资料员首次发送资料清单时，自动进入资料收集阶段
+      if (order.status === 'CONNECTED') {
+        await tx.order.update({
+          where: { id },
+          data: { status: 'COLLECTING_DOCS' as OrderStatus },
+        })
+        await tx.orderLog.create({
           data: {
             orderId: id,
             companyId: user.companyId,
-            name: item.name,
-            description: item.description ?? null,
-            isRequired: item.isRequired,
-            sortOrder: nextSort + i,
+            userId: user.userId,
+            action: '发送资料清单',
+            fromStatus: 'CONNECTED',
+            toStatus: 'COLLECTING_DOCS',
+            detail: `发送了 ${data.items.length} 项资料需求给客户`,
           },
         })
-      )
-    )
+      } else {
+        // 非首次（追加资料）：普通操作日志
+        await tx.orderLog.create({
+          data: {
+            orderId: id,
+            companyId: user.companyId,
+            userId: user.userId,
+            action: '添加资料需求',
+            detail: `添加了 ${data.items.length} 项资料需求`,
+          },
+        })
+      }
 
-    // 写操作日志
-    await prisma.orderLog.create({
-      data: {
-        orderId: id,
-        companyId: user.companyId,
-        userId: user.userId,
-        action: '添加资料需求',
-        detail: `添加了 ${data.items.length} 项资料需求`,
-      },
+      return items
     })
 
     // 通知客户：资料清单已更新
     const orderWithCustomer = await prisma.order.findUnique({
       where: { id },
-      select: { customerId: true, orderNo: true },
+      select: { customerId: true, collectorId: true, orderNo: true, status: true },
     })
     if (orderWithCustomer?.customerId) {
+      const isFirstSend = order.status === 'CONNECTED'
       await prisma.notification.create({
         data: {
           companyId: user.companyId,
           userId: orderWithCustomer.customerId,
           orderId: id,
           type: 'DOC_REVIEWED',
-          title: `订单 ${orderWithCustomer.orderNo} 资料清单已更新`,
-          content: `资料员为您新增了 ${data.items.length} 项资料需求，请及时上传`,
+          title: `订单 ${orderWithCustomer.orderNo} ${isFirstSend ? '资料清单已发送' : '资料清单已更新'}`,
+          content: `资料员为您${isFirstSend ? '发送' : '新增'}了 ${data.items.length} 项资料需求，请及时上传`,
         },
       })
 
       emitToUser(orderWithCustomer.customerId, 'notification', {
         type: 'DOC_REVIEWED',
-        title: '资料清单已更新',
+        title: isFirstSend ? '资料清单已发送' : '资料清单已更新',
         orderId: id,
         orderNo: orderWithCustomer.orderNo,
+      })
+    }
+
+    // GAP-2 修复：操作员在 UNDER_REVIEW 阶段添加补充资料时通知资料员
+    if (['UNDER_REVIEW', 'MAKING_MATERIALS'].includes(order.status) && order.collectorId) {
+      const names = data.items.map(i => i.name).join('、')
+      await prisma.notification.create({
+        data: {
+          companyId: user.companyId,
+          userId: order.collectorId,
+          orderId: id,
+          type: 'DOC_REVIEWED',
+          title: `订单 ${orderWithCustomer?.orderNo ?? ''} 新增补充资料`,
+          content: `操作员新增了 ${data.items.length} 项补充资料需求：${names}，请通知客户上传`,
+        },
+      })
+      emitToUser(order.collectorId, 'notification', {
+        type: 'DOC_REVIEWED',
+        title: '新增补充资料',
+        orderId: id,
+        orderNo: orderWithCustomer?.orderNo,
       })
     }
 

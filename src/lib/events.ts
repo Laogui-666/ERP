@@ -83,14 +83,32 @@ eventBus.on(EVENTS.ORDER_STATUS_CHANGED, async (data) => {
   const fromLabel = ORDER_STATUS_LABELS[fromStatus as keyof typeof ORDER_STATUS_LABELS] ?? fromStatus
   const toLabel = ORDER_STATUS_LABELS[toStatus as keyof typeof ORDER_STATUS_LABELS] ?? toStatus
 
+  // GAP-3 修复：操作员打回时，通知内容汇总审核意见
+  let enhancedContent = `${order.customerName} 的订单状态：${fromLabel} → ${toLabel}`
+  if (toStatus === 'COLLECTING_DOCS' && fromStatus === 'UNDER_REVIEW') {
+    const rejectedDocs = await prisma.documentRequirement.findMany({
+      where: {
+        orderId,
+        status: { in: ['REJECTED', 'SUPPLEMENT'] },
+      },
+      select: { name: true, status: true, rejectReason: true },
+    })
+    if (rejectedDocs.length > 0) {
+      const summary = rejectedDocs.map(d =>
+        `${d.name}（${d.status === 'REJECTED' ? '需修改' : '需补充'}${d.rejectReason ? `: ${d.rejectReason}` : ''}）`
+      ).join('、')
+      enhancedContent += `，需处理：${summary}`
+    }
+  }
+
   await prisma.notification.createMany({
     data: Array.from(notifyUserIds).map((userId) => ({
       companyId,
       userId,
       orderId,
-      type: 'STATUS_CHANGE',
+      type: 'STATUS_CHANGE' as const,
       title: `订单 ${order.orderNo} ${action}`,
-      content: `${order.customerName} 的订单状态：${fromLabel} → ${toLabel}`,
+      content: enhancedContent,
     })),
   })
 

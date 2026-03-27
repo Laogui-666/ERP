@@ -71,18 +71,18 @@ export default function OrderDetailPage() {
       case 'UNDER_REVIEW':
         if (['OPERATOR', 'OUTSOURCE', 'VISA_ADMIN'].includes(role)) {
           actions.push({ toStatus: 'COLLECTING_DOCS', label: '打回补充资料' })
-          actions.push({ toStatus: 'MAKING_MATERIALS', label: '确认资料达标' })
+          actions.push({ toStatus: 'MAKING_MATERIALS', label: '开始制作签证材料' })
         }
         break
       case 'MAKING_MATERIALS':
         if (['OPERATOR', 'OUTSOURCE', 'VISA_ADMIN'].includes(role)) {
-          actions.push({ toStatus: 'PENDING_DELIVERY', label: '上传签证材料' })
+          actions.push({ toStatus: 'PENDING_DELIVERY', label: '发送资料' })
         }
         break
       case 'PENDING_DELIVERY':
         if (['DOC_COLLECTOR', 'VISA_ADMIN'].includes(role)) {
-          actions.push({ toStatus: 'MAKING_MATERIALS', label: '打回修改材料' })
-          actions.push({ toStatus: 'DELIVERED', label: '确认交付' })
+          actions.push({ toStatus: 'MAKING_MATERIALS', label: '反馈操作员' })
+          actions.push({ toStatus: 'DELIVERED', label: '材料交付' })
         }
         break
       case 'DELIVERED':
@@ -534,8 +534,9 @@ function StatusTransitionModal({
   const getDetailPlaceholder = (): string => {
     const action = actions.find(a => a.toStatus === selectedStatus)
     if (!action) return '操作说明...'
-    if (selectedStatus === 'MAKING_MATERIALS') return '请说明需要修改的内容...'
+    if (selectedStatus === 'MAKING_MATERIALS') return '确认资料达标，开始制作...'
     if (selectedStatus === 'COLLECTING_DOCS') return '请说明需要补充哪些资料...'
+    if (selectedStatus === 'PENDING_DELIVERY') return '材料说明...'
     return `${action.label}的备注说明...`
   }
 

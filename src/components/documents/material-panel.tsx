@@ -104,7 +104,7 @@ export function MaterialPanel({ orderId, materials, userRole, orderStatus, onRef
                 </svg>
                 上传中...
               </span>
-            ) : '上传签证材料'}
+            ) : '发送资料'}
           </button>
           <input
             ref={fileInputRef}

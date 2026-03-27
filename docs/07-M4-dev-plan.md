@@ -1,7 +1,8 @@
 # 沐海旅行 ERP - M4 实时通信全知开发手册
 
-> **文档版本**: V1.0
+> **文档版本**: V2.0
 > **创建日期**: 2026-03-28
+> **更新日期**: 2026-03-28 04:15（第一轮深度审查，20 项缺口修复）
 > **用途**: M4 阶段唯一开发指南。拿到本文件 + Git 仓库即可完整恢复开发上下文。
 > **前置条件**: M1 ✅ + M2 ✅ + M3 ✅ + M5 ✅ 全部完成（119 源文件 / ~13,757 行 / 39 API 路由 / 18 页面 / 25 组件 / 74 测试用例）
 > **核心交付**: 订单级站内聊天 + 管理端内部通讯 + 已读回执 + 消息持久化 + Socket.io 实时推送
@@ -157,6 +158,11 @@
 | 1 | **聊天绑定订单（1:1 会话）** | 签证行业沟通围绕订单展开，不需要独立的"联系人列表"概念。每个订单自动创建一个聊天会话 |
 | 2 | **多人可见（非 1:1 私聊）** | 订单的客服/资料员/操作员/客户/管理者都能看到同一个聊天流，保证信息透明 |
 | 3 | **消息持久化到 MySQL** | 不用 Redis / MongoDB——项目已有 MySQL，消息量级（每订单百条级）MySQL 完全够用 |
+| 13 | **系统消息用专用系统用户** | Prisma FK 约束要求 senderId 存在于 erp_users，seed.ts 创建 `chat-system` 用户，系统消息 senderId 用此 ID |
+| 14 | **cursor 分页用复合游标** | `(createdAt, id)` 双字段防同时间戳消息丢失 |
+| 15 | **连接时懒加载房间** | 只 join 最近 20 个活跃订单，避免房间爆炸 |
+| 16 | **聊天文件 OSS 路径隔离** | 路径前缀 `chat/{companyId}/{roomId}/` 与业务文件 `orders/` 分开 |
+| 17 | **mark-read 前端 debounce** | 2s 节流合并，减少高频 DB 写入 |
 | 4 | **Socket.io 推送 + DB 持久化** | 双通道：发消息先写 DB 再 Socket 推送，确保离线用户上线后能拉取历史 |
 | 5 | **消息支持图片/文件** | 业务场景需要发送证件照片、补充文件，复用现有 OSS 预签名直传 |
 | 6 | **已读回执（per-user）** | `ChatRead` 记录每个用户对该会话的最后已读消息 ID，计算未读数 |
@@ -176,51 +182,63 @@
 #### erp_chat_rooms — 聊天会话
 
 ```prisma
-model ChatRoom {
-  id          String      @id @default(cuid())
-  companyId   String      @map("company_id")
-  orderId     String      @unique @map("order_id")       // 每个订单一个聊天室
-  title       String      @db.VarChar(200)                // 自动生成："订单 HX20260328XXXX"
-  lastMessage String?     @db.Text @map("last_message")   // 最后一条消息摘要（顶栏预览）
-  lastMessageAt DateTime? @map("last_message_at")         // 最后消息时间
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
+enum ChatRoomStatus {
+  ACTIVE     // 进行中
+  ARCHIVED   // 已归档（订单终态后自动归档）
+  MUTED      // 已静默（管理者选择不接收通知）
+}
 
-  company     Company     @relation(fields: [companyId], references: [id])
-  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  messages    ChatMessage[]
-  reads       ChatRead[]
+model ChatRoom {
+  id            String          @id @default(cuid())
+  companyId     String          @map("company_id")
+  orderId       String          @unique @map("order_id")
+  title         String          @db.VarChar(200)
+  status        ChatRoomStatus  @default(ACTIVE)     // 会话状态
+  lastMessage   String?         @db.Text @map("last_message")
+  lastMessageAt DateTime?       @map("last_message_at")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  company       Company         @relation(fields: [companyId], references: [id])
+  order         Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  messages      ChatMessage[]
+  reads         ChatRead[]
 
   @@index([companyId])
-  @@index([lastMessageAt])
+  @@index([companyId, lastMessageAt])  // 会话列表按最近消息排序
   @@map("erp_chat_rooms")
 }
 ```
+
+> **注意**：`@@index([lastMessageAt])` 单列索引改为 `@@index([companyId, lastMessageAt])` 复合索引，因为查询总是带 companyId 过滤。
 
 #### erp_chat_messages — 聊天消息
 
 ```prisma
 model ChatMessage {
-  id          String        @id @default(cuid())
-  roomId      String        @map("room_id")
-  companyId   String        @map("company_id")
-  senderId    String        @map("sender_id")             // 发送者 userId（SYSTEM 消息为 "system"）
-  type        ChatMessageType                            // TEXT / IMAGE / FILE / SYSTEM
-  content     String        @db.Text                      // TEXT: 文本内容 / IMAGE/FILE: ossUrl / SYSTEM: 描述文本
-  fileName    String?       @db.VarChar(255) @map("file_name")   // FILE 类型的原始文件名
-  fileSize    Int?          @map("file_size")                    // FILE 类型的文件大小
-  metadata    Json?                                           // 扩展字段（图片尺寸等）
-  createdAt   DateTime      @default(now()) @map("created_at")
+  id          String          @id @default(cuid())
+  roomId      String          @map("room_id")
+  companyId   String          @map("company_id")
+  senderId    String          @map("sender_id")             // 发送者 userId（系统消息用 seed 创建的 chat-system 用户）
+  type        ChatMessageType
+  content     String          @db.Text                      // TEXT: 文本 / IMAGE/FILE: ossUrl / SYSTEM: 描述文本
+  fileName    String?         @db.VarChar(255) @map("file_name")
+  fileSize    Int?            @map("file_size")
+  metadata    Json?                                           // 扩展字段（图片尺寸、缩略图 URL 等）
+  createdAt   DateTime        @default(now()) @map("created_at")
 
-  room        ChatRoom      @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  sender      User?         @relation(fields: [senderId], references: [id])
+  room        ChatRoom        @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender      User            @relation(fields: [senderId], references: [id])  // 非空关联，系统消息用 chat-system 用户
 
-  @@index([roomId, createdAt])    // 会话内按时间查询（最核心查询）
+  @@index([roomId, createdAt])    // 会话内按时间查询
+  @@index([roomId, createdAt, id])  // 复合游标分页：防同时间戳丢失
   @@index([companyId])
   @@index([senderId])
   @@map("erp_chat_messages")
 }
 ```
+
+> **关键修复（P0#1）**：`sender User` 改为非空关联（不是 `User?`）。系统消息的 senderId 不用 `'system'` 字符串，而是用 seed.ts 创建的 `chat-system` 用户 ID（`id: 'chat_system'`），确保 FK 约束合法。
 
 #### erp_chat_reads — 已读回执
 
@@ -302,30 +320,42 @@ model User {
 |---|---|---|---|
 | POST | `/api/chat/rooms/[orderId]/read` | 有权限 | 标记已读（传入 lastReadMessageId） |
 
-### 6.4 文件上传（复用现有）
+### 6.4 文件上传（复用现有 + 路径隔离）
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| POST | `/api/documents/presign` | 复用现有预签名直传，聊天图片/文件走同一通道 |
-| POST | `/api/documents/confirm` | 复用现有上传确认 |
+| POST | `/api/documents/presign` | 复用预签名直传，增加 `context: 'chat'` 参数区分路径 |
+| POST | `/api/documents/confirm` | 复用上传确认，`context: 'chat'` 写入 ChatMessage 而非 DocumentFile |
 
-> 聊天文件不写入 `erp_document_files` 表，直接在 ChatMessage 中存储 ossUrl。文件生命周期跟随 ChatRoom。
+> **关键修复（P1#13）**：聊天文件用独立 OSS 路径前缀 `chat/{companyId}/{roomId}/{timestamp}_{filename}`，与业务文件 `orders/{companyId}/{orderId}/` 完全隔离。presign API 需扩展：
+
+```typescript
+// presign API 扩展
+const context = body.context ?? 'document'  // 'document' | 'chat'
+
+let ossPath: string
+if (context === 'chat') {
+  ossPath = `chat/${user.companyId}/${roomId}/${Date.now()}_${fileName}`
+} else {
+  ossPath = `orders/${user.companyId}/${orderId}/${Date.now()}_${fileName}`
+}
+```
 
 ### 6.5 权限矩阵
 
 | 角色 | 查看会话 | 发送消息 | 查看历史 | 标记已读 |
 |---|:---:|:---:|:---:|:---:|
-| SUPER_ADMIN (Lv1) | ✅ | ⚠️ 可介入 | ✅ | ✅ |
-| COMPANY_OWNER (Lv2) | ✅ | ⚠️ 可介入 | ✅ | ✅ |
-| CS_ADMIN (Lv3) | ✅ | ✅ | ✅ | ✅ |
-| CUSTOMER_SERVICE (Lv4) | ✅ 仅自己订单 | ✅ | ✅ | ✅ |
-| VISA_ADMIN (Lv5) | ✅ | ⚠️ 可介入 | ✅ | ✅ |
-| DOC_COLLECTOR (Lv6) | ✅ 仅自己订单 | ✅ | ✅ | ✅ |
-| OPERATOR (Lv7) | ✅ 仅自己订单 | ✅ | ✅ | ✅ |
-| OUTSOURCE (Lv8) | ❌ | ❌ | ❌ | ❌ |
-| CUSTOMER (Lv9) | ✅ 仅自己订单 | ✅ | ✅ | ✅ |
+| SUPER_ADMIN (Lv1) | ✅ wildcard | ✅ wildcard | ✅ | ✅ |
+| COMPANY_OWNER (Lv2) | ✅ chat:read | ✅ chat:send | ✅ | ✅ |
+| CS_ADMIN (Lv3) | ✅ chat:read | ✅ chat:send | ✅ | ✅ |
+| CUSTOMER_SERVICE (Lv4) | ✅ 仅自己订单 | ✅ chat:send | ✅ | ✅ |
+| VISA_ADMIN (Lv5) | ✅ chat:read | ✅ chat:send | ✅ | ✅ |
+| DOC_COLLECTOR (Lv6) | ✅ 仅自己订单 | ✅ chat:send | ✅ | ✅ |
+| OPERATOR (Lv7) | ✅ 仅自己订单 | ✅ chat:send | ✅ | ✅ |
+| OUTSOURCE (Lv8) | ❌ 无 chat 权限 | ❌ | ❌ | ❌ |
+| CUSTOMER (Lv9) | ✅ 仅自己订单 | ✅ chat:send | ✅ | ✅ |
 
-> Lv1/Lv2/Lv5 默认只读，需要调用 `/api/chat/rooms/[orderId]/join` 变为可发送。首次发送时自动 join。
+> **关键修复（P0#3）**：新增 chat 资源的 read/send 权限，OUTSOURCE 无权访问。
 
 ---
 
@@ -383,10 +413,10 @@ io.on('connection', (socket) => {
 
 ### 7.4 聊天房间管理
 
-在用户连接 Socket 时，自动加入其**所有活跃订单**的聊天房间：
+**连接时懒加入（关键修复 P1#8）**：只加入最近 20 个活跃订单的房间，避免房间爆炸：
 
 ```typescript
-// 连接时查询用户关联的活跃订单
+// 连接时查询用户关联的最近 20 个活跃订单
 const activeOrders = await prisma.order.findMany({
   where: {
     companyId: user.companyId,
@@ -399,6 +429,8 @@ const activeOrders = await prisma.order.findMany({
     ],
   },
   select: { id: true },
+  orderBy: { updatedAt: 'desc' },
+  take: 20,  // 最多 20 个，其余按需 chat:join
 })
 
 for (const order of activeOrders) {
@@ -406,7 +438,35 @@ for (const order of activeOrders) {
 }
 ```
 
-> 终态订单（已交付/出签/拒签）不再自动加入，但仍可手动 `chat:join` 查看历史。
+> 终态订单（已交付/出签/拒签）不自动加入。用户打开聊天 Tab 时通过 `chat:join` 按需加入。
+
+**chat:join 权限校验（关键修复 P0#2）**：
+
+```typescript
+socket.on('chat:join', async ({ orderId }: { orderId: string }) => {
+  // 校验用户对订单有访问权
+  const order = await prisma.order.findFirst({
+    where: {
+      id: orderId,
+      companyId: user.companyId,
+      OR: [
+        { customerId: user.userId },
+        { collectorId: user.userId },
+        { operatorId: user.userId },
+        { createdBy: user.userId },
+      ],
+    },
+    select: { id: true },
+  })
+
+  if (!order) {
+    socket.emit('chat:error', { message: '无权访问该聊天' })
+    return
+  }
+
+  socket.join(`order:${orderId}`)
+})
+```
 
 ---
 
@@ -447,9 +507,34 @@ for (const order of activeOrders) {
 
 | 属性 | 说明 |
 |---|---|
-| Props | `orderId: string`, `className?: string` |
+| Props | `orderId: string`, `className?: string`, `compact?: boolean` |
 | 状态 | `messages`, `isLoadingMore`, `hasMore`, `typingUsers`, `unreadCount` |
 | 行为 | 初始化加载 → 获取历史消息 → 监听 Socket 事件 → 自动滚底 → 向上滚动加载更多 |
+
+> **关键修复（P1#11）**：ChatMessageList 加载历史时保持滚动位置：
+
+```typescript
+// 加载更多历史消息时的滚动位置保持
+const handleScroll = useCallback(async () => {
+  if (containerRef.current?.scrollTop !== 0) return
+  if (isLoadingMore || !hasMore) return
+
+  // 1. 记录加载前的 scrollHeight
+  const prevScrollHeight = containerRef.current.scrollHeight
+
+  setIsLoadingMore(true)
+  const result = await loadMore()
+  setIsLoadingMore(false)
+
+  // 2. 加载完成后，保持视觉位置不变
+  if (containerRef.current) {
+    const newScrollHeight = containerRef.current.scrollHeight
+    containerRef.current.scrollTop = newScrollHeight - prevScrollHeight
+  }
+
+  setHasMore(result.hasMore)
+}, [loadMore, isLoadingMore, hasMore])
+```
 
 #### ChatMessage（单条消息）
 
@@ -540,7 +625,9 @@ function useChat(orderId: string) {
 | M4-3 | TypeScript 类型 | `src/types/chat.ts` | ChatRoom / ChatMessage / ChatRead 接口 + SendMessagePayload |
 | M4-4 | ChatRoom 自动创建 | `src/lib/transition.ts` | transitionOrder 中，订单创建时自动创建 ChatRoom |
 | M4-5 | 系统消息工具函数 | `src/lib/chat-system.ts` | `sendSystemMessage(roomId, companyId, content)` 函数 |
+| M4-5b | 种子数据扩展 | `prisma/seed.ts` | 新增 chat_system 系统用户 + chat 权限 |
 | M4-6 | 事件总线集成 | `src/lib/events.ts` | 关键工作流节点自动发送系统消息 |
+| M4-6b | RBAC 权限扩展 | `src/lib/rbac.ts` | 为所有角色新增 chat 资源权限 |
 
 ### 10.2 详细实现
 
@@ -558,23 +645,30 @@ enum ChatMessageType {
   SYSTEM
 }
 
-model ChatRoom {
-  id            String        @id @default(cuid())
-  companyId     String        @map("company_id")
-  orderId       String        @unique @map("order_id")
-  title         String        @db.VarChar(200)
-  lastMessage   String?       @db.Text @map("last_message")
-  lastMessageAt DateTime?     @map("last_message_at")
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
+enum ChatRoomStatus {
+  ACTIVE
+  ARCHIVED
+  MUTED
+}
 
-  company       Company       @relation(fields: [companyId], references: [id])
-  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+model ChatRoom {
+  id            String          @id @default(cuid())
+  companyId     String          @map("company_id")
+  orderId       String          @unique @map("order_id")
+  title         String          @db.VarChar(200)
+  status        ChatRoomStatus  @default(ACTIVE) @map("status")
+  lastMessage   String?         @db.Text @map("last_message")
+  lastMessageAt DateTime?       @map("last_message_at")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  company       Company         @relation(fields: [companyId], references: [id])
+  order         Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   messages      ChatMessage[]
   reads         ChatRead[]
 
   @@index([companyId])
-  @@index([lastMessageAt])
+  @@index([companyId, lastMessageAt])
   @@map("erp_chat_rooms")
 }
 
@@ -591,9 +685,10 @@ model ChatMessage {
   createdAt   DateTime        @default(now()) @map("created_at")
 
   room        ChatRoom        @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  sender      User?           @relation(fields: [senderId], references: [id])
+  sender      User            @relation(fields: [senderId], references: [id])
 
   @@index([roomId, createdAt])
+  @@index([roomId, createdAt, id])  // 复合游标分页
   @@index([companyId])
   @@index([senderId])
   @@map("erp_chat_messages")
@@ -700,6 +795,9 @@ await prisma.chatRoom.create({
 import { prisma } from '@/lib/prisma'
 import { emitToRoom } from '@/lib/socket'
 
+// 系统用户 ID — seed.ts 中创建的 chat_system 用户
+const SYSTEM_USER_ID = 'chat_system'
+
 export async function sendSystemMessage(
   orderId: string,
   companyId: string,
@@ -712,12 +810,12 @@ export async function sendSystemMessage(
   })
   if (!room) return
 
-  // 创建消息
+  // 创建消息（senderId 用系统用户 ID，满足 FK 约束）
   const message = await prisma.chatMessage.create({
     data: {
       roomId: room.id,
       companyId,
-      senderId: 'system',
+      senderId: SYSTEM_USER_ID,
       type: 'SYSTEM',
       content,
     },
@@ -737,7 +835,7 @@ export async function sendSystemMessage(
     id: message.id,
     roomId: room.id,
     orderId,
-    senderId: 'system',
+    senderId: SYSTEM_USER_ID,
     senderName: '系统',
     senderAvatar: null,
     type: 'SYSTEM',
@@ -747,6 +845,82 @@ export async function sendSystemMessage(
 
   return message
 }
+```
+
+> **关键修复（P0#1）**：`senderId` 用 `'chat_system'`（seed.ts 中创建的系统用户），而非不存在的 `'system'`。
+
+#### M4-5b: 种子数据扩展
+
+在 `prisma/seed.ts` 的 `main()` 函数末尾追加：
+
+```typescript
+// 3. 创建聊天系统用户（用于系统消息 senderId）
+const chatSystemUser = await prisma.user.upsert({
+  where: { username: 'chat_system' },
+  update: {},
+  create: {
+    id: 'chat_system',
+    companyId: 'system',
+    username: 'chat_system',
+    phone: '13800000001',
+    passwordHash: await bcrypt.hash('ChatSystem@2026', 12),
+    realName: '系统助手',
+    role: 'SUPER_ADMIN',
+    status: 'ACTIVE',
+  },
+})
+console.log('✅ Chat system user created:', chatSystemUser.username)
+```
+
+> **说明**：chat_system 用户归属 system 公司，role 为 SUPER_ADMIN，但实际不会登录。它的唯一用途是作为 ChatMessage.senderId 的合法 FK 值。
+
+#### M4-6b: RBAC 权限扩展
+
+在 `src/lib/rbac.ts` 的 `ROLE_PERMISSIONS` 中，为每个角色追加 `chat` 资源：
+
+```typescript
+// 在每个角色的权限数组中追加：
+// SUPER_ADMIN 已有 wildcard，无需追加
+
+COMPANY_OWNER: [
+  // ... 已有权限 ...
+  { resource: 'chat', actions: ['read', 'send'] },  // 可查看+可介入
+],
+
+CS_ADMIN: [
+  // ... 已有权限 ...
+  { resource: 'chat', actions: ['read', 'send'] },
+],
+
+CUSTOMER_SERVICE: [
+  // ... 已有权限 ...
+  { resource: 'chat', actions: ['read', 'send'] },
+],
+
+VISA_ADMIN: [
+  // ... 已有权限 ...
+  { resource: 'chat', actions: ['read', 'send'] },  // 可查看+可介入
+],
+
+DOC_COLLECTOR: [
+  // ... 已有权限 ...
+  { resource: 'chat', actions: ['read', 'send'] },
+],
+
+OPERATOR: [
+  // ... 已有权限 ...
+  { resource: 'chat', actions: ['read', 'send'] },
+],
+
+OUTSOURCE: [
+  // ... 已有权限 ...
+  // 不加 chat 权限 → 无法访问聊天
+],
+
+CUSTOMER: [
+  // ... 已有权限 ...
+  { resource: 'chat', actions: ['read', 'send'] },
+],
 ```
 
 #### M4-6: 事件总线集成
@@ -791,92 +965,139 @@ export async function sendSystemMessage(
 #### M4-7: GET /api/chat/rooms
 
 ```typescript
-// 权限：所有已登录用户
+// 权限：有 chat:read 权限的所有用户
 // 逻辑：
-// 1. 查询用户关联的 ChatRooms（通过 Order 关联）
-// 2. LEFT JOIN ChatRead 计算未读数
-// 3. 按 lastMessageAt DESC 排序
+// 1. requirePermission(user, 'chat', 'read')
+// 2. 查询用户关联的 ChatRooms（通过 Order 关联）
+// 3. 计算每个会话的未读数
+// 4. 按 lastMessageAt DESC 排序（NULL 排最后）
 // 返回：
 // {
 //   success: true,
 //   data: [{
-//     orderId, orderNo, title, lastMessage, lastMessageAt,
-//     unreadCount: 3,   // messages 表 COUNT WHERE id > lastReadMessageId
+//     orderId, orderNo, title, lastMessage, lastMessageAt, status,
+//     unreadCount: 3,
 //   }]
 // }
 
-// 查询逻辑：
+// MySQL 兼容查询（关键修复 P0#7：不用 PostgreSQL 的 NULLS LAST）
 const rooms = await prisma.$queryRaw`
   SELECT
     cr.id, cr.order_id as orderId, o.order_no as orderNo,
-    cr.title, cr.last_message as lastMessage,
+    cr.title, cr.status, cr.last_message as lastMessage,
     cr.last_message_at as lastMessageAt,
     cr.created_at as createdAt,
     COALESCE(unread.cnt, 0) as unreadCount
   FROM erp_chat_rooms cr
   INNER JOIN erp_orders o ON o.id = cr.order_id
-  LEFT JOIN erp_chat_reads crd ON crd.room_id = cr.id AND crd.user_id = ${userId}
   LEFT JOIN (
     SELECT cm.room_id, COUNT(*) as cnt
     FROM erp_chat_messages cm
-    LEFT JOIN erp_chat_reads crd2 ON crd2.room_id = cm.room_id AND crd2.user_id = ${userId}
-    WHERE cm.id > COALESCE(crd2.last_read_message_id, '')
+    LEFT JOIN erp_chat_reads crd ON crd.room_id = cm.room_id AND crd.user_id = ${userId}
+    WHERE cm.id > COALESCE(crd.last_read_message_id, '')
     GROUP BY cm.room_id
   ) unread ON unread.room_id = cr.id
-  WHERE o.customer_id = ${userId}
+  WHERE (o.customer_id = ${userId}
      OR o.collector_id = ${userId}
      OR o.operator_id = ${userId}
-     OR o.created_by = ${userId}
-  ORDER BY cr.last_message_at DESC NULLS LAST
+     OR o.created_by = ${userId})
+    AND cr.status != 'ARCHIVED'
+  ORDER BY cr.last_message_at IS NULL, cr.last_message_at DESC
   LIMIT 50
 `
 ```
 
-> 实际实现可用 Prisma ORM + 应用层计算未读数，原生 SQL 仅作为性能参考。
+> **关键修复（P0#7）**：`ORDER BY cr.last_message_at IS NULL, cr.last_message_at DESC` 替代 PostgreSQL 的 `NULLS LAST`，MySQL 兼容。未发过消息的会话排在最后。
 
 #### M4-9: GET /api/chat/rooms/[orderId]/messages
 
 ```typescript
-// 权限：订单相关人员（customer/collector/operator/createdBy）+ 管理者
-// 参数：?cursor=xxx&limit=50
+// 权限：订单相关人员（customer/collector/operator/createdBy）+ 有 chat:read 权限的管理者
+// 参数：?cursor=xxx&beforeId=xxx&limit=50   （复合游标：createdAt + id）
 // 逻辑：
-// 1. 校验用户对订单有访问权
-// 2. 查找 ChatRoom
-// 3. cursor 为空 → 返回最新 50 条
-//    cursor 不为空 → 返回 createdAt < cursor 的 50 条
-// 4. 查询 User 信息填充 senderName/senderAvatar/senderRole
+// 1. requirePermission(user, 'chat', 'read')
+// 2. 校验用户对订单有访问权（dataScope 或订单关联）
+// 3. 查找 ChatRoom
+// 4. cursor 为空 → 返回最新 50 条
+//    cursor 不为空 → WHERE (createdAt < ?) OR (createdAt = ? AND id < ?)
+// 5. 查询 User 信息填充 senderName/senderAvatar/senderRole
 // 返回：
 // {
 //   success: true,
 //   data: [ChatMessageItem],
-//   meta: { hasMore: true, cursor: "2026-03-28T..." }
+//   meta: { hasMore: true, cursor: "2026-03-28T...", beforeId: "cm_xxx" }
 // }
+
+// 关键修复（P0#5）：复合游标防同时间戳丢失
+const where = cursor
+  ? {
+      roomId,
+      OR: [
+        { createdAt: { lt: new Date(cursor) } },
+        {
+          createdAt: new Date(cursor),
+          id: { lt: beforeId },
+        },
+      ],
+    }
+  : { roomId }
+
+const messages = await prisma.chatMessage.findMany({
+  where,
+  orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+  take: limit + 1,  // 多取 1 条判断 hasMore
+  include: { sender: { select: { id: true, realName: true, avatar: true, role: true } } },
+})
+
+const hasMore = messages.length > limit
+if (hasMore) messages.pop()
+
+return {
+  data: messages.reverse(),  // 反转为时间正序
+  meta: {
+    hasMore,
+    cursor: messages[0]?.createdAt.toISOString(),
+    beforeId: messages[0]?.id,
+  },
+}
 ```
 
 #### M4-10: POST /api/chat/rooms/[orderId]/messages
 
 ```typescript
-// 权限：CUSTOMER/Lv3-4/Lv6-7 可直接发送；Lv1-2/5 首次发送自动 join
+// 权限：有 chat:send 权限 + 订单访问权
 // Body: { type: 'TEXT'|'IMAGE'|'FILE', content: string, fileName?: string, fileSize?: number }
 // 逻辑：
-// 1. 校验权限 + 校验订单存在
-// 2. 校验 ChatRoom 存在（不存在则自动创建）
-// 3. 校验内容：
+// 1. requirePermission(user, 'chat', 'send')
+// 2. 校验订单存在 + 用户有订单访问权
+// 3. 校验 ChatRoom 存在 + status != ARCHIVED（不存在则自动创建）
+// 4. 校验内容：
 //    - TEXT: content 非空，最长 2000 字符
-//    - IMAGE: content 为 ossUrl，校验 ossKey 路径
-//    - FILE: content 为 ossUrl + fileName + fileSize
-// 4. Prisma 事务：
+//    - IMAGE: content 为 ossUrl，校验 ossKey 路径以 chat/ 开头
+//    - FILE: content 为 ossUrl + fileName + fileSize，校验 ossKey 路径
+// 5. Prisma 事务：
 //    a. 创建 ChatMessage
 //    b. 更新 ChatRoom (lastMessage, lastMessageAt)
-// 5. Socket 推送到 order:{orderId}
-// 6. 通知：非即时场景下为离线用户创建 Notification
+// 6. Socket 推送到 order:{orderId}（附带 unreadCount 给各接收方）
 // 返回：
 // { success: true, data: ChatMessageItem }
 
-// 通知逻辑（低优先级优化）：
-// 如果接收方不在线（Socket 未连接），创建一条 Notification
-// type: 'SYSTEM'，title: "xxx 给您发了一条消息"
-// 避免高频消息轰炸：同会话 5 分钟内只发 1 条通知
+// 关键修复（P0#6）：事务内更新 ChatRoom，用原子操作防竞态
+const result = await prisma.$transaction(async (tx) => {
+  const message = await tx.chatMessage.create({
+    data: { roomId: room.id, companyId, senderId: user.userId, type, content, fileName, fileSize },
+  })
+
+  await tx.chatRoom.update({
+    where: { id: room.id },
+    data: { lastMessage: content.slice(0, 100), lastMessageAt: message.createdAt },
+  })
+
+  return message
+})
+
+// 关键修复（P1#14）：Socket 推送附带接收方各自的未读计数
+// 查询房间内所有在线用户 → 逐个推送含 unreadCount 的消息
 ```
 
 #### M4-11: POST /api/chat/rooms/[orderId]/read
@@ -928,7 +1149,7 @@ export function emitToRoom(room: string, event: string, data: unknown): void {
 }
 
 // io.on('connection') 内追加：
-// 1. 查询活跃订单 → 自动 join
+// 1. 查询活跃订单 → 懒加入（最近 20 个）
 const activeOrders = await prisma.order.findMany({
   where: {
     companyId: user.companyId,
@@ -941,13 +1162,30 @@ const activeOrders = await prisma.order.findMany({
     ],
   },
   select: { id: true },
+  orderBy: { updatedAt: 'desc' },
+  take: 20,
 })
 for (const order of activeOrders) {
   socket.join(`order:${order.id}`)
 }
 
-// 2. 聊天事件
-socket.on('chat:join', ({ orderId }: { orderId: string }) => {
+// 2. 聊天事件（含权限校验）
+socket.on('chat:join', async ({ orderId }: { orderId: string }) => {
+  // P0#2：权限校验
+  const order = await prisma.order.findFirst({
+    where: {
+      id: orderId, companyId: user.companyId,
+      OR: [
+        { customerId: user.userId }, { collectorId: user.userId },
+        { operatorId: user.userId }, { createdBy: user.userId },
+      ],
+    },
+    select: { id: true },
+  })
+  if (!order) {
+    socket.emit('chat:error', { message: '无权访问该聊天' })
+    return
+  }
   socket.join(`order:${orderId}`)
 })
 
@@ -955,35 +1193,44 @@ socket.on('chat:leave', ({ orderId }: { orderId: string }) => {
   socket.leave(`order:${orderId}`)
 })
 
+// P1#8：typing 限流 — 服务端也加 2s 冷却
+const typingCooldown = new Map<string, number>()
 socket.on('chat:typing', ({ orderId }: { orderId: string }) => {
+  const key = `${user.userId}:${orderId}`
+  const now = Date.now()
+  const last = typingCooldown.get(key) ?? 0
+  if (now - last < 2000) return  // 2s 冷却
+  typingCooldown.set(key, now)
   socket.to(`order:${orderId}`).emit('chat:typing', {
-    orderId,
-    userId: user.userId,
-    realName: socket.data.realName,
+    orderId, userId: user.userId, realName: socket.data.realName,
   })
 })
 
-socket.on('chat:mark-read', async ({ orderId, lastReadMessageId }) => {
-  // 更新 DB
-  const room = await prisma.chatRoom.findUnique({
-    where: { orderId },
-    select: { id: true },
-  })
-  if (!room) return
+// P1#9：mark-read 防抖 — 同一房间 3s 内只处理最后一次
+const readDebounce = new Map<string, NodeJS.Timeout>()
+socket.on('chat:mark-read', ({ orderId, lastReadMessageId }) => {
+  const key = `${user.userId}:${orderId}`
+  const existing = readDebounce.get(key)
+  if (existing) clearTimeout(existing)
 
-  await prisma.chatRead.upsert({
-    where: { roomId_userId: { roomId: room.id, userId: user.userId } },
-    update: { lastReadMessageId },
-    create: { roomId: room.id, userId: user.userId, lastReadMessageId },
-  })
+  readDebounce.set(key, setTimeout(async () => {
+    readDebounce.delete(key)
+    const room = await prisma.chatRoom.findUnique({
+      where: { orderId }, select: { id: true },
+    })
+    if (!room) return
 
-  // 广播已读回执
-  socket.to(`order:${orderId}`).emit('chat:read', {
-    orderId,
-    userId: user.userId,
-    realName: socket.data.realName,
-    lastReadMessageId,
-  })
+    await prisma.chatRead.upsert({
+      where: { roomId_userId: { roomId: room.id, userId: user.userId } },
+      update: { lastReadMessageId },
+      create: { roomId: room.id, userId: user.userId, lastReadMessageId },
+    })
+
+    socket.to(`order:${orderId}`).emit('chat:read', {
+      orderId, userId: user.userId,
+      realName: socket.data.realName, lastReadMessageId,
+    })
+  }, 3000))  // 3s 延迟合并
 })
 ```
 
@@ -998,31 +1245,59 @@ interface UseSocketOptions {
   onChatMessage?: (data: ChatMessageSocketPayload) => void
   onChatTyping?: (data: { orderId: string; userId: string; realName: string }) => void
   onChatRead?: (data: { orderId: string; userId: string; realName: string; lastReadMessageId: string }) => void
+  onChatError?: (data: { message: string }) => void
+}
+```
+
+> **关键修复（P0#4）**：useSocketClient 是全局单例，多个组件传入不同 onChatMessage 回调会互相覆盖。解决方案：
+
+**方案 A（推荐）：回调注册表**
+
+```typescript
+// 全局回调注册表
+type ChatMessageHandler = (data: ChatMessageSocketPayload) => void
+const chatMessageHandlers = new Map<string, ChatMessageHandler>()
+
+export function registerChatHandler(id: string, handler: ChatMessageHandler) {
+  chatMessageHandlers.set(id, handler)
+  return () => chatMessageHandlers.delete(id)
 }
 
-// 在 socket.on 部分追加：
+// Socket 事件处理改为遍历注册表
 socket.on('chat:message', (data) => {
-  optionsRef.current.onChatMessage?.(data)
+  for (const handler of chatMessageHandlers.values()) {
+    handler(data)
+  }
 })
+```
 
-socket.on('chat:typing', (data) => {
-  optionsRef.current.onChatTyping?.(data)
-})
+组件中使用：
+```tsx
+// ChatPanel 组件
+useEffect(() => {
+  const unregister = registerChatHandler(`chat-panel-${orderId}`, (data) => {
+    if (data.orderId === orderId) {
+      chatStore.addMessage(orderId, data)
+    }
+  })
+  return unregister
+}, [orderId])
+```
 
-socket.on('chat:read', (data) => {
-  optionsRef.current.onChatRead?.(data)
-})
+**方案 B：让各组件直接操作 socket 实例**
 
-// 新增暴露方法：
+useSocketClient 只负责连接管理，返回 socket 实例。各组件自行 `socket.on/off`。
+
+```typescript
 return {
   isConnected,
   disconnect,
-  // 新增：
-  joinRoom: (orderId: string) => socket.emit('chat:join', { orderId }),
-  leaveRoom: (orderId: string) => socket.emit('chat:leave', { orderId }),
-  sendTyping: (orderId: string) => socket.emit('chat:typing', { orderId }),
+  socket,  // 直接暴露 socket 实例
+  joinRoom: (orderId: string) => socket?.emit('chat:join', { orderId }),
+  leaveRoom: (orderId: string) => socket?.emit('chat:leave', { orderId }),
+  sendTyping: (orderId: string) => socket?.emit('chat:typing', { orderId }),
   markRead: (orderId: string, lastReadMessageId: string) =>
-    socket.emit('chat:mark-read', { orderId, lastReadMessageId }),
+    socket?.emit('chat:mark-read', { orderId, lastReadMessageId }),
 }
 ```
 
@@ -1082,7 +1357,7 @@ return {
 │ │ 📄 护照扫描件.pdf  1.2MB │  ← 点击下载       │
 │ └─────────────────────────┘                   │
 ├─────────────────────────────────────────────┤
-│ [输入指示] 张三正在输入...                     │  ← 3s 后自动消失
+│ [输入指示] 张三和李四正在输入...               │  ← P2#19：多人同时输入时合并显示，最多 2 人名，3s 后消失
 └─────────────────────────────────────────────┘
 ```
 
@@ -1091,14 +1366,15 @@ return {
 ```
 ┌─────────────────────────────────────────────┐
 │  [📎] [📷]  │ 输入消息...          │  [发送]  │
-│             │                      │         │
+│             │                      │  152/2k │  ← P2#18：实时字数
 └─────────────────────────────────────────────┘
 
-- 📎 文件上传：复用 presign + confirm → ossUrl → 发送 FILE 消息
-- 📷 拍照：复用 CameraCapture → OSS → 发送 IMAGE 消息
+- 📎 文件上传：复用 presign + confirm（context='chat'）→ ossUrl → 发送 FILE 消息
+- 📷 拍照：复用 CameraCapture → OSS（chat/ 路径）→ 发送 IMAGE 消息
 - 输入防抖 300ms → emit chat:typing
 - Enter 发送，Shift+Enter 换行
 - 发送后清空输入框 + 自动滚底
+- 字数提示：超过 1800 字变黄，超过 2000 字变红并禁止发送
 ```
 
 #### M4-22: ChatRoomList 组件
@@ -1200,7 +1476,7 @@ const tabs = [
   { id: 'info', label: '订单信息', icon: '📋' },
   { id: 'documents', label: '资料管理', icon: '📄' },
   { id: 'materials', label: '签证材料', icon: '🛂' },
-  { id: 'chat', label: '聊天', icon: '💬' },       // ← 新增
+  { id: 'chat', label: `💬 聊天${chatUnread > 0 ? ` (${chatUnread})` : ''}`, icon: '💬' },  // P2#20：Tab 未读角标
   { id: 'logs', label: '操作记录', icon: '📝' },
 ]
 
@@ -1220,13 +1496,21 @@ const tabs = [
 推荐方案 A，因为客户端页面已有多个区块，Tab 会增加层级。
 
 ```tsx
-// 方案 A：浮动聊天按钮 + 抽屉
+// 方案 A：浮动聊天按钮 + 抽屉（关键修复 P1#10：移动端全屏）
 const [showChat, setShowChat] = useState(false)
 
 // 页面底部
 <div className="fixed bottom-20 right-4 z-40">
   {showChat && (
-    <div className="w-80 h-96 glass-card-static rounded-xl shadow-2xl animate-slide-in-up overflow-hidden">
+    // 桌面端：固定尺寸 | 移动端：全屏
+    <div className="
+      w-80 h-96                          /* 桌面端 */
+      max-sm:fixed max-sm:inset-0        /* 移动端全屏 */
+      max-sm:w-full max-sm:h-full
+      max-sm:bottom-0 max-sm:right-0
+      max-sm:rounded-none max-sm:z-50
+      glass-card-static rounded-xl shadow-2xl animate-slide-in-up overflow-hidden
+    ">
       <ChatPanel orderId={order.id} compact />
     </div>
   )}
@@ -1335,45 +1619,48 @@ describe('sendSystemMessage', () => {
 
 ## 15. 文件变更全量清单
 
-### 新建文件（10 个）
+### 新建文件（15 个）
 
 | 文件 | 说明 |
 |---|---|
 | `prisma/migrations/xxxx_add_chat/migration.sql` | 迁移 SQL |
 | `src/types/chat.ts` | 聊天类型定义 |
-| `src/lib/chat-system.ts` | 系统消息工具函数 |
+| `src/lib/chat-system.ts` | 系统消息工具函数（含 chat_system 用户） |
 | `src/stores/chat-store.ts` | 聊天 Zustand Store |
 | `src/hooks/use-chat.ts` | 聊天 Hook |
 | `src/app/api/chat/rooms/route.ts` | 会话列表 API |
 | `src/app/api/chat/rooms/[orderId]/route.ts` | 会话详情 API |
-| `src/app/api/chat/rooms/[orderId]/messages/route.ts` | 消息 API |
+| `src/app/api/chat/rooms/[orderId]/messages/route.ts` | 消息 API（复合游标分页） |
 | `src/app/api/chat/rooms/[orderId]/read/route.ts` | 已读 API |
 | `src/components/chat/chat-message.tsx` | 消息组件 |
-| `src/components/chat/chat-message-list.tsx` | 消息列表组件 |
-| `src/components/chat/chat-input.tsx` | 输入组件 |
+| `src/components/chat/chat-message-list.tsx` | 消息列表组件（含滚动位置保持） |
+| `src/components/chat/chat-input.tsx` | 输入组件（含字数提示） |
 | `src/components/chat/chat-panel.tsx` | 主面板组件 |
 | `src/components/chat/chat-room-list.tsx` | 会话列表组件 |
 | `src/lib/__tests__/chat-system.test.ts` | 测试 |
 
-### 修改文件（6 个）
+### 修改文件（8 个）
 
 | 文件 | 变更 |
 |---|---|
-| `prisma/schema.prisma` | 新增 3 Model + 1 Enum + 关联 |
-| `src/lib/socket.ts` | +emitToRoom +chat 事件 +自动 join |
-| `src/hooks/use-socket-client.ts` | +chat 事件监听 +joinRoom/leaveRoom/sendTyping/markRead |
-| `src/app/admin/orders/[id]/page.tsx` | +聊天 Tab |
-| `src/app/customer/orders/[id]/page.tsx` | +聊天浮窗 |
+| `prisma/schema.prisma` | 新增 3 Model + 2 Enum + 关联 |
+| `prisma/seed.ts` | 新增 chat_system 系统用户 |
+| `src/lib/rbac.ts` | 新增 chat 资源权限（read/send） |
+| `src/lib/socket.ts` | +emitToRoom +chat 事件（含权限校验+限流+懒加载） |
+| `src/hooks/use-socket-client.ts` | +回调注册表 +chat 事件 +joinRoom/leaveRoom |
+| `src/app/admin/orders/[id]/page.tsx` | +聊天 Tab（含未读角标） |
+| `src/app/customer/orders/[id]/page.tsx` | +聊天浮窗（移动端全屏） |
 | `src/components/layout/topbar.tsx` | +ChatRoomList |
 | `src/lib/events.ts` | +系统消息触发点 |
 | `src/app/api/orders/route.ts` (POST) | +ChatRoom 自动创建 |
+| `src/app/api/documents/presign/route.ts` | +context 参数区分 chat/document 路径 |
 
 ### 源文件统计
 
 | 指标 | M4 前 | M4 后 | 增量 |
 |---|---|---|---|
-| 源文件 | 119 | ~134 | +15 |
-| 代码行数 | ~13,757 | ~15,200 | +~1,450 |
+| 源文件 | 119 | ~137 | +18 |
+| 代码行数 | ~13,757 | ~15,800 | +~2,050 |
 | API 路由 | 39 | 43 | +4 |
 | 组件 | 25 | 30 | +5 |
 | 测试文件 | 4 | 5 | +1 |

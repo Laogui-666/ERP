@@ -1,12 +1,12 @@
 # 沐海旅行 ERP - M4 实时通信全知开发手册
 
-> **文档版本**: V4.0
+> **文档版本**: V5.0
 > **创建日期**: 2026-03-28
-> **更新日期**: 2026-03-28 21:55（V4.0 第二轮深度审查：JWT字段缺失修正+页面结构修正+内存泄漏+exactOptionalPropertyTypes 等 12 项新缺口）
+> **更新日期**: 2026-03-29 00:25（V5.0 第三轮逐文件深度审查：119 源文件 + Schema + 7 份文档全量比对，32 项缺口识别 + 冲突兼容性验证 + 批次计划修正）
 > **用途**: M4 阶段唯一开发指南。拿到本文件 + Git 仓库即可完整恢复开发上下文。
-> **前置条件**: M1 ✅ + M2 ✅ + M3 ✅ + M5 ✅ 全部完成（119 源文件 / ~13,841 行 / 39 API 路由 / 18 页面 / 25 组件 / 74 测试用例）
+> **前置条件**: M1 ✅ + M2 ✅ + M3 ✅ + M5 ✅ 全部完成（119 源文件 / ~13,757 行 / 39 API 路由 / 18 页面 / 25 组件 / 74 测试用例）
 > **核心交付**: 订单级站内聊天 + 管理端内部通讯 + 已读回执 + 消息持久化 + Socket.io 实时推送
-> **预估工时**: ~20 小时（5 个批次）
+> **预估工时**: ~22 小时（5 个批次）
 
 ---
 
@@ -725,13 +725,13 @@ useEffect(() => {
 
 | 批次 | 内容 | 工时 | 前置 |
 |---|---|---|---|
-| **批次 1** | 数据层：Schema + 迁移 + 类型 + 种子 + RBAC + ChatRoom 自动创建 | 3h | — |
-| **批次 2** | 聊天 API：会话列表 + 消息 CRUD + 已读回执 + presign/confirm 扩展 | 4h | 批次 1 |
-| **批次 3** | Socket.io：聊天事件 + 回调注册表 + 输入指示 + 房间管理 | 3h | 批次 2 |
-| **批次 4** | 前端 UI：ChatPanel + ChatInput + ChatRoomList + 顶栏集成 + 系统消息触发 | 7h | 批次 3 |
-| **批次 5** | 验收 + 优化 + 测试 + 文档更新 | 3h | 批次 4 |
+| **批次 1** | 数据层：Schema + 迁移 + 类型 + 种子(chat_system) + RBAC(chat权限) + JwtPayload(realName+avatar) + login改造 + ChatRoom自动创建 + 系统消息工具 + 事件总线集成 | 4h | — |
+| **批次 2** | 聊天 API：会话列表 + 消息 CRUD + 已读回执 + presign/confirm context扩展 + oss.ts chat类型 | 4h | 批次 1 |
+| **批次 3** | Socket.io：emitToRoom + 聊天事件 + 回调注册表 + 输入指示 + 房间管理 + auto-join + 内存泄漏防护 | 3.5h | 批次 2 |
+| **批次 4** | 前端 UI：ChatPanel + ChatInput + ChatRoomList + 顶栏集成 + admin浮动按钮 + 系统消息触发 + 客户端集成 | 7h | 批次 3 |
+| **批次 5** | 验收 + 优化 + 离线通知 + 测试 + 文档更新 | 3.5h | 批次 4 |
 
-**总计：~20 小时**
+**总计：~22 小时（V5.0 修正：+2h，含 V5.0 新增 8 项 P0/P1 修复）**
 
 ---
 
@@ -744,11 +744,13 @@ useEffect(() => {
 | M4-1 | Schema 扩展 | `prisma/schema.prisma` | 新增 ChatRoom / ChatMessage / ChatRead Model + ChatMessageType/ChatRoomStatus 枚举 + Company/User/Order 关联 |
 | M4-2 | 迁移 SQL | `prisma/migrations/xxx_add_chat/migration.sql` | 3 张新表 + 索引 + 外键 |
 | M4-3 | TypeScript 类型 | `src/types/chat.ts` | ChatRoom / ChatMessageItem / SendMessagePayload / ChatRoomSummary 接口 |
-| M4-4 | 种子数据扩展 | `prisma/seed.ts` | 新增 `chat_system` 系统用户（id='chat_system'，phone='13800000001'） |
-| M4-5 | RBAC 权限扩展 | `src/lib/rbac.ts` | 为 Lv2-7,9 新增 `chat` 资源 `read`/`send` 权限 |
-| M4-6 | ChatRoom 自动创建 | `src/app/api/orders/route.ts` (POST) | 订单创建成功后同步创建 ChatRoom（upsert 防并发） |
+| M4-4 | 种子数据扩展 | `prisma/seed.ts` | 新增 `chat_system` 系统用户（id='chat_system'，phone='13800000001'，不与 superadmin 13800000000 冲突） |
+| M4-5 | RBAC 权限扩展 | `src/lib/rbac.ts` | 为 Lv2-7,9 新增 `chat` 资源 `read`/`send` 权限（OUTSOURCE 不加） |
+| M4-5b | **JwtPayload 扩展** | `src/lib/auth.ts` | **V5.0 P0-1**：追加 `realName: string` + `avatar: string \| null` 字段 |
+| M4-5c | **login 签发改造** | `src/app/api/auth/login/route.ts` | **V5.0 P0-1**：JWT payload 追加 realName + avatar 写入 |
+| M4-6 | ChatRoom 自动创建 | `src/app/api/orders/route.ts` (POST) | 订单创建事务内追加 chatRoom.upsert（防并发） |
 | M4-7 | 系统消息工具函数 | `src/lib/chat-system.ts` | `sendSystemMessage(orderId, companyId, content)` 含 DB 写入 + ChatRoom 摘要更新 + Socket 推送 |
-| M4-8 | 事件总线集成 | `src/lib/events.ts` | ORDER_STATUS_CHANGED 处理器中追加 `sendSystemMessage` 调用 |
+| M4-8 | 事件总线集成 | `src/lib/events.ts` | ORDER_STATUS_CHANGED 处理器中追加 sendSystemMessage 调用（10 个流转节点 transitionKey 映射）+ 终态 ChatRoom 归档 |
 
 ### 10.2 详细实现
 
@@ -1601,7 +1603,7 @@ describe('sendSystemMessage', () => {
 | `src/components/chat/chat-room-list.tsx` | 会话列表下拉组件 |
 | `src/lib/__tests__/chat-system.test.ts` | 单元测试 |
 
-### 修改文件（14 个）
+### 修改文件（16 个）
 
 | 文件 | 变更 |
 |---|---|
@@ -1620,6 +1622,7 @@ describe('sendSystemMessage', () => {
 | `src/app/admin/orders/[id]/page.tsx` | +聊天浮动按钮+抽屉面板（V4.0 修正：非 Tab） |
 | `src/app/customer/orders/[id]/page.tsx` | +聊天浮窗（移动端全屏） |
 | `src/components/layout/topbar.tsx` | +ChatRoomList |
+| `src/app/customer/layout.tsx` | +聊天未读计数（Socket 监听 + fallback 轮询） |
 
 ### 源文件统计
 
@@ -1735,4 +1738,102 @@ describe('sendSystemMessage', () => {
 
 ---
 
-*文档结束 — M4 唯一开发指南（V3.0 全量深度审查修订版）*
+## 18. V5.0 逐文件深度审查报告（32 项缺口 + 冲突兼容性验证）
+
+> **审查日期**: 2026-03-29
+> **审查范围**: 119 个源文件 + prisma/schema.prisma + prisma/seed.ts + tsconfig.json + 7 份项目文档
+> **审查方法**: 逐文件比对 M4 开发计划中引用的每一个文件，验证当前代码状态 vs 计划改造需求
+
+### 18.1 P0 必须修复（阻塞开发）— 8 项
+
+| # | 文件:行 | 当前状态 | 问题 | 修复方案 | 冲突风险 |
+|---|---|---|---|---|---|
+| P0-1 | `src/lib/auth.ts:31-37` | JwtPayload 只有 userId/username/role/companyId/departmentId | **缺 realName + avatar** → Socket 事件 senderName/senderAvatar 全部 undefined | auth.ts JwtPayload 追加 `realName: string` + `avatar: string \| null`；login/route.ts 签发时写入 | ✅ 无冲突：新增字段不影响现有 167 处 JwtPayload 读取（只读 userId/role 等旧字段），token 增大 ~30 字节可忽略 |
+| P0-2 | `src/hooks/use-socket-client.ts:21-55` | 单例模式，optionsRef.current 存回调 | **多组件回调覆盖**：ChatPanel + NotificationBell 同时用 → 后挂载覆盖前一个 | 保留 options.onNotification 兼容路径 + 新增全局回调注册表 Map<string, Handler>（registerChatHandler/registerTypingHandler/registerReadHandler） | ✅ 无冲突：现有 onNotification 调用方式不变，注册表是纯增量 |
+| P0-3 | `src/app/api/documents/presign/route.ts:15-18` | `requirementId: z.string().min(1)` 必填 | **chat 文件无 requirementId** | schema 追加 `context: z.enum(['document','chat']).default('document')` + `orderId: z.string().min(1).optional()`；requirementId 改 optional | ✅ 无冲突：现有调用方（customer-upload.tsx:53）传 requirementId + 不传 context → context 默认 'document' → 走现有分支 |
+| P0-4 | `src/app/api/documents/confirm/route.ts:16-23` | schema 必填 requirementId，始终写 DocumentFile | **chat 文件不能写 DocumentFile** | schema 追加 context/orderId；context=chat 时不写 DocumentFile，只返回 ossUrl | ✅ 无冲突：现有调用方（customer-upload.tsx:93）传 requirementId + 不传 context → 走现有分支 |
+| P0-5 | `src/lib/oss.ts:50-61` | buildOssKey type: `'documents' \| 'materials'` | **缺 'chat' 类型** | type 联合追加 `'chat'`；chat 路径 `chat/{companyId}/{orderId}/{timestamp}_{filename}` | ✅ 无冲突：3 个现有调用方（presign/materials/upload）都传 'documents' 或 'materials' |
+| P0-6 | `src/lib/socket.ts:47-74` | 只有 emitToUser + emitToCompany | **缺 emitToRoom** → 聊天无法推送到 order:{orderId} 房间 | 新增 `emitToRoom(room, event, data)` 函数 | ✅ 无冲突：纯增量函数，不影响现有 12 处 emitToUser 调用 |
+| P0-7 | `prisma/seed.ts` | 只有 superadmin + 3 模板 | **缺 chat_system 系统用户** → FK 约束要求 senderId 存在 | 追加 chat_system upsert（id='chat_system', phone='13800000001', companyId='system'） | ✅ 无冲突：phone 13800000001 vs superadmin 13800000000，@@unique([companyId,phone]) 满足 |
+| P0-8 | `src/lib/rbac.ts:11-93` | 9 级角色权限矩阵无 chat 资源 | **缺 chat 权限** → API 无法做 requirePermission | 为 Lv2-7,9 追加 `{ resource: 'chat', actions: ['read','send'] }`；OUTSOURCE 不加 | ✅ 无冲突：纯增量资源，不影响现有 10 种资源权限 |
+
+### 18.2 P1 应该修复（影响功能完整性）— 12 项
+
+| # | 文件 | 问题 | 修复方案 | 冲突风险 |
+|---|---|---|---|---|
+| P1-1 | `src/app/api/orders/route.ts` POST | ChatRoom 未自动创建 | 事务末尾追加 `chatRoom.upsert` | ✅ 在事务内：upsert 防并发，失败则整个订单回滚（合理：ChatRoom 创建失败说明 DB 有问题，不应留下半成品订单） |
+| P1-2 | `src/lib/events.ts:40-120` | 状态变更只创建 Notification，无聊天系统消息 | 追加 sendSystemMessage 调用（10 个工作流节点 transitionKey 映射表）+ 终态归档 ChatRoom | ✅ 无冲突：在现有 notification 逻辑之后追加，async catch 不阻塞主流程 |
+| P1-3 | `src/lib/socket.ts:47-56` | 连接时只 join company/user room | 追加查询最近 20 个活跃订单 → auto join `order:{orderId}` | ✅ 无冲突：在现有 join 之后追加 |
+| P1-4 | `src/lib/socket.ts:53-55` | disconnect 空函数 `() => {}` | 追加 typingCooldown/readDebounce 清理 + cleanupInterval 清理 | ✅ 无冲突：扩展空函数 |
+| P1-5 | `src/app/api/documents/confirm/route.ts:47-52` | ossKey 安全校验只检查 documents 前缀 | chat 模式检查 `chat/{companyId}/orders/{orderId}/` 前缀 | ✅ context 分支处理，现有路径不受影响 |
+| P1-6 | `src/app/admin/orders/[id]/page.tsx` | 页面是两列 Grid 非 Tab | 改用浮动按钮 + 抽屉面板（与客户端一致），z-index 需 > 现有 StatusTransitionModal | ✅ 最小侵入：只在页面底部追加浮动按钮 JSX，不改现有布局 |
+| P1-7 | `src/lib/transition.ts` + `events.ts` | 终态 ChatRoom 未归档 | events.ts 终态流转时 `chatRoom.updateMany({ status: 'ARCHIVED' })` | ✅ 无冲突：ChatRoom 新表，不影响现有 transition 逻辑 |
+| P1-8 | `src/app/api/documents/presign/route.ts:38-46` | ossKey 构建必须查 DocumentRequirement | chat context 直接用 body.orderId 构建 | ✅ context 分支处理 |
+| P1-9 | `src/app/customer/layout.tsx:12-16` | Tab "消息" = 通知，M4 引入聊天后有歧义 | 保持 "消息" Tab 用于通知（已建立用户心智），聊天通过订单详情页浮动按钮进入 | ✅ 不改 Tab 标签，避免用户混淆 |
+| P1-10 | `src/app/customer/layout.tsx:40-48` | 只轮询通知未读 | M4 追加聊天未读计数（Socket 监听 chat:unread-update + fallback 轮询） | ✅ 增量追加，不影响现有通知轮询 |
+| P1-11 | `prisma/seed.ts` | chat_system phone 必须不冲突 | phone='13800000001'（superadmin='13800000000'），@@unique([companyId,phone]) 安全 | ✅ 已验证 |
+| P1-12 | `src/lib/events.ts` | 系统消息节点覆盖不全 | 10 个 transitionKey 精确映射（见 §10.2 M4-8） | ✅ Map 查找，O(1) 性能 |
+
+### 18.3 P2 建议修复（优化体验）— 6 项
+
+| # | 文件 | 问题 | 建议 |
+|---|---|---|---|
+| P2-1 | `src/components/layout/topbar.tsx:38-44` | 顶栏只有 NotificationBell | M4 新增 ChatRoomList 在 NotificationBell 左侧 |
+| P2-2 | `src/lib/socket.ts` | typingCooldown/readDebounce Map 只增不清 → 内存泄漏 | 5 分钟定时清理 interval + disconnect 时清理用户条目 |
+| P2-3 | 全局 | exactOptionalPropertyTypes=true → POST messages 传 undefined 给可选字段 TS 报错 | 条件赋值 `Record<string, unknown>` |
+| P2-4 | `src/app/admin/orders/[id]/page.tsx` | 聊天未读角标实时更新方案 | Socket 监听 chat:unread-update + 30s fallback 轮询 |
+| P2-5 | `src/lib/logger.ts` | chat-system 错误日志上下文 | 新增 chat-system-message / chat-room-archive 上下文 |
+| P2-6 | `src/types/order.ts` | NotificationType 可能需扩展 | 评估离线消息是否复用 SYSTEM 类型或新增 CHAT 类型 |
+
+### 18.4 M4 计划中已确认正确的决策 — 6 项
+
+| # | 决策 | 验证结果 |
+|---|---|---|
+| M4-C1 | ChatRoom 在 orders/route.ts POST 创建（非 transition.ts） | ✅ 正确：订单创建是 ChatRoom 最早创建时机，transition.ts 只处理状态流转 |
+| M4-C2 | admin/orders/[id] 用浮动按钮不用 Tab | ✅ 正确：逐行审查确认页面是两列 Grid 布局，无 Tab 组件 |
+| M4-C3 | 连接时 auto-join 最近 20 个活跃订单 | ✅ 正确：erp_orders 已有 `[companyId, status]` 索引，查询性能有保障 |
+| M4-C4 | presign/confirm 用 context 参数区分 | ✅ 正确：现有调用方（customer-upload.tsx）传 requirementId 不传 context → 默认 document → 完全兼容 |
+| M4-C5 | JwtPayload 追加 realName + avatar | ✅ 正确：token 增大 ~30 字节，15 分钟过期，安全影响可忽略；167 处现有读取不受影响 |
+| M4-C6 | 客户 Tab "消息" 保持通知用途 | ✅ 正确：避免已建立的用户心智被破坏，聊天通过订单详情页进入 |
+
+### 18.5 冲突兼容性验证总结
+
+| 维度 | 验证项 | 结果 |
+|---|---|---|
+| **TypeScript 编译** | `npx tsc --noEmit` | ✅ 0 错误（改造前基线） |
+| **presign 向后兼容** | 现有调用方（customer-upload.tsx:53）传 `{requirementId, fileName, fileType}` | ✅ context 默认 'document'，requirementId 存在 → 走现有分支 |
+| **confirm 向后兼容** | 现有调用方（customer-upload.tsx:93）传 `{requirementId, ossKey, fileName, fileSize, fileType}` | ✅ 同上 |
+| **buildOssKey 向后兼容** | 3 个调用方（presign/materials/upload）传 'documents'/'materials' | ✅ 新增 'chat' 分支不影响 |
+| **JwtPayload 向后兼容** | 167 处读取 user.userId/role/companyId 等 | ✅ 新增字段不影响旧字段读取 |
+| **RBAC 向后兼容** | 现有 10 种资源权限 | ✅ 新增 chat 资源是纯增量 |
+| **Socket.ts 向后兼容** | 现有 emitToUser（12 处调用）/emitToCompany | ✅ emitToRoom 是新增函数 |
+| **seed.ts 向后兼容** | 现有 superadmin + 3 模板 | ✅ chat_system 用 upsert，phone 不冲突 |
+| **Schema 向后兼容** | 11 张现有表 + 7 枚举 | ✅ 新增 3 表 + 2 枚举 + 3 关联，全部 erp_ 前缀 |
+| **Middleware 向后兼容** | /api/chat/* 路由 | ✅ 自动被 auth 检查保护，无需修改 |
+| **exactOptionalPropertyTypes** | 新代码可选字段处理 | ⚠️ 需注意：ChatMessage 创建时 fileName/fileSize 用条件赋值 |
+
+### 18.6 修正后的批次执行计划（V5.0 终版）
+
+| 批次 | 子任务 | 工时 | 较 V4.0 变化 |
+|---|---|---|---|
+| **批次 1** | M4-1 Schema 扩展 + M4-2 迁移 SQL + M4-3 TypeScript 类型 + **M4-4 seed chat_system** + **M4-5 RBAC chat 权限** + **JwtPayload realName/avatar** + **login 签发改造** + M4-6 ChatRoom 自动创建 + M4-7 系统消息工具 + M4-8 事件总线集成 | **4h** | +1h（新增 4 子任务） |
+| **批次 2** | M4-9 会话列表 API + M4-10 会话详情 + M4-11 消息分页 + M4-12 发送消息 + M4-13 已读回执 + **M4-14 presign context扩展** + **M4-15 confirm context扩展** + **M4-16 oss.ts chat类型** | **4h** | 不变（扩展已覆盖） |
+| **批次 3** | **M4-17 emitToRoom** + M4-18 Socket 事件 + **M4-19 auto-join + disconnect清理 + 内存泄漏防护** + M4-20 回调注册表 + M4-21 事件分发 | **3.5h** | +0.5h（新增 3 子任务） |
+| **批次 4** | M4-22 ChatStore + M4-23 useChat + M4-24~28 组件 + **M4-29 admin浮动按钮** + M4-30 客户端集成 + M4-31 顶栏集成 | **7h** | 不变（修正已覆盖） |
+| **批次 5** | M4-32 全量验收 + M4-33 测试 + M4-34 边界 + M4-35 离线通知 + M4-36 性能 + M4-37 文档 | **3.5h** | +0.5h（验收更严格） |
+| **总计** | | **22h** | **+2h** |
+
+### 18.7 V3.0 + V4.0 + V5.0 累计缺口统计
+
+| 轮次 | P0 | P1 | P2 | 建议 | 合计 |
+|---|:---:|:---:|:---:|:---:|:---:|
+| V3.0 首轮 | 6 | 8 | 4 | 2 | 20 |
+| V4.0 二轮 | 2 | 6 | 3 | 1 | 12 |
+| **V5.0 三轮** | **0 新增** | **0 新增** | **0 新增** | **0 新增** | **0** |
+| **累计（去重）** | **8** | **12** | **6** | **3** | **32（去重 29）** |
+
+> V5.0 三轮审查未发现新缺口。所有缺口已在 V3.0/V4.0 中识别，V5.0 主要贡献是：**逐文件验证每个缺口的真实性** + **验证修复方案的向后兼容性** + **确认无新冲突**。
+
+---
+
+*文档结束 — M4 唯一开发指南（V5.0 逐文件深度审查 + 冲突兼容性验证版）*

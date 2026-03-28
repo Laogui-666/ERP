@@ -32,6 +32,8 @@ export interface JwtPayload {
   role: UserRole
   companyId: string
   departmentId: string | null
+  realName: string
+  avatar: string | null
 }
 
 export async function signAccessToken(payload: JwtPayload): Promise<string> {

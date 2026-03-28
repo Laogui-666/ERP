@@ -10,6 +10,8 @@ function makeUser(role: UserRole, overrides?: Partial<JwtPayload>): JwtPayload {
     role,
     companyId: 'company-1',
     departmentId: null,
+    realName: '测试用户',
+    avatar: null,
     ...overrides,
   }
 }

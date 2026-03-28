@@ -74,6 +74,8 @@ export async function POST(request: NextRequest) {
       role: result.user.role,
       companyId: result.company.id,
       departmentId: null,
+      realName: result.user.realName,
+      avatar: null,
     }
 
     const [accessToken, refreshToken] = await Promise.all([

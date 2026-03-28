@@ -1,8 +1,8 @@
 # 沐海旅行 ERP - M4 实时通信全知开发手册
 
-> **文档版本**: V5.0
+> **文档版本**: V6.0
 > **创建日期**: 2026-03-28
-> **更新日期**: 2026-03-29 00:25（V5.0 第三轮逐文件深度审查：119 源文件 + Schema + 7 份文档全量比对，32 项缺口识别 + 冲突兼容性验证 + 批次计划修正）
+> **更新日期**: 2026-03-29 01:02（V6.0 源代码逐文件深度审查：119 源文件全量比对，新增 5 项缺口（GAP-N1~N5），累计 37 项缺口，批次 1 开发启动）
 > **用途**: M4 阶段唯一开发指南。拿到本文件 + Git 仓库即可完整恢复开发上下文。
 > **前置条件**: M1 ✅ + M2 ✅ + M3 ✅ + M5 ✅ 全部完成（119 源文件 / ~13,757 行 / 39 API 路由 / 18 页面 / 25 组件 / 74 测试用例）
 > **核心交付**: 订单级站内聊天 + 管理端内部通讯 + 已读回执 + 消息持久化 + Socket.io 实时推送
@@ -1681,6 +1681,26 @@ describe('sendSystemMessage', () => {
 | 30 | 🟢 P2 | `login/route.ts` | **JwtPayload 也缺 avatar**：消息头像需来自 JWT 或 DB | §7.3：JWT 追加 avatar 字段 |
 | 31 | 💡 | `NotificationBell` | **ChatRoomList 可复用其交互模式**：点击外部关闭 + 下拉面板 + 未读气泡 | §13.1 M4-28 |
 | 32 | 💡 | `prisma.$queryRaw` | **rooms API 原生 SQL 需类型断言**：`$queryRaw<RoomRow[]>` | §11.2 M4-9 |
+
+### V6.0 四轮（5 项 — 源代码逐文件深度审查）
+
+| # | 优先级 | 文件 | 问题 | 修复位置 |
+|---|---|---|---|---|
+| 33 | 🔴 P0 | `src/types/order.ts:61` | **NotificationType TypeScript 缺 `'SYSTEM'`** — Prisma schema 已有但 TS 联合类型遗漏，M4 离线通知创建 `type: 'SYSTEM'` 将 TS 报错 | §10.2 M4-3b：联合类型追加 `'SYSTEM'` |
+| 34 | 🔴 P0 | `src/app/api/orders/route.ts` | **ChatRoom upsert 时序问题** — 放在事务末尾则 `sendSystemMessage` 可能在 ChatRoom 之前执行，导致静默丢失。需移到 order 创建之后立即执行 | §10.2 M4-6：upsert 移到事务最前面 |
+| 35 | 🟡 P1 | `src/hooks/use-socket-client.ts` | **Socket notification 监听生命周期 Bug** — 组件 re-mount 时 `socketInstance?.connected` 为 true → 直接 return → `socket.on('notification')` 不会重新绑定 → M4 注册表回调也受影响 | §12.2 M4-20：复用连接时也要重新绑定事件 |
+| 36 | 🟡 P1 | `src/app/api/documents/confirm/route.ts` | **ossKey 安全校验需扩展** — 当前 `startsWith('companies/')` 会拒绝 chat 文件（`chat/{companyId}/...`），需按 context 分别校验 | §11.2 M4-15：context 分支校验 |
+| 37 | 🟡 P1 | `src/lib/oss.ts` | **buildOssKey chat 分支需前置** — chat 不走 `companies/` 前缀，需在现有逻辑之前单独处理 | §11.2 M4-16：chat 分支提到最前面 |
+
+### V6.0 累计缺口统计
+
+| 轮次 | P0 | P1 | P2 | 建议 | 合计 |
+|---|:---:|:---:|:---:|:---:|:---:|
+| V3.0 首轮 | 6 | 8 | 4 | 2 | 20 |
+| V4.0 二轮 | 2 | 6 | 3 | 1 | 12 |
+| V5.0 三轮 | 0 | 0 | 0 | 0 | 0 |
+| **V6.0 四轮** | **2** | **3** | **0** | **0** | **5** |
+| **累计（去重）** | **10** | **15** | **6** | **3** | **37（去重 34）** |
 
 ---
 

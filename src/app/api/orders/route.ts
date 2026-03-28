@@ -221,6 +221,17 @@ export async function POST(request: NextRequest) {
         },
       })
 
+      // M4: 创建聊天会话（必须在 order 创建之后立即执行，确保 sendSystemMessage 时 ChatRoom 已存在）
+      await tx.chatRoom.upsert({
+        where: { orderId: order.id },
+        create: {
+          companyId: order.companyId,
+          orderId: order.id,
+          title: `订单 ${order.orderNo}`,
+        },
+        update: {},
+      })
+
       // 创建 Applicant 记录
       await tx.applicant.createMany({
         data: applicantList.map((a, i) => ({

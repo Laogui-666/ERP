@@ -94,6 +94,23 @@ async function main() {
   }
 
   console.log('🎉 Seeding completed!')
+
+  // 3. 创建聊天系统用户（M4：用于系统消息 senderId，满足 FK 约束）
+  const chatSystemUser = await prisma.user.upsert({
+    where: { username: 'chat_system' },
+    update: {},
+    create: {
+      id: 'chat_system',
+      companyId: 'system',
+      username: 'chat_system',
+      phone: '13800000001',
+      passwordHash: await bcrypt.hash('ChatSystem@2026', 12),
+      realName: '系统助手',
+      role: 'SUPER_ADMIN',
+      status: 'ACTIVE',
+    },
+  })
+  console.log('✅ Chat system user created:', chatSystemUser.username)
 }
 
 main()

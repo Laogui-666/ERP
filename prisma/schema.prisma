@@ -71,6 +71,21 @@ enum NotificationType {
   MATERIAL_FEEDBACK  // 签证材料反馈
   APPOINTMENT_REMIND // 预约提醒
   SYSTEM             // 系统通知
+  CHAT_MESSAGE       // 聊天离线消息通知
+}
+
+// M4: 聊天
+enum ChatRoomStatus {
+  ACTIVE     // 进行中
+  ARCHIVED   // 已归档（订单终态后自动归档）
+  MUTED      // 已静默
+}
+
+enum ChatMessageType {
+  TEXT      // 文本
+  IMAGE     // 图片
+  FILE      // 文件
+  SYSTEM    // 系统消息
 }
 
 // ==================== 公司/租户 ====================
@@ -91,6 +106,7 @@ model Company {
   departments Department[]
   orders      Order[]
   templates   VisaTemplate[]
+  chatRooms   ChatRoom[]
 
   @@map("erp_companies")
 }
@@ -145,6 +161,8 @@ model User {
 
   orderLogs       OrderLog[]
   notifications   Notification[]
+  chatMessages    ChatMessage[]
+  chatReads       ChatRead[]
 
   @@index([companyId])
   @@index([companyId, role])
@@ -230,6 +248,7 @@ model Order {
   visaMaterials        VisaMaterial[]
   orderLogs            OrderLog[]
   notifications        Notification[]
+  chatRoom             ChatRoom?
 
   @@index([companyId])
   @@index([companyId, status])
@@ -405,4 +424,68 @@ model VisaTemplate {
   @@index([companyId])
   @@index([companyId, country, visaType])
   @@map("erp_visa_templates")
+}
+
+// ==================== M4: 聊天会话 ====================
+
+model ChatRoom {
+  id            String         @id @default(cuid())
+  companyId     String         @map("company_id")
+  orderId       String         @unique @map("order_id")
+  title         String         @db.VarChar(200)
+  status        ChatRoomStatus @default(ACTIVE)
+  lastMessage   String?        @db.Text @map("last_message")
+  lastMessageAt DateTime?      @map("last_message_at")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  company       Company        @relation(fields: [companyId], references: [id])
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  messages      ChatMessage[]
+  reads         ChatRead[]
+
+  @@index([companyId])
+  @@index([companyId, lastMessageAt])
+  @@map("erp_chat_rooms")
+}
+
+// ==================== M4: 聊天消息 ====================
+
+model ChatMessage {
+  id          String          @id @default(cuid())
+  roomId      String          @map("room_id")
+  companyId   String          @map("company_id")
+  senderId    String          @map("sender_id")
+  type        ChatMessageType
+  content     String          @db.Text
+  fileName    String?         @db.VarChar(255) @map("file_name")
+  fileSize    Int?            @map("file_size")
+  metadata    Json?
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  room        ChatRoom        @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender      User            @relation(fields: [senderId], references: [id])
+
+  @@index([roomId, createdAt])
+  @@index([roomId, createdAt, id])
+  @@index([companyId])
+  @@index([senderId])
+  @@map("erp_chat_messages")
+}
+
+// ==================== M4: 已读回执 ====================
+
+model ChatRead {
+  id                String    @id @default(cuid())
+  roomId            String    @map("room_id")
+  userId            String    @map("user_id")
+  lastReadMessageId String?   @map("last_read_message_id")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  room              ChatRoom  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [userId], references: [id])
+
+  @@unique([roomId, userId])
+  @@index([userId])
+  @@map("erp_chat_reads")
 }

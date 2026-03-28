@@ -23,6 +23,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'analytics', actions: ['read'] },
     { resource: 'audit', actions: ['read'] },
     { resource: 'notifications', actions: ['read', 'update'] },
+    { resource: 'chat', actions: ['read', 'send'] },
   ],
 
   CS_ADMIN: [
@@ -30,11 +31,13 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'users', actions: ['read'] },
     { resource: 'analytics', actions: ['read'] },
     { resource: 'notifications', actions: ['read', 'update'] },
+    { resource: 'chat', actions: ['read', 'send'] },
   ],
 
   CUSTOMER_SERVICE: [
     { resource: 'orders', actions: ['read', 'create', 'update'] },
     { resource: 'notifications', actions: ['read', 'update'] },
+    { resource: 'chat', actions: ['read', 'send'] },
   ],
 
   VISA_ADMIN: [
@@ -46,6 +49,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'templates', actions: ['read', 'create', 'update', 'delete'] },
     { resource: 'analytics', actions: ['read'] },
     { resource: 'notifications', actions: ['read', 'update'] },
+    { resource: 'chat', actions: ['read', 'send'] },
   ],
 
   DOC_COLLECTOR: [
@@ -53,6 +57,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'pool', actions: ['read', 'claim'] },
     { resource: 'documents', actions: ['read', 'create', 'update'] },
     { resource: 'notifications', actions: ['read', 'update'] },
+    { resource: 'chat', actions: ['read', 'send'] },
   ],
 
   OPERATOR: [
@@ -61,6 +66,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'documents', actions: ['read'] },
     { resource: 'materials', actions: ['read', 'create', 'update'] },
     { resource: 'notifications', actions: ['read', 'update'] },
+    { resource: 'chat', actions: ['read', 'send'] },
   ],
 
   OUTSOURCE: [
@@ -69,6 +75,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'documents', actions: ['read'] },
     { resource: 'materials', actions: ['read', 'create', 'update'] },
     { resource: 'notifications', actions: ['read', 'update'] },
+    // OUTSOURCE 无 chat 权限
   ],
 
   CUSTOMER: [
@@ -76,6 +83,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'documents', actions: ['read', 'create', 'delete'] },
     { resource: 'materials', actions: ['read'] },
     { resource: 'notifications', actions: ['read', 'update'] },
+    { resource: 'chat', actions: ['read', 'send'] },
   ],
 }
 

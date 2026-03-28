@@ -74,3 +74,8 @@ export function emitToUser(userId: string, event: string, data: unknown): void {
 export function emitToCompany(companyId: string, event: string, data: unknown): void {
   io?.to(`company:${companyId}`).emit(event, data)
 }
+
+// M4: 向指定房间广播
+export function emitToRoom(room: string, event: string, data: unknown): void {
+  io?.to(room).emit(event, data)
+}

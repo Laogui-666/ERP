@@ -1,6 +1,7 @@
 import { ORDER_STATUS_LABELS } from '@/types/order'
 import { logApiError } from '@/lib/logger'
 import { emitToUser } from '@/lib/socket'
+import { sendSystemMessage, archiveChatRoom } from '@/lib/chat-system'
 
 export const EVENTS = {
   ORDER_CREATED: 'order:created',
@@ -119,6 +120,37 @@ eventBus.on(EVENTS.ORDER_STATUS_CHANGED, async (data) => {
       title: `订单 ${order.orderNo} ${action}`,
       orderId,
       orderNo: order.orderNo,
+    })
+  }
+
+  // M4: 系统消息 → 聊天（异步，不阻塞主流程）
+  const systemMessages: Record<string, string> = {
+    'PENDING_CONNECTION→CONNECTED': '资料员已接单，将协助您准备资料',
+    'CONNECTED→COLLECTING_DOCS': '请按清单上传所需资料',
+    'COLLECTING_DOCS→PENDING_REVIEW': '资料已提交审核',
+    'PENDING_REVIEW→UNDER_REVIEW': '操作员正在审核资料',
+    'UNDER_REVIEW→MAKING_MATERIALS': '资料审核通过，等待制作签证材料',
+    'UNDER_REVIEW→COLLECTING_DOCS': '资料需要修改，请查看聊天中的具体说明',
+    'MAKING_MATERIALS→PENDING_DELIVERY': '签证材料已上传，请确认',
+    'PENDING_DELIVERY→DELIVERED': '签证材料已交付',
+    'DELIVERED→APPROVED': '🎉 签证结果：出签！恭喜！',
+    'DELIVERED→REJECTED': '签证结果：拒签。请联系客服了解详情',
+    'PENDING_DELIVERY→MAKING_MATERIALS': '材料需要修改，请查看说明',
+  }
+
+  const transitionKey = `${fromStatus}→${toStatus}`
+  const chatMessage = systemMessages[transitionKey]
+  if (chatMessage) {
+    sendSystemMessage(orderId, companyId, chatMessage).catch((err) => {
+      logApiError('chat-system-message-event', err, { orderId, transitionKey })
+    })
+  }
+
+  // 终态自动归档 ChatRoom
+  const terminalStatuses = ['APPROVED', 'REJECTED']
+  if (terminalStatuses.includes(toStatus)) {
+    archiveChatRoom(orderId).catch((err) => {
+      logApiError('chat-room-archive-event', err, { orderId, toStatus })
     })
   }
 })

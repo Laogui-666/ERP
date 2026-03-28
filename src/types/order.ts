@@ -60,7 +60,6 @@ export type NotificationType =
   | 'APPOINTMENT_REMIND'
   | 'SYSTEM'
   | 'CHAT_MESSAGE'
-  | 'SYSTEM'
 
 export const DOC_REQ_STATUS_LABELS: Record<DocReqStatus, string> = {
   PENDING: '待上传',

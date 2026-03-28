@@ -1,10 +1,10 @@
 # 沐海旅行 ERP - M4 实时通信全知开发手册
 
-> **文档版本**: V6.0
+> **文档版本**: V7.0
 > **创建日期**: 2026-03-28
-> **更新日期**: 2026-03-29 01:02（V6.0 源代码逐文件深度审查：119 源文件全量比对，新增 5 项缺口（GAP-N1~N5），累计 37 项缺口，批次 1 开发启动）
+> **更新日期**: 2026-03-29 02:05（批次 1+2 全部完成，presign/confirm 扩展+5 个聊天 API+tsc 0 错误+build 通过，源文件 126 / ~14,200 行 / 44 API 路由）
 > **用途**: M4 阶段唯一开发指南。拿到本文件 + Git 仓库即可完整恢复开发上下文。
-> **前置条件**: M1 ✅ + M2 ✅ + M3 ✅ + M5 ✅ 全部完成（119 源文件 / ~13,757 行 / 39 API 路由 / 18 页面 / 25 组件 / 74 测试用例）
+> **前置条件**: M1 ✅ + M2 ✅ + M3 ✅ + M5 ✅ 全部完成（126 源文件 / ~14,200 行 / 44 API 路由 / 18 页面 / 25 组件 / 74 测试用例）
 > **核心交付**: 订单级站内聊天 + 管理端内部通讯 + 已读回执 + 消息持久化 + Socket.io 实时推送
 > **预估工时**: ~22 小时（5 个批次）
 
@@ -723,13 +723,13 @@ useEffect(() => {
 
 ## 9. 批次拆分与执行计划
 
-| 批次 | 内容 | 工时 | 前置 |
-|---|---|---|---|
-| **批次 1** | 数据层：Schema + 迁移 + 类型 + 种子(chat_system) + RBAC(chat权限) + JwtPayload(realName+avatar) + login改造 + ChatRoom自动创建 + 系统消息工具 + 事件总线集成 | 4h | — |
-| **批次 2** | 聊天 API：会话列表 + 消息 CRUD + 已读回执 + presign/confirm context扩展 + oss.ts chat类型 | 4h | 批次 1 |
-| **批次 3** | Socket.io：emitToRoom + 聊天事件 + 回调注册表 + 输入指示 + 房间管理 + auto-join + 内存泄漏防护 | 3.5h | 批次 2 |
-| **批次 4** | 前端 UI：ChatPanel + ChatInput + ChatRoomList + 顶栏集成 + admin浮动按钮 + 系统消息触发 + 客户端集成 | 7h | 批次 3 |
-| **批次 5** | 验收 + 优化 + 离线通知 + 测试 + 文档更新 | 3.5h | 批次 4 |
+| 批次 | 内容 | 工时 | 前置 | 状态 |
+|---|---|---|---|---|
+| **批次 1** | 数据层：Schema + 迁移 + 类型 + 种子(chat_system) + RBAC(chat权限) + JwtPayload(realName+avatar) + login改造 + ChatRoom自动创建 + 系统消息工具 + 事件总线集成 | 4h | — | ✅ 完成 |
+| **批次 2** | 聊天 API：会话列表 + 消息 CRUD + 已读回执 + presign/confirm context扩展 + oss.ts chat类型 | 4h | 批次 1 | ✅ 完成 |
+| **批次 3** | Socket.io：emitToRoom + 聊天事件 + 回调注册表 + 输入指示 + 房间管理 + auto-join + 内存泄漏防护 | 3.5h | 批次 2 | ⬜ 待开发 |
+| **批次 4** | 前端 UI：ChatPanel + ChatInput + ChatRoomList + 顶栏集成 + admin浮动按钮 + 系统消息触发 + 客户端集成 | 7h | 批次 3 | ⬜ 待开发 |
+| **批次 5** | 验收 + 优化 + 离线通知 + 测试 + 文档更新 | 3.5h | 批次 4 | ⬜ 待开发 |
 
 **总计：~22 小时（V5.0 修正：+2h，含 V5.0 新增 8 项 P0/P1 修复）**
 
@@ -1029,6 +1029,48 @@ if (terminalStatuses.includes(toStatus)) {
 ---
 
 ## 11. 批次 2：聊天 API
+
+> ✅ **已完成** 2026-03-29 | 8 项子任务 + 5 项修复全部交付
+
+### 完成摘要
+
+| # | 任务 | 文件 | 状态 |
+|---|---|---|:---:|
+| M4-9 | 会话列表 API | `src/app/api/chat/rooms/route.ts` | ✅ |
+| M4-10 | 会话详情 API | `src/app/api/chat/rooms/[orderId]/route.ts` | ✅ |
+| M4-11 | 消息列表 API | `src/app/api/chat/rooms/[orderId]/messages/route.ts` (GET) | ✅ |
+| M4-12 | 发送消息 API | 同上 (POST) | ✅ |
+| M4-13 | 标记已读 API | `src/app/api/chat/rooms/[orderId]/read/route.ts` | ✅ |
+| M4-14 | presign API 扩展 | `src/app/api/documents/presign/route.ts` | ✅ |
+| M4-15 | confirm API 扩展 | `src/app/api/documents/confirm/route.ts` | ✅ |
+| M4-16 | oss.ts 扩展 | `src/lib/oss.ts` | ✅ |
+
+### 批次 2 深度审查修复（5 项）
+
+| # | 级别 | 文件 | 问题 | 修复 |
+|---|:---:|---|---|---|
+| 1 | 🔴 | `types/order.ts` | NotificationType 联合类型重复 `'SYSTEM'` | 删除重复 |
+| 2 | 🟡 | `presign/route.ts` | requirementId 必填，chat 文件无此值 | +context/orderId，权限按分支 |
+| 3 | 🟡 | `confirm/route.ts` | ossKey 校验拒绝 chat 路径 + chat 不应写 DocumentFile | +context 分支，chat 返回 ossUrl |
+| 4 | 🟡 | `oss.ts` | buildOssKey type 不支持 'chat' | type 联合追加 'chat' |
+| 5 | 🟡 | `types/api.ts` | ApiMeta 缺 hasMore/cursor（聊天分页需要） | 追加 2 字段 |
+
+### 架构决策补充（3 项）
+
+| # | 决策 | 理由 |
+|---|---|---|
+| 补充 1 | chat 文件 OSS 走 `companies/` 统一前缀 | 与 documents/materials 一致，ossKey 校验统一 |
+| 补充 2 | presign/confirm 按 context 检查不同权限 | chat 需 chat:send，非 documents:create |
+| 补充 3 | POST messages 事务外 Socket 推送 | 失败不影响数据一致性，与 materials 模式一致 |
+
+### 验收结果
+
+```
+tsc --noEmit  → 0 错误 ✅
+npm run build  → 0 警告 0 错误 ✅
+源文件 121 → 126 (+5)
+API 路由 39 → 44 (+5)
+```
 
 ### 11.1 任务清单
 
@@ -1629,7 +1671,7 @@ describe('sendSystemMessage', () => {
 | 指标 | M4 前 | M4 后 | 增量 |
 |---|---|---|---|
 | 源文件 | 119 | ~135 | +16 |
-| 代码行数 | ~13,841 | ~15,900 | +~2,060 |
+| 代码行数 | ~14,200 | ~16,200 | +~2,000 |
 | API 路由 | 39 | 43 | +4 |
 | 组件 | 25 | 30 | +5 |
 | 测试文件 | 4 | 5 | +1 |
@@ -1700,7 +1742,8 @@ describe('sendSystemMessage', () => {
 | V4.0 二轮 | 2 | 6 | 3 | 1 | 12 |
 | V5.0 三轮 | 0 | 0 | 0 | 0 | 0 |
 | **V6.0 四轮** | **2** | **3** | **0** | **0** | **5** |
-| **累计（去重）** | **10** | **15** | **6** | **3** | **37（去重 34）** |
+| **Batch 2 开发** | **0** | **3** | **2** | **0** | **5** |
+| **累计（去重）** | **10** | **16** | **7** | **3** | **39（去重 36）** |
 
 ---
 

@@ -10,6 +10,9 @@ export interface ApiMeta {
   pageSize?: number
   totalPages?: number
   unreadCount?: number
+  // 聊天分页
+  hasMore?: boolean
+  cursor?: { createdAt: string; id: string } | null
 }
 
 export interface ApiError {

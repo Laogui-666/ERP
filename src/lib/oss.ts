@@ -45,12 +45,15 @@ export interface SignedUrlResult {
 
 /**
  * 构建 OSS 存储路径
- * 结构: companies/{companyId}/orders/{orderId}/documents/{requirementId}/{timestamp}_{filename}
+ * 结构: companies/{companyId}/orders/{orderId}/documents|materials|chat/...
+ *
+ * chat 类型不使用 subId，路径为:
+ *   companies/{companyId}/orders/{orderId}/chat/{timestamp}_{filename}
  */
 export function buildOssKey(params: {
   companyId: string
   orderId: string
-  type: 'documents' | 'materials'
+  type: 'documents' | 'materials' | 'chat'
   subId?: string
   fileName: string
 }): string {

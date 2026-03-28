@@ -1,8 +1,8 @@
 # 沐海旅行 ERP - M4 实时通信全知开发手册
 
-> **文档版本**: V3.0
+> **文档版本**: V4.0
 > **创建日期**: 2026-03-28
-> **更新日期**: 2026-03-28 21:30（V3.0 全量深度审查：逐文件比对代码库，20 项缺口修复 + 结构优化）
+> **更新日期**: 2026-03-28 21:55（V4.0 第二轮深度审查：JWT字段缺失修正+页面结构修正+内存泄漏+exactOptionalPropertyTypes 等 12 项新缺口）
 > **用途**: M4 阶段唯一开发指南。拿到本文件 + Git 仓库即可完整恢复开发上下文。
 > **前置条件**: M1 ✅ + M2 ✅ + M3 ✅ + M5 ✅ 全部完成（119 源文件 / ~13,841 行 / 39 API 路由 / 18 页面 / 25 组件 / 74 测试用例）
 > **核心交付**: 订单级站内聊天 + 管理端内部通讯 + 已读回执 + 消息持久化 + Socket.io 实时推送
@@ -177,6 +177,8 @@
 | 12 | **输入状态指示（typing）** | Socket.io 事件驱动，对方正在输入时显示"xxx 正在输入..."，3s 超时消失 |
 | 13 | **管理者只读 + 可介入** | 公司负责人/管理员默认可查看所有聊天，可选择"加入对话"变为可发送 |
 | 14 | **useSocketClient 回调注册表** | **V3.0 新增**：useSocketClient 是全局单例，多组件回调互相覆盖。解决方案：全局回调注册表 `Map<string, Handler>`，各组件注册/注销独立 ID，Socket 事件遍历注册表分发 |
+| 15 | **JwtPayload 追加 realName + avatar** | **V4.0 新增**：当前 JwtPayload 只有 userId/username/role/companyId/departmentId，Socket 事件需要 realName（typing/read）和 avatar（消息头像）。追加到 JWT 避免每次 Socket 事件都查 DB。login API 签发时写入 |
+| 16 | **admin 订单详情不用 Tab，用浮动按钮** | **V4.0 修正**：admin/orders/[id] 当前是单列/两列 Grid 布局（非 Tab），聊天入口改为浮动按钮+抽屉面板（与客户端一致），而非插入不存在的 Tab 结构 |
 
 ---
 
@@ -469,13 +471,75 @@ export function emitToRoom(room: string, event: string, data: unknown): void {
 }
 ```
 
-**连接时懒加入**：只 join 最近 20 个活跃订单的房间（不含终态订单），管理者不自动 join（打开聊天 Tab 时通过 `chat:join` 按需加入）。
+**V4.0 关键修复 — JwtPayload 追加 realName + avatar**：
+
+当前 `socket.data.user` 来自 JWT（`verifyAccessToken`），但 JwtPayload 不含 realName 和 avatar。`socket.data.user.realName` 全部为 `undefined`，导致 typing/read 事件和消息推送的发送者信息缺失。
+
+修复链路：
+
+```typescript
+// 1. src/lib/auth.ts — JwtPayload 追加字段
+export interface JwtPayload {
+  userId: string
+  username: string
+  role: UserRole
+  companyId: string
+  departmentId: string | null
+  realName: string       // V4.0 新增
+  avatar: string | null  // V4.0 新增
+}
+
+// 2. src/app/api/auth/login/route.ts — 签发 JWT 时写入
+const payload = {
+  userId: user.id,
+  username: user.username,
+  role: user.role,
+  companyId: user.companyId,
+  departmentId: user.departmentId,
+  realName: user.realName,   // V4.0 新增
+  avatar: user.avatar,       // V4.0 新增
+}
+```
+
+JWT 大小增加约 30 字节（中文名 ~10 字符），15 分钟过期，安全影响可忽略。
+
+**连接时懒加入**：只 join 最近 20 个活跃订单的房间（不含终态订单），管理者不自动 join（打开聊天面板时通过 `chat:join` 按需加入）。
 
 **chat:join 权限校验**：校验用户是订单相关人员（customer/collector/operator/createdBy）或有 chat:read 权限的管理者（COMPANY_OWNER/VISA_ADMIN/CS_ADMIN）。
 
 **typing 限流**：服务端 2s 冷却，同一用户同一房间 2s 内只转发一次。
 
 **mark-read debounce**：服务端 3s 延迟合并，同一用户同一房间 3s 内只写入最后一次。
+
+**V4.0 新增 — 内存泄漏防护**：
+
+```typescript
+// typingCooldown / readDebounce 定期清理（每 5 分钟）
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, ts] of typingCooldown) {
+    if (now - ts > 60_000) typingCooldown.delete(key)  // 1 分钟前的条目
+  }
+  for (const [key, timer] of readDebounce) {
+    // timer 应该已执行并删除自身，兜底清理
+    clearTimeout(timer)
+    readDebounce.delete(key)
+  }
+}, 5 * 60 * 1000)
+
+// disconnect 时清理该用户的所有条目
+socket.on('disconnect', () => {
+  for (const key of typingCooldown) {
+    if (key[0].startsWith(user.userId + ':')) typingCooldown.delete(key[0])
+  }
+  for (const [key, timer] of readDebounce) {
+    if (key.startsWith(user.userId + ':')) {
+      clearTimeout(timer)
+      readDebounce.delete(key)
+    }
+  }
+})
+```
 
 ---
 
@@ -546,6 +610,7 @@ export function emitToRoom(room: string, event: string, data: unknown): void {
 - 输入防抖 300ms → emit chat:typing
 - Enter 发送，Shift+Enter 换行
 - 发送后清空输入框 + 自动滚底
+- **V4.0 文件上传错误处理**：presign/confirm 任一步失败 → toast 错误提示 + 阻止消息发送 + 恢复输入框内容
 
 #### ChatRoomList（顶栏下拉）
 
@@ -936,6 +1001,17 @@ if (chatMessage) {
     logApiError('chat-system-message', err, { orderId, transitionKey })
   })
 }
+
+// V4.0：终态自动归档 ChatRoom
+const terminalStatuses = ['DELIVERED', 'APPROVED', 'REJECTED']
+if (terminalStatuses.includes(toStatus)) {
+  prisma.chatRoom.updateMany({
+    where: { orderId, status: 'ACTIVE' },
+    data: { status: 'ARCHIVED' },
+  }).catch((err) => {
+    logApiError('chat-room-archive', err, { orderId, toStatus })
+  })
+}
 ```
 
 ### 10.3 验收标准
@@ -1041,37 +1117,50 @@ return {
 }
 ```
 
-#### M4-12: POST messages（事务 + 并发安全）
+#### M4-12: POST messages（事务 + 并发安全 + exactOptionalPropertyTypes）
 
 ```typescript
 // 关键修复：Prisma 事务内创建消息 + 更新 ChatRoom 摘要
 // ChatRoom.lastMessageAt 使用原子操作防竞态
 
+// V4.0 修复：exactOptionalPropertyTypes 要求可选字段用条件赋值，不能传 undefined
+const messageData: Record<string, unknown> = {
+  roomId: room.id,
+  companyId,
+  senderId: user.userId,
+  type: data.type,
+  content: data.content,
+}
+if (data.type !== 'TEXT') {
+  // IMAGE/FILE 类型携带文件信息
+  if (data.fileName !== undefined) messageData.fileName = data.fileName
+  if (data.fileSize !== undefined) messageData.fileSize = data.fileSize
+}
+
 const result = await prisma.$transaction(async (tx) => {
-  const message = await tx.chatMessage.create({
-    data: { roomId: room.id, companyId, senderId: user.userId, type, content, fileName, fileSize },
-  })
+  const message = await tx.chatMessage.create({ data: messageData as any })
 
   await tx.chatRoom.update({
     where: { id: room.id },
-    data: { lastMessage: content.slice(0, 100), lastMessageAt: message.createdAt },
+    data: { lastMessage: data.content.slice(0, 100), lastMessageAt: message.createdAt },
   })
 
   return message
 })
 
 // Socket 推送（事务外，失败不影响数据一致性）
+// V4.0：user.realName 和 user.avatar 来自 JwtPayload（已追加字段）
 emitToRoom(`order:${orderId}`, 'chat:message', {
   id: result.id,
   roomId: room.id,
   orderId,
   senderId: user.userId,
-  senderName: user.realName,
-  senderAvatar: user.avatar,
+  senderName: user.realName,      // V4.0 修复：来自 JwtPayload
+  senderAvatar: user.avatar,      // V4.0 修复：来自 JwtPayload
   type: result.type,
   content: result.content,
-  fileName: result.fileName,
-  fileSize: result.fileSize,
+  fileName: result.fileName ?? null,
+  fileSize: result.fileSize ?? null,
   createdAt: result.createdAt.toISOString(),
 })
 ```
@@ -1190,6 +1279,32 @@ socket.on('chat:mark-read', ({ orderId, lastReadMessageId }: { orderId: string; 
     })
   }, 3000))
 })
+
+// V4.0：disconnect 时清理该用户的 typing/read 状态
+socket.on('disconnect', () => {
+  for (const [key] of typingCooldown) {
+    if (key.startsWith(user.userId + ':')) typingCooldown.delete(key)
+  }
+  for (const [key, timer] of readDebounce) {
+    if (key.startsWith(user.userId + ':')) {
+      clearTimeout(timer)
+      readDebounce.delete(key)
+    }
+  }
+})
+
+// V4.0：定期清理过期条目（每 5 分钟）
+const cleanupInterval = setInterval(() => {
+  const now = Date.now()
+  for (const [key, ts] of typingCooldown) {
+    if (now - ts > 60_000) typingCooldown.delete(key)
+  }
+}, 5 * 60 * 1000)
+
+// 清理 interval 防止内存泄漏
+socket.on('disconnect', () => {
+  clearInterval(cleanupInterval)
+})
 ```
 
 #### M4-19: 连接时自动加入
@@ -1279,21 +1394,38 @@ const handleScroll = useCallback(async () => {
 - Enter 发送 / Shift+Enter 换行
 - 输入 300ms 防抖 → emit chat:typing
 
-#### M4-29: 管理端集成
+#### M4-29: 管理端集成（V4.0 修正 — 浮动按钮，非 Tab）
 
-在 `src/app/admin/orders/[id]/page.tsx` 的 Tab 列表中新增：
+**V4.0 重要修正**：`admin/orders/[id]/page.tsx` 当前是 **两列 Grid 布局**（左：信息/资料/材料，右：关联人员/日志），**不使用 Tab**。聊天入口改为浮动按钮+抽屉面板（与客户端一致）。
 
 ```tsx
-const tabs = [
-  { id: 'info', label: '订单信息', icon: '📋' },
-  { id: 'documents', label: '资料管理', icon: '📄' },
-  { id: 'materials', label: '签证材料', icon: '🛂' },
-  { id: 'chat', label: `💬 聊天${chatUnread > 0 ? ` (${chatUnread})` : ''}`, icon: '💬' },
-  { id: 'logs', label: '操作记录', icon: '📝' },
-]
+// 在 src/app/admin/orders/[id]/page.tsx 中追加：
 
-{activeTab === 'chat' && <ChatPanel orderId={order.id} />}
+const [showChat, setShowChat] = useState(false)
+
+// 在页面最底部（状态流转弹窗之前）追加：
+{/* 聊天浮动按钮 */}
+<div className="fixed bottom-6 right-6 z-40">
+  {showChat && (
+    <div className="w-96 h-[500px] mb-3 glass-card-static rounded-xl shadow-2xl animate-slide-in-up overflow-hidden">
+      <ChatPanel orderId={order.id} />
+    </div>
+  )}
+  <button
+    onClick={() => setShowChat(!showChat)}
+    className="w-12 h-12 rounded-full bg-[var(--color-primary)] text-white shadow-lg hover:scale-105 transition-transform flex items-center justify-center"
+  >
+    💬
+    {chatUnread > 0 && (
+      <span className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--color-error)] text-xs rounded-full flex items-center justify-center">
+        {chatUnread > 9 ? '9+' : chatUnread}
+      </span>
+    )}
+  </button>
+</div>
 ```
+
+> **为什么不用 Tab**：当前页面是纯垂直布局，没有 Tab 组件。改为 Tab 需要大规模重构（拆分资料面板、材料面板等为 Tab 内容），超出 M4 范围。浮动按钮+抽屉面板是最小侵入方案，UX 与客户端一致。M6 如需统一 Tab 架构再重构。
 
 #### M4-30: 客户端集成
 
@@ -1469,21 +1601,23 @@ describe('sendSystemMessage', () => {
 | `src/components/chat/chat-room-list.tsx` | 会话列表下拉组件 |
 | `src/lib/__tests__/chat-system.test.ts` | 单元测试 |
 
-### 修改文件（11 个）
+### 修改文件（14 个）
 
 | 文件 | 变更 |
 |---|---|
 | `prisma/schema.prisma` | +3 Model + 2 Enum + Company/User/Order 关联 |
 | `prisma/seed.ts` | +chat_system 系统用户 |
+| `src/lib/auth.ts` | JwtPayload 追加 realName + avatar 字段（V4.0 P0 修复） |
+| `src/app/api/auth/login/route.ts` | JWT 签发 payload 追加 realName + avatar（V4.0 P0 修复） |
 | `src/lib/rbac.ts` | +chat 资源 read/send 权限（Lv2-7,9） |
-| `src/lib/socket.ts` | +emitToRoom +chat 事件（权限校验+限流+debounce+懒加载） |
+| `src/lib/socket.ts` | +emitToRoom +chat 事件（权限校验+限流+debounce+懒加载+内存清理） |
 | `src/lib/oss.ts` | buildOssKey type + 'chat' |
 | `src/hooks/use-socket-client.ts` | +回调注册表 +joinRoom/leaveRoom/sendTyping/socketMarkRead |
-| `src/lib/events.ts` | +sendSystemMessage 调用（10 个工作流节点） |
+| `src/lib/events.ts` | +sendSystemMessage 调用（10 个工作流节点） + 订单终态归档 ChatRoom |
 | `src/app/api/orders/route.ts` (POST) | +ChatRoom upsert 创建 |
 | `src/app/api/documents/presign/route.ts` | +context/orderId 参数 |
 | `src/app/api/documents/confirm/route.ts` | +context/orderId 参数 |
-| `src/app/admin/orders/[id]/page.tsx` | +聊天 Tab（含未读角标） |
+| `src/app/admin/orders/[id]/page.tsx` | +聊天浮动按钮+抽屉面板（V4.0 修正：非 Tab） |
 | `src/app/customer/orders/[id]/page.tsx` | +聊天浮窗（移动端全屏） |
 | `src/components/layout/topbar.tsx` | +ChatRoomList |
 
@@ -1499,32 +1633,51 @@ describe('sendSystemMessage', () => {
 
 ---
 
-## 16. V3.0 深度审查缺口清单（20 项）
+## 16. 深度审查缺口清单（累计 32 项）
 
-> 基于逐文件比对实际代码库发现，已全部在上文中修复。
+> V3.0 首轮 20 项 + V4.0 二轮 12 项，全部已在上文中修复。
+
+### V3.0 首轮（20 项）
 
 | # | 优先级 | 文件 | 问题 | 修复位置 |
 |---|---|---|---|---|
-| 1 | 🔴 P0 | `presign/route.ts` | presign API schema 要求 `requirementId` 必填，chat 文件无需求 ID | §6.4 M4-14：schema 改可选 + context 参数 |
-| 2 | 🔴 P0 | `confirm/route.ts` | confirm 写入 DocumentFile，chat 文件应返回 ossUrl 而非写资料表 | §6.4 M4-15：context=chat 时不写 DocumentFile |
-| 3 | 🔴 P0 | `oss.ts` | buildOssKey type 只支持 documents/materials，不支持 chat | §6.4 M4-16：type 追加 'chat' |
-| 4 | 🔴 P0 | `api/orders/route.ts` | ChatRoom 应在订单创建时自动创建，原计划写在 transition.ts 但实际不在那 | §10.2 M4-6：改到 orders POST handler + upsert |
-| 5 | 🔴 P0 | `seed.ts` | chat_system 用户 phone 可能与 superadmin 冲突 | §10.2 M4-4：phone 用 13800000001 |
-| 6 | 🔴 P0 | `use-socket-client.ts` | 单例模式下多组件回调覆盖，只有最后挂载的组件收到消息 | §8.4 M4-20：回调注册表方案 |
-| 7 | 🟡 P1 | `socket.ts` | 缺少 `emitToRoom` 函数，M4-7 chat-system.ts 依赖它 | §12.2 M4-17：新增 emitToRoom |
-| 8 | 🟡 P1 | `events.ts` | 系统消息触发需覆盖 10 个工作流节点，不止 ORDER_STATUS_CHANGED | §10.2 M4-8：transitionKey 映射表 |
-| 9 | 🟡 P1 | `schema.prisma` | 迁移 SQL 枚举必须在表之前创建 | §5.3：明确迁移顺序 |
-| 10 | 🟡 P1 | `chat:join` | socket join 需校验管理者权限（COMPANY_OWNER/VISA_ADMIN/CS_ADMIN） | §12.2 M4-18：管理者权限检查 |
-| 11 | 🟡 P1 | `ChatRoom` | 并发创建 ChatRoom 可能触发唯一约束异常 | §10.2 M4-6：upsert 替代 create |
-| 12 | 🟡 P1 | `rooms API` | MySQL 不支持 NULLS LAST 语法 | §11.2 M4-9：ORDER BY IS NULL 技巧 |
-| 13 | 🟡 P1 | `messages API` | 同时间戳消息可能丢失（单 createdAt 游标） | §11.2 M4-11：复合游标 (createdAt, id) |
-| 14 | 🟡 P1 | `POST messages` | 事务外 Socket emit 失败不影响数据，但接收方可能延迟收到 | §11.2 M4-12：可接受，离线拉历史 |
-| 15 | 🟢 P2 | `topbar.tsx` | 顶栏需新增 ChatRoomList 组件 | §13.1 M4-31 |
-| 16 | 🟢 P2 | 离线通知 | 用户不在线时需创建 Notification（5 分钟去重） | §14.3 M4-35 |
-| 17 | 🟢 P2 | 文件大小限制 | 聊天文件大小限制未定义 | §14.2：复用 MAX_FILE_SIZE（10MB） |
-| 18 | 🟢 P2 | admin layout | 管理端聊天 Tab 在移动端需响应式适配 | §13.2 M4-29 |
-| 19 | 💡 建议 | `middleware.ts` | /api/chat/* 路由自动鉴权无需修改，但应确认 | §2.1：已确认 |
-| 20 | 💡 建议 | `server.ts` | 不需修改，initSocketServer 内已包含所有事件注册 | §2.1：已确认 |
+| 1 | 🔴 P0 | `presign/route.ts` | presign API schema 要求 `requirementId` 必填，chat 文件无需求 ID | §6.4 M4-14 |
+| 2 | 🔴 P0 | `confirm/route.ts` | confirm 写入 DocumentFile，chat 文件应返回 ossUrl | §6.4 M4-15 |
+| 3 | 🔴 P0 | `oss.ts` | buildOssKey type 只支持 documents/materials | §6.4 M4-16 |
+| 4 | 🔴 P0 | `api/orders/route.ts` | ChatRoom 创建位置错误 | §10.2 M4-6 |
+| 5 | 🔴 P0 | `seed.ts` | chat_system phone 冲突风险 | §10.2 M4-4 |
+| 6 | 🔴 P0 | `use-socket-client.ts` | 单例回调覆盖 | §8.4 M4-20 |
+| 7 | 🟡 P1 | `socket.ts` | 缺 emitToRoom | §12.2 M4-17 |
+| 8 | 🟡 P1 | `events.ts` | 系统消息节点覆盖不全 | §10.2 M4-8 |
+| 9 | 🟡 P1 | `schema.prisma` | 迁移顺序 | §5.3 |
+| 10 | 🟡 P1 | `chat:join` | 管理者权限校验 | §12.2 M4-18 |
+| 11 | 🟡 P1 | `ChatRoom` | 并发创建异常 | §10.2 M4-6 |
+| 12 | 🟡 P1 | `rooms API` | MySQL NULLS LAST | §11.2 M4-9 |
+| 13 | 🟡 P1 | `messages API` | 单游标同时间戳丢失 | §11.2 M4-11 |
+| 14 | 🟡 P1 | `POST messages` | 事务外 Socket 延迟 | §11.2 M4-12 |
+| 15 | 🟢 P2 | `topbar.tsx` | 顶栏新增组件 | §13.1 M4-31 |
+| 16 | 🟢 P2 | 离线通知 | 5 分钟去重 | §14.3 M4-35 |
+| 17 | 🟢 P2 | 文件大小限制 | 复用 MAX_FILE_SIZE | §14.2 |
+| 18 | 🟢 P2 | admin layout | 移动端响应式 | §13.2 M4-29 |
+| 19 | 💡 | `middleware.ts` | 无需修改 | §2.1 |
+| 20 | 💡 | `server.ts` | 无需修改 | §2.1 |
+
+### V4.0 二轮（12 项）
+
+| # | 优先级 | 文件 | 问题 | 修复位置 |
+|---|---|---|---|---|
+| 21 | 🔴 P0 | `auth.ts` + `login/route.ts` | **JwtPayload 缺少 realName + avatar** → Socket typing/read/message 事件的 `senderName`/`realName` 全部为 `undefined`，前端显示空白 | §7.3 + §12.2：JwtPayload 追加 2 字段，login 签发时写入 |
+| 22 | 🔴 P0 | `admin/orders/[id]/page.tsx` | **页面不是 Tab 结构而是两列 Grid**，原计划"新增聊天 Tab"无法实施 | §13.2 M4-29：改为浮动按钮+抽屉面板 |
+| 23 | 🟡 P1 | `POST messages handler` | **exactOptionalPropertyTypes**：`data: { fileName, fileSize }` 传 undefined 会报 TS 错误 | §11.2 M4-12：条件赋值 `Record<string, unknown>` |
+| 24 | 🟡 P1 | `socket.ts` | **typingCooldown / readDebounce Map 内存泄漏**：只增不清，长期运行积累 | §7.3：5 分钟定时清理 + disconnect 时清理用户条目 |
+| 25 | 🟡 P1 | `socket.ts` | **disconnect 事件未清理聊天相关状态**：用户登出后 typing/read timer 仍存在 | §7.3：disconnect handler 清理 |
+| 26 | 🟡 P1 | `events.ts` | **订单终态时 ChatRoom 应自动归档**：当前 ChatRoom status 永远 ACTIVE | §10.2 M4-8：终态流转时 update ChatRoom.status = ARCHIVED |
+| 27 | 🟡 P1 | `useChat` + `ChatPanel` | **需要 userId 判断 isOwn 消息**：ChatMessage 组件需区分左右对齐 | §13.1：从 `useAuth()` 获取 `user.id` |
+| 28 | 🟡 P1 | `ChatInput` | **文件上传到 OSS 失败时缺少错误处理**：需 toast 提示 + 阻止发送 | §13.1 M4-26：try/catch + toast |
+| 29 | 🟢 P2 | `admin/orders/[id]` | **聊天未读角标实时更新**：需决定轮询还是 Socket | §13.2 M4-29：Socket 监听 + 30s 轮询 fallback |
+| 30 | 🟢 P2 | `login/route.ts` | **JwtPayload 也缺 avatar**：消息头像需来自 JWT 或 DB | §7.3：JWT 追加 avatar 字段 |
+| 31 | 💡 | `NotificationBell` | **ChatRoomList 可复用其交互模式**：点击外部关闭 + 下拉面板 + 未读气泡 | §13.1 M4-28 |
+| 32 | 💡 | `prisma.$queryRaw` | **rooms API 原生 SQL 需类型断言**：`$queryRaw<RoomRow[]>` | §11.2 M4-9 |
 
 ---
 

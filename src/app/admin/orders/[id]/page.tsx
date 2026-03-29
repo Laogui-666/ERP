@@ -5,12 +5,14 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useOrders } from '@/hooks/use-orders'
 import { useAuth } from '@/hooks/use-auth'
+import { useChatStore } from '@/stores/chat-store'
 import { StatusBadge } from '@/components/orders/status-badge'
 import { ApplicantCard } from '@/components/orders/applicant-card'
 import { GlassCard } from '@/components/layout/glass-card'
 import { PageHeader } from '@/components/layout/page-header'
 import { DocumentPanel } from '@/components/documents/document-panel'
 import { MaterialPanel } from '@/components/documents/material-panel'
+import { ChatPanel } from '@/components/chat/chat-panel'
 import { Modal } from '@/components/ui/modal'
 import { useToast } from '@/components/ui/toast'
 import { formatDateTime, formatDate } from '@/lib/utils'
@@ -429,6 +431,9 @@ export default function OrderDetailPage() {
         </div>
       </div>
 
+      {/* 聊天浮动按钮 */}
+      <ChatFloatingButton orderId={orderId} />
+
       {/* 状态流转弹窗 */}
       {showStatusModal && (
         <StatusTransitionModal
@@ -605,5 +610,50 @@ function StatusTransitionModal({
         </div>
       </div>
     </Modal>
+  )
+}
+
+// ==================== 聊天浮动按钮 ====================
+
+function ChatFloatingButton({ orderId }: { orderId: string }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const { rooms } = useChatStore()
+
+  // 该订单的未读数
+  const room = rooms.find((r) => r.orderId === orderId)
+  const unread = room?.unreadCount ?? 0
+
+  return (
+    <div className="fixed bottom-6 right-6 z-40">
+      {/* 聊天面板 */}
+      {isOpen && (
+        <div className="w-96 h-[520px] mb-3 rounded-2xl overflow-hidden shadow-2xl border border-white/[0.08] animate-fade-in-up"
+          style={{ animationDuration: '200ms' }}
+        >
+          <ChatPanel orderId={orderId} onClose={() => setIsOpen(false)} />
+        </div>
+      )}
+
+      {/* 按钮 */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-14 h-14 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 hover:shadow-[var(--color-primary)]/50 hover:scale-105 transition-all duration-200 flex items-center justify-center relative"
+      >
+        {isOpen ? (
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+          </svg>
+        )}
+        {unread > 0 && !isOpen && (
+          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 rounded-full bg-[var(--color-error)] text-[11px] text-white flex items-center justify-center px-1 font-medium">
+            {unread > 9 ? '9+' : unread}
+          </span>
+        )}
+      </button>
+    </div>
   )
 }

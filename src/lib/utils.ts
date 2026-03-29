@@ -25,6 +25,38 @@ export function formatDateTime(date: Date | string | null): string {
 }
 
 /**
+ * 聊天消息时间格式化
+ * - 今天：HH:mm
+ * - 昨天：昨天 HH:mm
+ * - 本年：MM-DD HH:mm
+ * - 跨年：YYYY-MM-DD HH:mm
+ */
+export function formatMessageTime(date: Date | string | null): string {
+  if (!date) return ''
+  const d = new Date(date)
+  const now = new Date()
+
+  const isSameDay = d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const isYesterday = d.getFullYear() === yesterday.getFullYear() &&
+    d.getMonth() === yesterday.getMonth() &&
+    d.getDate() === yesterday.getDate()
+
+  const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+
+  if (isSameDay) return time
+  if (isYesterday) return `昨天 ${time}`
+  if (d.getFullYear() === now.getFullYear()) {
+    return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${time}`
+  }
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${time}`
+}
+
+/**
  * 生成系统专属订单号
  * 格式: HX + YYYYMMDD + 4位随机码
  * 示例: HX20260320A3F2

@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 import { NotificationBell } from '@/components/notifications/notification-bell'
+import { ChatRoomList } from '@/components/chat/chat-room-list'
 import { USER_ROLE_LABELS } from '@/types/user'
 
 // 面包屑映射
@@ -60,6 +61,7 @@ export function Topbar() {
 
       {/* 右侧：通知 + 用户 */}
       <div className="flex items-center gap-5">
+        <ChatRoomList />
         <NotificationBell />
 
         <div className="h-8 w-px bg-white/10" />

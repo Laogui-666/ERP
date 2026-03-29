@@ -431,8 +431,8 @@ export default function OrderDetailPage() {
         </div>
       </div>
 
-      {/* 聊天浮动按钮 */}
-      <ChatFloatingButton orderId={orderId} />
+      {/* 聊天浮动按钮（OUTSOURCE 无聊天权限） */}
+      {user?.role !== 'OUTSOURCE' && <ChatFloatingButton orderId={orderId} />}
 
       {/* 状态流转弹窗 */}
       {showStatusModal && (

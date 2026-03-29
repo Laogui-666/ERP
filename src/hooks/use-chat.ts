@@ -11,6 +11,7 @@ import {
   registerChatMessageHandler,
   registerChatReadHandler,
 } from '@/hooks/use-socket-client'
+import { apiFetch } from '@/lib/api-client'
 import type { SendMessagePayload } from '@/types/chat'
 
 interface UseChatOptions {
@@ -122,8 +123,16 @@ export function useChat({ orderId, autoJoin = true }: UseChatOptions) {
   // ===== 标记已读 =====
   const markRead = useCallback(
     (lastMessageId: string) => {
+      // Socket 实时推送（服务端 3s debounce）
       socketMarkRead(orderId, lastMessageId)
+      // 本地 store 即时更新角标
       markRoomRead(orderId, lastMessageId)
+      // API 持久化（Socket 断连时兜底）
+      apiFetch(`/api/chat/rooms/${orderId}/read`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lastReadMessageId: lastMessageId }),
+      }).catch(() => { /* 静默失败，Socket 通道为主 */ })
     },
     [orderId, markRoomRead]
   )

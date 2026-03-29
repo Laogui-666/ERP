@@ -61,7 +61,7 @@ export function Topbar() {
 
       {/* 右侧：通知 + 用户 */}
       <div className="flex items-center gap-5">
-        <ChatRoomList />
+        {user?.role !== 'OUTSOURCE' && <ChatRoomList />}
         <NotificationBell />
 
         <div className="h-8 w-px bg-white/10" />

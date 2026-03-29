@@ -2,9 +2,9 @@
 
 # 架构实现方案
 
-> **文档版本**: V14.0
+> **文档版本**: V15.0
 > **生成日期**: 2026-03-19
-> **最后更新**: 2026-03-28 03:30
+> **最后更新**: 2026-03-30 02:30
 > **技术栈**: Next.js 15.5.14 + React 19.2.4 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
 > **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
@@ -798,6 +798,23 @@ model VisaTemplate {
 |---|---|---|---|
 | POST | `/api/sms/send` | 发送短信 | 返回 501，预留 |
 | GET | `/api/sms/templates` | 短信模板列表 | 返回 501，预留 |
+
+### 4.14 M6 签证行业优化模块
+
+| 方法 | 路径 | 说明 | 权限 | 状态 |
+|---|---|---|---|:---:|
+| GET | `/api/templates` | 签证模板列表（公司+系统预置） | Lv2,5-6 | ✅ |
+| POST | `/api/templates` | 创建签证模板 | Lv2,5-6 | ✅ |
+| GET | `/api/templates/[id]` | 模板详情 | Lv2,5-6 | ✅ |
+| PATCH | `/api/templates/[id]` | 更新模板（系统模板不可改） | Lv2,5-6 | ✅ |
+| DELETE | `/api/templates/[id]` | 删除模板（系统模板不可删） | Lv2,5-6 | ✅ |
+| POST | `/api/templates/apply` | 将模板应用到订单（批量创建 DocumentRequirement） | Lv5-7 | ✅ |
+| GET | `/api/orders/[id]/check` | 智能资料检查（护照有效期/齐全性/多人完整性/签证推荐/财务异常） | 有权限 | ✅ |
+| POST | `/api/orders/batch` | 批量操作（apply_template/transition/cancel，最多50单） | Lv2-5 | ✅ |
+| GET | `/api/order-templates` | 快速录入数据（模板列表+最近10个老客户） | Lv2-4 | ✅ |
+| POST | `/api/order-templates` | 快速创建订单（支持模板自动应用资料清单） | Lv2-4 | ✅ |
+| GET | `/api/companies/me` | 获取当前公司信息 | 已登录 | ✅ |
+| PATCH | `/api/companies/me` | 更新公司信息 | Lv2 | ✅ |
 
 ---
 

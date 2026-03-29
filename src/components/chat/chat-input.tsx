@@ -80,6 +80,18 @@ export function ChatInput({ orderId, isSending, onSend, onTyping }: ChatInputPro
       return
     }
 
+    // MIME type 兜底：部分浏览器对 .heic 等格式返回空字符串
+    let fileType = file.type
+    if (!fileType) {
+      const ext = file.name.split('.').pop()?.toLowerCase()
+      const extMap: Record<string, string> = {
+        heic: 'image/heic', heif: 'image/heif',
+        jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
+        pdf: 'application/pdf',
+      }
+      fileType = extMap[ext ?? ''] ?? 'application/octet-stream'
+    }
+
     setIsUploading(true)
     try {
       // 1. 获取预签名 URL
@@ -90,7 +102,7 @@ export function ChatInput({ orderId, isSending, onSend, onTyping }: ChatInputPro
           context: 'chat',
           orderId,
           fileName: file.name,
-          fileType: file.type,
+          fileType,
         }),
       })
       const presignJson = await presignRes.json()
@@ -102,7 +114,7 @@ export function ChatInput({ orderId, isSending, onSend, onTyping }: ChatInputPro
       // 2. 直传 OSS
       const putRes = await fetch(presignedUrl, {
         method: 'PUT',
-        headers: { 'Content-Type': file.type },
+        headers: { 'Content-Type': fileType },
         body: file,
       })
       if (!putRes.ok) throw new Error('上传失败')
@@ -117,7 +129,7 @@ export function ChatInput({ orderId, isSending, onSend, onTyping }: ChatInputPro
           ossKey,
           fileName: file.name,
           fileSize: file.size,
-          fileType: file.type,
+          fileType,
         }),
       })
       const confirmJson = await confirmRes.json()

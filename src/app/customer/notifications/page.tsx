@@ -87,7 +87,7 @@ export default function CustomerNotificationsPage() {
       await handleMarkAsRead(notification.id)
     }
     // 跳转订单
-    const route = getNotificationRoute(notification.orderId)
+    const route = getNotificationRoute(notification.orderId, 'CUSTOMER')
     if (route) {
       router.push(route)
     }

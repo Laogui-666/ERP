@@ -69,13 +69,20 @@ export function ChatPanel({ orderId, compact = false, onClose }: ChatPanelProps)
     }
   }, [orderId, userId])
 
-  // 自动标记已读（查看最新消息时）
+  // 自动标记已读（3s debounce，避免短时间多条消息频繁调用）
+  const markReadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
-    if (messages.length > 0) {
-      const lastMsg = messages[messages.length - 1]
-      if (lastMsg.senderId !== userId) {
-        markRead(lastMsg.id)
-      }
+    if (messages.length === 0) return
+    const lastMsg = messages[messages.length - 1]
+    if (lastMsg.senderId === userId) return
+
+    if (markReadTimerRef.current) clearTimeout(markReadTimerRef.current)
+    markReadTimerRef.current = setTimeout(() => {
+      markRead(lastMsg.id)
+    }, 2000)
+
+    return () => {
+      if (markReadTimerRef.current) clearTimeout(markReadTimerRef.current)
     }
   }, [messages.length, messages, userId, markRead])
 

@@ -141,11 +141,7 @@ export async function POST(
       if (data.fileSize !== undefined) messageData.fileSize = data.fileSize
 
       const msg = await tx.chatMessage.create({
-        data: messageData as {
-          roomId: string; companyId: string; senderId: string;
-          type: 'TEXT' | 'IMAGE' | 'FILE'; content: string;
-          fileName?: string; fileSize?: number
-        },
+        data: messageData as Parameters<typeof tx.chatMessage.create>[0]['data'],
       })
 
       // 更新会话摘要

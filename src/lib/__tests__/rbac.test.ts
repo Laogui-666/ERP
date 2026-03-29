@@ -50,6 +50,26 @@ describe('hasPermission', () => {
     expect(hasPermission('OUTSOURCE', 'materials', 'create')).toBe(true)
     expect(hasPermission('OUTSOURCE', 'orders', 'create')).toBe(false)
   })
+
+  it('CUSTOMER can send chat messages', () => {
+    expect(hasPermission('CUSTOMER', 'chat', 'read')).toBe(true)
+    expect(hasPermission('CUSTOMER', 'chat', 'send')).toBe(true)
+  })
+
+  it('OUTSOURCE cannot access chat', () => {
+    expect(hasPermission('OUTSOURCE', 'chat', 'read')).toBe(false)
+    expect(hasPermission('OUTSOURCE', 'chat', 'send')).toBe(false)
+  })
+
+  it('DOC_COLLECTOR can read and send chat', () => {
+    expect(hasPermission('DOC_COLLECTOR', 'chat', 'read')).toBe(true)
+    expect(hasPermission('DOC_COLLECTOR', 'chat', 'send')).toBe(true)
+  })
+
+  it('COMPANY_OWNER can read and send chat', () => {
+    expect(hasPermission('COMPANY_OWNER', 'chat', 'read')).toBe(true)
+    expect(hasPermission('COMPANY_OWNER', 'chat', 'send')).toBe(true)
+  })
 })
 
 describe('canAccessRoute', () => {

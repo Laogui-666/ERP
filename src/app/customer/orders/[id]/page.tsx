@@ -433,7 +433,7 @@ function CustomerChatButton({ orderId }: { orderId: string }) {
       {/* 浮动按钮 */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-24 right-4 z-40 w-12 h-12 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 hover:shadow-[var(--color-primary)]/50 hover:scale-105 transition-all duration-200 flex items-center justify-center relative"
+        className="fixed bottom-28 right-4 z-40 w-12 h-12 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 hover:shadow-[var(--color-primary)]/50 hover:scale-105 transition-all duration-200 flex items-center justify-center relative"
       >
         {isOpen ? (
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -456,7 +456,7 @@ function CustomerChatButton({ orderId }: { orderId: string }) {
         <div className={`
           fixed z-50
           max-sm:inset-0 max-sm:rounded-none
-          sm:bottom-20 sm:right-4 sm:w-80 sm:h-96 sm:rounded-2xl
+          sm:bottom-28 sm:right-4 sm:w-80 sm:h-96 sm:rounded-2xl
           overflow-hidden shadow-2xl border border-white/[0.08] animate-fade-in-up
         `} style={{ animationDuration: '200ms' }}>
           <ChatPanel orderId={orderId} compact onClose={() => setIsOpen(false)} />

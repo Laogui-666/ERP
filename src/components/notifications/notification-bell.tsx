@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/hooks/use-notifications'
 import { formatDateTime } from '@/lib/utils'
-import { NOTIFICATION_ICONS } from '@/lib/notification-icons'
+import { NOTIFICATION_ICONS, getNotificationRoute } from '@/lib/notification-icons'
 
 export function NotificationBell() {
+  const router = useRouter()
   const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead } = useNotifications()
   const [isOpen, setIsOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -73,7 +75,14 @@ export function NotificationBell() {
                   className={`p-3 border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${
                     !n.isRead ? 'bg-[var(--color-info)]/5' : ''
                   }`}
-                  onClick={() => { void markAsRead(n.id) }}
+                  onClick={() => {
+                    void markAsRead(n.id)
+                    const route = getNotificationRoute(n.orderId)
+                    if (route) {
+                      setIsOpen(false)
+                      router.push(route)
+                    }
+                  }}
                 >
                   <div className="flex items-start gap-2">
                     <span className="text-sm shrink-0 mt-0.5">

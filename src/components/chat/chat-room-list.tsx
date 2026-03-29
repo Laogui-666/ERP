@@ -20,14 +20,24 @@ export function ChatRoomList() {
     fetchRooms()
   }, [fetchRooms])
 
-  // Socket 实时刷新
+  // Socket 实时刷新（2s 节流，避免高频聊天时频繁请求）
+  const fetchThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     const handlerId = 'chat-room-list'
     const unregister = registerChatMessageHandler(handlerId, () => {
-      // 收到新消息 → 刷新会话列表
+      if (fetchThrottleRef.current) return
+      fetchThrottleRef.current = setTimeout(() => {
+        fetchThrottleRef.current = null
+      }, 2000)
       fetchRooms()
     })
-    return unregister
+    return () => {
+      unregister()
+      if (fetchThrottleRef.current) {
+        clearTimeout(fetchThrottleRef.current)
+        fetchThrottleRef.current = null
+      }
+    }
   }, [fetchRooms])
 
   // 点击外部关闭

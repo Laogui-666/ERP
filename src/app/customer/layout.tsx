@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { useNotificationStore } from '@/stores/notification-store'
 import { useChatStore } from '@/stores/chat-store'
@@ -32,12 +32,23 @@ export default function CustomerLayout({
     },
   })
 
-  // 监听聊天消息 → 刷新聊天未读
+  // 监听聊天消息 → 刷新聊天未读（2s 节流）
+  const chatThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     const unregister = registerChatMessageHandler('layout-chat', () => {
+      if (chatThrottleRef.current) return
+      chatThrottleRef.current = setTimeout(() => {
+        chatThrottleRef.current = null
+      }, 2000)
       fetchRooms()
     })
-    return unregister
+    return () => {
+      unregister()
+      if (chatThrottleRef.current) {
+        clearTimeout(chatThrottleRef.current)
+        chatThrottleRef.current = null
+      }
+    }
   }, [fetchRooms])
 
   // 初始加载 + Socket 断连时的 fallback 轮询（30s）

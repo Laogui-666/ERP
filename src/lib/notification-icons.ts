@@ -10,11 +10,16 @@ export const NOTIFICATION_ICONS: Record<string, string> = {
   MATERIAL_UPLOADED: '📥',
   MATERIAL_FEEDBACK: '📝',
   APPOINTMENT_REMIND: '⏰',
+  CHAT_MESSAGE: '💬',
   SYSTEM: '🔔',
 }
 
 // 根据通知获取跳转路由
-export function getNotificationRoute(orderId: string | null): string | null {
+export function getNotificationRoute(
+  orderId: string | null,
+  role?: string | null,
+): string | null {
   if (!orderId) return null
-  return `/customer/orders/${orderId}`
+  const base = role === 'CUSTOMER' ? '/customer/orders' : '/admin/orders'
+  return `${base}/${orderId}`
 }

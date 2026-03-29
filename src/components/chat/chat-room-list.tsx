@@ -3,11 +3,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useChatStore } from '@/stores/chat-store'
+import { useAuth } from '@/hooks/use-auth'
 import { registerChatMessageHandler } from '@/hooks/use-socket-client'
 import { formatMessageTime } from '@/lib/utils'
 
 export function ChatRoomList() {
   const router = useRouter()
+  const { user } = useAuth()
   const { rooms, totalUnread, isLoadingRooms, fetchRooms } = useChatStore()
   const [isOpen, setIsOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -47,9 +49,10 @@ export function ChatRoomList() {
   const handleClickRoom = useCallback(
     (orderId: string) => {
       setIsOpen(false)
-      router.push(`/admin/orders/${orderId}`)
+      const basePath = user?.role === 'CUSTOMER' ? '/customer/orders' : '/admin/orders'
+      router.push(`${basePath}/${orderId}`)
     },
-    [router]
+    [router, user?.role]
   )
 
   return (

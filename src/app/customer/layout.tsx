@@ -5,7 +5,8 @@ import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { useNotificationStore } from '@/stores/notification-store'
-import { useSocketClient } from '@/hooks/use-socket-client'
+import { useChatStore } from '@/stores/chat-store'
+import { useSocketClient, registerChatMessageHandler } from '@/hooks/use-socket-client'
 import { cn } from '@/lib/utils'
 
 const TABS = [
@@ -22,6 +23,7 @@ export default function CustomerLayout({
   const { user, logout } = useAuth()
   const pathname = usePathname()
   const { unreadCount, fetchUnreadCount } = useNotificationStore()
+  const { totalUnread: chatUnread, fetchRooms } = useChatStore()
 
   // Socket.io 实时通知 → 即时刷新角标
   const { isConnected } = useSocketClient({
@@ -30,16 +32,28 @@ export default function CustomerLayout({
     },
   })
 
+  // 监听聊天消息 → 刷新聊天未读
+  useEffect(() => {
+    const unregister = registerChatMessageHandler('layout-chat', () => {
+      fetchRooms()
+    })
+    return unregister
+  }, [fetchRooms])
+
   // 初始加载 + Socket 断连时的 fallback 轮询（30s）
   useEffect(() => {
     fetchUnreadCount()
-  }, [fetchUnreadCount])
+    fetchRooms()
+  }, [fetchUnreadCount, fetchRooms])
 
   useEffect(() => {
     if (isConnected) return // Socket 正常时不轮询
-    const interval = setInterval(fetchUnreadCount, 30000)
+    const interval = setInterval(() => {
+      fetchUnreadCount()
+      fetchRooms()
+    }, 30000)
     return () => clearInterval(interval)
-  }, [isConnected, fetchUnreadCount])
+  }, [isConnected, fetchUnreadCount, fetchRooms])
 
   return (
     <div className="min-h-screen">
@@ -75,7 +89,7 @@ export default function CustomerLayout({
             const isActive =
               pathname === tab.href || pathname.startsWith(tab.href + '/')
             const showBadge =
-              tab.href === '/customer/notifications' && unreadCount > 0
+              tab.href === '/customer/notifications' && (unreadCount + chatUnread) > 0
 
             return (
               <Link
@@ -92,7 +106,7 @@ export default function CustomerLayout({
                   <span className="text-lg">{tab.icon}</span>
                   {showBadge && (
                     <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 rounded-full bg-[var(--color-error)] text-[10px] text-white flex items-center justify-center px-1">
-                      {unreadCount > 9 ? '9+' : unreadCount}
+                      {unreadCount + chatUnread > 9 ? '9+' : unreadCount + chatUnread}
                     </span>
                   )}
                 </span>

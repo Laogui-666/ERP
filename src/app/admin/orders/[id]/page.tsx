@@ -59,7 +59,7 @@ export default function OrderDetailPage() {
       case 'COLLECTING_DOCS':
         if (['DOC_COLLECTOR', 'VISA_ADMIN'].includes(role)) {
           // 检查是否为复审场景（操作员曾打回过）
-          const wasRejected = order.orderLogs?.some(
+          const wasRejected = currentOrder.orderLogs?.some(
             (l) => l.fromStatus === 'UNDER_REVIEW' && l.toStatus === 'COLLECTING_DOCS'
           )
           actions.push({ toStatus: 'PENDING_REVIEW', label: wasRejected ? '提交复审' : '提交审核' })
@@ -617,7 +617,12 @@ function StatusTransitionModal({
 
 function ChatFloatingButton({ orderId }: { orderId: string }) {
   const [isOpen, setIsOpen] = useState(false)
-  const { rooms } = useChatStore()
+  const { rooms, fetchRooms } = useChatStore()
+
+  // 挂载时拉取会话列表（获取未读数）
+  useEffect(() => {
+    fetchRooms()
+  }, [fetchRooms])
 
   // 该订单的未读数
   const room = rooms.find((r) => r.orderId === orderId)

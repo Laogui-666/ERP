@@ -17,10 +17,13 @@ type ChatMessageHandler = (data: ChatMessageSocketPayload) => void
 type ChatTypingHandler = (data: ChatTypingPayload) => void
 type ChatReadHandler = (data: ChatReadPayload) => void
 
+type ChatErrorHandler = (data: { message: string }) => void
+
 const notificationHandlers = new Map<string, NotificationHandler>()
 const chatMessageHandlers = new Map<string, ChatMessageHandler>()
 const chatTypingHandlers = new Map<string, ChatTypingHandler>()
 const chatReadHandlers = new Map<string, ChatReadHandler>()
+const chatErrorHandlers = new Map<string, ChatErrorHandler>()
 
 // 已设置 socket 事件分发的标记（只设置一次）
 let dispatchersInitialized = false
@@ -43,6 +46,11 @@ export function registerChatTypingHandler(id: string, handler: ChatTypingHandler
 export function registerChatReadHandler(id: string, handler: ChatReadHandler) {
   chatReadHandlers.set(id, handler)
   return () => { chatReadHandlers.delete(id) }
+}
+
+export function registerChatErrorHandler(id: string, handler: ChatErrorHandler) {
+  chatErrorHandlers.set(id, handler)
+  return () => { chatErrorHandlers.delete(id) }
 }
 
 // ==================== Socket 操作方法 ====================
@@ -96,7 +104,9 @@ function initDispatchers(socket: Socket) {
   })
 
   socket.on('chat:error', (data: { message: string }) => {
-    console.warn('[Chat Error]', data.message)
+    for (const handler of chatErrorHandlers.values()) {
+      try { handler(data) } catch { /* ignore */ }
+    }
   })
 }
 

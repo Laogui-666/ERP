@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Image from 'next/image'
 import { useChat } from '@/hooks/use-chat'
 import { registerChatTypingHandler } from '@/hooks/use-socket-client'
 import { ChatMessageList } from './chat-message-list'
@@ -35,11 +36,12 @@ export function ChatPanel({ orderId, compact = false, onClose }: ChatPanelProps)
   // 注册 typing 回调
   useEffect(() => {
     const handlerId = `typing-panel-${orderId}`
+    const timers = typingTimersRef.current
     const unregister = registerChatTypingHandler(handlerId, (data) => {
       if (data.orderId !== orderId || data.userId === userId) return
 
       // 清除之前的 timer
-      const existing = typingTimersRef.current.get(data.userId)
+      const existing = timers.get(data.userId)
       if (existing) clearTimeout(existing)
 
       // 添加用户到 typing 列表
@@ -51,19 +53,19 @@ export function ChatPanel({ orderId, compact = false, onClose }: ChatPanelProps)
       // 3s 后自动移除
       const timer = setTimeout(() => {
         setTypingUsers((prev) => prev.filter((u) => u.userId !== data.userId))
-        typingTimersRef.current.delete(data.userId)
+        timers.delete(data.userId)
       }, 3000)
 
-      typingTimersRef.current.set(data.userId, timer)
+      timers.set(data.userId, timer)
     })
 
     return () => {
       unregister()
       // 清理所有 timer
-      for (const timer of typingTimersRef.current.values()) {
+      for (const timer of timers.values()) {
         clearTimeout(timer)
       }
-      typingTimersRef.current.clear()
+      timers.clear()
     }
   }, [orderId, userId])
 
@@ -134,10 +136,13 @@ export function ChatPanel({ orderId, compact = false, onClose }: ChatPanelProps)
           className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 animate-fade-in-up cursor-pointer"
           onClick={() => setLightboxUrl(null)}
         >
-          <img
+          <Image
             src={lightboxUrl}
             alt="预览"
+            width={800}
+            height={600}
             className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            unoptimized
           />
           <button
             className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"

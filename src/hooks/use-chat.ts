@@ -11,7 +11,6 @@ import {
   registerChatMessageHandler,
   registerChatReadHandler,
 } from '@/hooks/use-socket-client'
-import { apiFetch } from '@/lib/api-client'
 import type { SendMessagePayload } from '@/types/chat'
 
 interface UseChatOptions {
@@ -125,14 +124,6 @@ export function useChat({ orderId, autoJoin = true }: UseChatOptions) {
     (lastMessageId: string) => {
       socketMarkRead(orderId, lastMessageId)
       markRoomRead(orderId, lastMessageId)
-      // 同时调用 API 确保持久化
-      apiFetch(`/api/chat/rooms/${orderId}/read`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lastReadMessageId: lastMessageId }),
-      }).catch(() => {
-        // 静默失败，Socket 已处理
-      })
     },
     [orderId, markRoomRead]
   )

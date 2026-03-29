@@ -1,12 +1,12 @@
 # 沐海旅行 ERP - M4 实时通信全知开发手册
 
-> **文档版本**: V8.0
+> **文档版本**: V9.0
 > **创建日期**: 2026-03-28
-> **更新日期**: 2026-03-29 12:25（批次 1+2+3+4 全部完成，Socket 服务端完整重写+7个前端组件+全链路集成，132 源文件 / ~15,200 行 / 44 API 路由）
+> **更新日期**: 2026-03-29 15:30（**M4 全部 5 批次完成**，Socket服务端+聊天API+前端UI+离线通知+全量验收，133 源文件 / ~15,300 行 / 44 API 路由 / 89 测试用例）
 > **用途**: M4 阶段唯一开发指南。拿到本文件 + Git 仓库即可完整恢复开发上下文。
-> **前置条件**: M1 ✅ + M2 ✅ + M3 ✅ + M5 ✅ 全部完成（132 源文件 / ~15,200 行 / 44 API 路由 / 18 页面 / 30 组件 / 74 测试用例）
-> **核心交付**: 订单级站内聊天 + 管理端内部通讯 + 已读回执 + 消息持久化 + Socket.io 实时推送
-> **预估工时**: ~22 小时（5 个批次）
+> **前置条件**: M1 ✅ + M2 ✅ + M3 ✅ + M5 ✅ 全部完成（133 源文件 / ~15,300 行 / 44 API 路由 / 18 页面 / 30 组件 / 89 测试用例）
+> **核心交付**: 订单级站内聊天 + 管理端内部通讯 + 已读回执 + 消息持久化 + Socket.io 实时推送 + 离线消息通知
+> **实际工时**: ~22 小时（5 个批次全部完成）
 
 ---
 
@@ -729,7 +729,7 @@ useEffect(() => {
 | **批次 2** | 聊天 API：会话列表 + 消息 CRUD + 已读回执 + presign/confirm 扩展 | 4h | 批次 1 | ✅ 完成 |
 | **批次 3** | Socket.io：emitToRoom + 聊天事件 + 回调注册表 + 输入指示 + 房间管理 + auto-join + 内存泄漏防护 | 3.5h | 批次 2 | ✅ 完成 |
 | **批次 4** | 前端 UI：ChatStore + useChat + ChatPanel + ChatInput + ChatMessageList + ChatRoomList + 顶栏集成 + 浮动按钮 | 7h | 批次 3 | ✅ 完成 |
-| **批次 5** | 验收 + 优化 + 离线通知 + 测试 + 文档更新 | 3.5h | 批次 4 | ⬜ 待开发 |
+| **批次 5** | 验收 + 优化 + 离线通知 + 测试 + 文档更新 | 3.5h | 批次 4 | ✅ 完成 |
 
 **总计：~22 小时（V5.0 修正：+2h，含 V5.0 新增 8 项 P0/P1 修复）**
 
@@ -1543,18 +1543,35 @@ const [showChat, setShowChat] = useState(false)
 
 ---
 
-## 14. 批次 5：全量验收 + 优化
+## 14. 批次 5：全量验收 + 优化 ✅ 已完成
+
+> 完成于 2026-03-29 15:30 | 深度审查10项缺口(P0×2/P1×5/P2×3)全部修复
 
 ### 14.1 任务清单
 
-| # | 任务 | 说明 |
-|---|---|---|
-| M4-32 | 全量 tsc + build 验收 | 0 错误 0 警告 |
-| M4-33 | 测试用例补充 | `src/lib/__tests__/chat-system.test.ts` 单元测试 |
-| M4-34 | 边界场景处理 | 长消息折叠、超长消息截断（>2000字）、空消息校验、并发发送、多设备登录 |
-| M4-35 | 离线消息通知 | 用户不在线时，创建 Notification（5 分钟去重） |
-| M4-36 | 性能优化 | 消息列表虚拟滚动评估（<500条暂不需要）、图片懒加载 |
-| M4-37 | 文档更新 | 03-project-status + 02-architecture + 01-PRD + 其余文档版本号 |
+| # | 任务 | 文件 | 状态 |
+|---|---|---|:---:|
+| M4-32 | 全量 tsc + build 验收 | — | ✅ 0 错误 0 警告 |
+| M4-33 | 测试用例补充 | `__tests__/chat-system.test.ts` | ✅ 15 用例 (89 total) |
+| M4-34 | 边界场景处理 | 多文件 | ✅ |
+| M4-35 | 离线消息通知 | `messages/route.ts POST` | ✅ 5分钟去重+CHAT_MESSAGE |
+| M4-36 | 性能优化 | `chat-message.tsx` / `chat-panel.tsx` | ✅ Image优化+ref修复 |
+| M4-37 | 文档更新 | 03 + 07 | ✅ |
+
+### 14.2 深度审查发现并修复的缺口
+
+| # | 级别 | 文件 | 问题 | 修复 |
+|---|:---:|---|---|---|
+| 1 | 🔴 P0 | `chat-room-list.tsx` | 路由硬编码 `/admin/orders`，客户点会话被重定向丢失 | 按角色跳转：CUSTOMER→/customer/orders，其他→/admin/orders |
+| 2 | 🔴 P0 | `use-socket-client.ts` | `console.warn('[Chat Error]')` 违反 0 console 规范 | 注册 chatErrorHandlers 分发表 |
+| 3 | 🟡 P1 | `customer/orders/[id]` | 客户端浮动按钮无未读角标 | 引入 ChatStore + fetchRooms + unread badge |
+| 4 | 🟡 P1 | `customer/layout.tsx` | Tab "消息" 角标不含聊天未读 | registerChatMessageHandler + fetchRooms + unreadCount+chatUnread |
+| 5 | 🟡 P1 | `admin/orders/[id]` | 浮动按钮 unread 永远为 0（未调用 fetchRooms） | 挂载时 fetchRooms() |
+| 6 | 🟡 P1 | `use-chat.ts` | markRead 双重写入（Socket + API 并行） | 去掉冗余 API 调用 |
+| 7 | 🟡 P1 | `messages/route.ts` | 离线消息无通知 | POST后查询关联用户→5min去重→创建CHAT_MESSAGE通知+Socket推送 |
+| 8 | 🟢 P2 | `chat-message.tsx` | `<img>` → `<Image />` | next/image + unoptimized |
+| 9 | 🟢 P2 | `chat-panel.tsx` | `<img>` + typingTimersRef cleanup warning | next/image + ref 提前捕获 |
+| 10 | 🟢 P2 | `admin/orders/[id]` | `order.orderLogs` → `currentOrder.orderLogs` (useCallback 闭包) | 变量名修正 |
 
 ### 14.2 边界场景
 

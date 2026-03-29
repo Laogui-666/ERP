@@ -1,6 +1,7 @@
 'use client'
 
 import { memo } from 'react'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { formatMessageTime } from '@/lib/utils'
 import type { ChatMessageItem } from '@/types/chat'
@@ -86,11 +87,14 @@ export const ChatMessage = memo(function ChatMessage({
               onClick={() => onImageClick?.(message.content)}
               className="block max-w-[220px] rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
             >
-              <img
+              <Image
                 src={message.content}
                 alt={message.fileName ?? '图片'}
+                width={220}
+                height={200}
                 className="w-full h-auto max-h-[200px] object-cover rounded-lg"
                 loading="lazy"
+                unoptimized
               />
             </button>
           )}

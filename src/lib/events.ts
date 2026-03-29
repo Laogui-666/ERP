@@ -147,7 +147,7 @@ eventBus.on(EVENTS.ORDER_STATUS_CHANGED, async (data) => {
   }
 
   // 终态自动归档 ChatRoom
-  const terminalStatuses = ['APPROVED', 'REJECTED']
+  const terminalStatuses = ['APPROVED', 'REJECTED', 'PARTIAL']
   if (terminalStatuses.includes(toStatus)) {
     archiveChatRoom(orderId).catch((err) => {
       logApiError('chat-room-archive-event', err, { orderId, toStatus })

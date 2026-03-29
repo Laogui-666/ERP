@@ -160,7 +160,12 @@ export function ChatInput({ orderId, isSending, onSend, onTyping }: ChatInputPro
       <div className="flex items-end gap-2 p-3">
         {/* 文件按钮 */}
         <button
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => {
+            if (fileInputRef.current) {
+              fileInputRef.current.accept = ''
+              fileInputRef.current.click()
+            }
+          }}
           disabled={isSending || isUploading}
           className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] hover:bg-white/[0.06] transition-colors disabled:opacity-40"
           title="发送文件"
@@ -177,14 +182,11 @@ export function ChatInput({ orderId, isSending, onSend, onTyping }: ChatInputPro
         {/* 图片按钮 */}
         <button
           onClick={() => {
-            const input = document.createElement('input')
-            input.type = 'file'
-            input.accept = 'image/*'
-            input.onchange = (e) => {
-              const target = e.target as HTMLInputElement
-              handleFileSelect({ target } as React.ChangeEvent<HTMLInputElement>)
+            const input = fileInputRef.current
+            if (input) {
+              input.accept = 'image/*'
+              input.click()
             }
-            input.click()
           }}
           disabled={isSending || isUploading}
           className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] hover:bg-white/[0.06] transition-colors disabled:opacity-40"

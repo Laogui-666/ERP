@@ -163,19 +163,16 @@ export async function POST(
 
     // 事务：创建消息 + 更新 ChatRoom 摘要
     const message = await prisma.$transaction(async (tx) => {
-      // exactOptionalPropertyTypes 兼容：条件赋值
-      const messageData: Record<string, unknown> = {
-        roomId: room.id,
-        companyId: user.companyId,
-        senderId: user.userId,
-        type: data.type,
-        content: data.content,
-      }
-      if (data.fileName !== undefined) messageData.fileName = data.fileName
-      if (data.fileSize !== undefined) messageData.fileSize = data.fileSize
-
       const msg = await tx.chatMessage.create({
-        data: messageData as Parameters<typeof tx.chatMessage.create>[0]['data'],
+        data: {
+          roomId: room.id,
+          companyId: user.companyId,
+          senderId: user.userId,
+          type: data.type,
+          content: data.content,
+          fileName: data.fileName ?? null,
+          fileSize: data.fileSize ?? null,
+        },
       })
 
       // 更新会话摘要

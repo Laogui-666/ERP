@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
           ON crd.room_id = cm.room_id AND crd.user_id = ${user.userId}
         WHERE cm.id > COALESCE(crd.last_read_message_id, '')
           AND cm.sender_id != ${user.userId}
+          AND cm.room_id IN (SELECT id FROM erp_chat_rooms WHERE company_id = ${user.companyId})
         GROUP BY cm.room_id
       ) unread ON unread.room_id = cr.id
       WHERE cr.company_id = ${user.companyId}

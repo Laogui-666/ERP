@@ -44,6 +44,8 @@ export default function WorkspacePage() {
           inProgress: inProgress.length,
         })
       }
+    } catch {
+      // 网络错误静默处理（页面会显示空状态）
     } finally {
       setIsLoading(false)
     }

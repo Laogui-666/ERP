@@ -7,6 +7,34 @@ import { logApiError } from '@/lib/logger'
 import { z } from 'zod'
 import type { ChatMessageItem } from '@/types/chat'
 
+/** 校验用户有权访问订单的聊天（订单关联 或 管理者角色） */
+async function verifyChatAccess(
+  userId: string,
+  userRole: string,
+  companyId: string,
+  orderId: string,
+) {
+  const isManager = ['SUPER_ADMIN', 'COMPANY_OWNER', 'CS_ADMIN', 'VISA_ADMIN'].includes(userRole)
+  if (isManager) return
+
+  const order = await prisma.order.findFirst({
+    where: {
+      id: orderId,
+      companyId,
+      OR: [
+        { customerId: userId },
+        { collectorId: userId },
+        { operatorId: userId },
+        { createdBy: userId },
+      ],
+    },
+    select: { id: true },
+  })
+  if (!order) {
+    throw new AppError('FORBIDDEN', '无权访问该订单的聊天', 403)
+  }
+}
+
 // GET /api/chat/rooms/[orderId]/messages - 消息历史（复合游标分页）
 export async function GET(
   request: NextRequest,
@@ -23,6 +51,9 @@ export async function GET(
       select: { id: true },
     })
     if (!room) throw new AppError('NOT_FOUND', '聊天会话不存在', 404)
+
+    // 校验用户有权访问该聊天
+    await verifyChatAccess(user.userId, user.role, user.companyId, orderId)
 
     // 游标参数
     const cursorCreatedAt = request.nextUrl.searchParams.get('cursorCreatedAt')
@@ -116,6 +147,9 @@ export async function POST(
       select: { id: true, orderNo: true },
     })
     if (!order) throw new AppError('NOT_FOUND', '订单不存在', 404)
+
+    // 校验用户有权访问该聊天
+    await verifyChatAccess(user.userId, user.role, user.companyId, orderId)
 
     const room = await prisma.chatRoom.upsert({
       where: { orderId },

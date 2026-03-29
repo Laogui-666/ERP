@@ -180,8 +180,29 @@ export async function transitionOrder(input: {
     }
   }
 
-  // 事务：状态更新 + 操作日志
+  // 事务：重新读取状态（防并发） + 状态更新 + 操作日志
   await prisma.$transaction(async (tx) => {
+    // 事务内重新读取订单状态（防止外层 findFirst 到事务执行时状态已变）
+    const freshOrder = await tx.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, status: true },
+    })
+    if (!freshOrder) {
+      throw new AppError('ORDER_NOT_FOUND', '订单不存在', 404)
+    }
+
+    // 重新校验流转规则（基于事务内最新状态）
+    const freshRule = TRANSITION_RULES.find(
+      (r) => r.from === freshOrder.status && r.to === toStatus
+    )
+    if (!freshRule) {
+      throw new AppError(
+        'INVALID_TRANSITION',
+        `不允许从 "${freshOrder.status}" 流转到 "${toStatus}"（状态已被其他操作变更）`,
+        400
+      )
+    }
+
     const updateData: Record<string, unknown> = {
       status: toStatus,
       updatedAt: new Date(),
@@ -202,18 +223,27 @@ export async function transitionOrder(input: {
       updateData.completedAt = new Date()
     }
 
-    await tx.order.update({
-      where: { id: orderId },
+    // WHERE 含 status 条件 → 并发时只有一个能成功
+    const result = await tx.order.updateMany({
+      where: { id: orderId, status: freshOrder.status },
       data: updateData,
     })
+
+    if (result.count === 0) {
+      throw new AppError(
+        'CONCURRENT_MODIFICATION',
+        '操作失败：订单状态已被其他操作变更，请刷新后重试',
+        409
+      )
+    }
 
     await tx.orderLog.create({
       data: {
         orderId,
         companyId,
         userId,
-        action: rule.action,
-        fromStatus: order.status,
+        action: freshRule.action,
+        fromStatus: freshOrder.status,
         toStatus,
         detail: detail ?? null,
       },
@@ -273,7 +303,7 @@ export async function autoResolveOrderStatus(
   })
   if (!order) return null
 
-  // 5. 更新订单 + 写日志（同一事务）
+  // 5. 更新订单 + 写日志（同一事务，WHERE 含 status 防并发）
   const updateData: Record<string, unknown> = {
     status: newStatus,
     visaResultAt: new Date(),
@@ -283,10 +313,15 @@ export async function autoResolveOrderStatus(
     updateData.completedAt = new Date()
   }
 
-  await tx.order.update({
-    where: { id: orderId },
+  const updateResult = await tx.order.updateMany({
+    where: { id: orderId, status: order.status },
     data: updateData,
   })
+
+  if (updateResult.count === 0) {
+    // 并发冲突：另一个事务已修改状态，不抛异常（申请人结果已写入成功）
+    return null
+  }
 
   const actionLabel = allApproved
     ? '全部出签'

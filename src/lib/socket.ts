@@ -43,9 +43,12 @@ function startCleanupInterval() {
 // ==================== 初始化 ====================
 
 export function initSocketServer(httpServer: HttpServer): Server {
+  const isDev = process.env.NODE_ENV !== 'production'
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3002',
+      origin: isDev
+        ? [/localhost:\d+$/, /127\.0\.0\.1:\d+$/, process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3002']
+        : process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3002',
       methods: ['GET', 'POST'],
       credentials: true,
     },

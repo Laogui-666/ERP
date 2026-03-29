@@ -335,6 +335,13 @@ export default function OrderDetailPage() {
             </div>
           </GlassCard>
 
+          {/* 签证分类流程提示 */}
+          {order.visaCategory && (
+            <GlassCard className="p-4 animate-fade-in-up" style={{ animationDelay: '75ms' }}>
+              <VisaFlowHints category={order.visaCategory} fingerprintRequired={order.fingerprintRequired} appointmentDate={order.appointmentDate} />
+            </GlassCard>
+          )}
+
           {/* 订单信息 */}
           <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
@@ -699,6 +706,60 @@ function ChatFloatingButton({ orderId }: { orderId: string }) {
           </span>
         )}
       </button>
+    </div>
+  )
+}
+
+// 签证分类流程差异化提示组件
+function VisaFlowHints({ category, fingerprintRequired, appointmentDate }: {
+  category: string
+  fingerprintRequired: boolean
+  appointmentDate: string | null
+}) {
+  const cat = category.toLowerCase()
+  const isEVisa = cat.includes('电子') || cat.includes('evisa') || cat.includes('e-visa')
+  const isSticker = cat.includes('贴纸') || cat.includes('sticker')
+  const isSchengen = cat.includes('申根') || cat.includes('schengen')
+
+  const hints: Array<{ icon: string; text: string; color: string }> = []
+
+  if (isEVisa) {
+    hints.push({ icon: '💻', text: '电子签证：交付时提供电子文件即可，无需邮寄护照原件', color: 'var(--color-info)' })
+    hints.push({ icon: '📧', text: '出签后将电子签证发送至客户邮箱/聊天窗口', color: 'var(--color-info)' })
+  } else if (isSticker) {
+    hints.push({ icon: '📮', text: '贴纸签证：交付时需提供邮寄指引，客户需寄送护照原件', color: 'var(--color-warning)' })
+    hints.push({ icon: '📋', text: '确认客户收件地址后安排邮寄', color: 'var(--color-warning)' })
+  }
+
+  if (isSchengen) {
+    hints.push({ icon: '🇪🇺', text: '申根签证：客户需自行反馈出签状态', color: 'var(--color-accent)' })
+  }
+
+  if (fingerprintRequired) {
+    hints.push({ icon: '🖐️', text: '需录指纹：请在预约日前提醒客户前往签证中心采集', color: 'var(--color-warning)' })
+    if (appointmentDate) {
+      hints.push({ icon: '📅', text: `指纹采集预约：${formatDate(appointmentDate)}`, color: 'var(--color-warning)' })
+    }
+  }
+
+  if (hints.length === 0) return null
+
+  return (
+    <div>
+      <h4 className="text-xs font-semibold text-[var(--color-text-secondary)] mb-2 flex items-center gap-1.5">
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        流程提示
+      </h4>
+      <div className="space-y-1.5">
+        {hints.map((h, i) => (
+          <div key={i} className="flex items-start gap-2 text-xs">
+            <span className="text-base leading-none">{h.icon}</span>
+            <span style={{ color: h.color }}>{h.text}</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

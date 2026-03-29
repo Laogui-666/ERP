@@ -381,6 +381,57 @@ export default function OrdersPage() {
 function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showQuickEntry, setShowQuickEntry] = useState(true)
+  const [quickTemplates, setQuickTemplates] = useState<Array<{id:string;name:string;country:string;visaType:string;items:unknown[];isSystem:boolean}>>([])
+  const [recentCustomers, setRecentCustomers] = useState<Array<{customerName:string;customerPhone:string;customerEmail:string|null;passportNo:string|null;targetCountry:string;visaType:string;visaCategory:string|null;targetCity:string|null;paymentMethod:string|null;amount:string;sourceChannel:string|null;contactName:string|null}>>([])
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
+  const [applyDocTemplate, setApplyDocTemplate] = useState(false)
+
+  // 快速录入数据加载
+  useEffect(() => {
+    apiFetch('/api/order-templates').then(r => r.json()).then(json => {
+      if (json.success) {
+        setQuickTemplates(json.data.templates ?? [])
+        setRecentCustomers(json.data.recentCustomers ?? [])
+      }
+    }).catch(() => {})
+  }, [])
+
+  const handleQuickFill = (data: {
+    customerName?: string; customerPhone?: string; customerEmail?: string | null;
+    passportNo?: string | null; targetCountry?: string; visaType?: string;
+    visaCategory?: string | null; targetCity?: string | null; paymentMethod?: string | null;
+    amount?: string | number; sourceChannel?: string | null; contactName?: string | null;
+  }) => {
+    setForm(prev => ({
+      ...prev,
+      customerName: data.customerName ?? prev.customerName,
+      customerPhone: data.customerPhone ?? prev.customerPhone,
+      customerEmail: data.customerEmail ?? prev.customerEmail,
+      passportNo: data.passportNo ?? prev.passportNo,
+      targetCountry: data.targetCountry ?? prev.targetCountry,
+      visaType: data.visaType ?? prev.visaType,
+      visaCategory: data.visaCategory ?? prev.visaCategory,
+      targetCity: data.targetCity ?? prev.targetCity,
+      paymentMethod: data.paymentMethod ?? prev.paymentMethod,
+      amount: data.amount ? String(data.amount) : prev.amount,
+      sourceChannel: data.sourceChannel ?? prev.sourceChannel,
+      contactName: data.contactName ?? prev.contactName,
+    }))
+    toast('success', '已快速填充')
+  }
+
+  const handleTemplateSelect = (t: {id:string;country:string;visaType:string}) => {
+    setSelectedTemplateId(t.id)
+    setApplyDocTemplate(true)
+    setForm(prev => ({
+      ...prev,
+      targetCountry: t.country || prev.targetCountry,
+      visaType: t.visaType || prev.visaType,
+    }))
+    toast('success', '已应用模板')
+  }
+
   const [form, setForm] = useState({
     customerName: '',
     customerPhone: '',
@@ -487,6 +538,16 @@ function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSucce
       })
       const json = await res.json()
       if (json.success) {
+        // 如果选择了模板且开启了自动应用，创建资料清单
+        if (applyDocTemplate && selectedTemplateId && json.data?.id) {
+          try {
+            await apiFetch('/api/templates/apply', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderId: json.data.id, templateId: selectedTemplateId }),
+            })
+          } catch { /* 不阻塞主流程 */ }
+        }
         onSuccess()
       } else {
         toast('error', json.error?.message ?? '创建失败')
@@ -504,6 +565,60 @@ function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSucce
   return (
     <Modal isOpen onClose={onClose} title="新建订单" size="xl">
       <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+        {/* 快速录入 */}
+        {(quickTemplates.length > 0 || recentCustomers.length > 0) && (
+          <div className="rounded-xl bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/10">
+            <button
+              onClick={() => setShowQuickEntry(!showQuickEntry)}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium text-[var(--color-primary-light)]"
+            >
+              <span className="flex items-center gap-1.5">⚡ 快速录入</span>
+              <span>{showQuickEntry ? '▲' : '▼'}</span>
+            </button>
+            {showQuickEntry && (
+              <div className="px-4 pb-3 space-y-2">
+                {/* 模板快速填充 */}
+                {quickTemplates.length > 0 && (
+                  <div>
+                    <p className="text-[10px] text-[var(--color-text-placeholder)] mb-1.5">从模板填充</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {quickTemplates.slice(0, 6).map(t => (
+                        <button key={t.id}
+                          onClick={() => handleTemplateSelect(t)}
+                          className={`text-[11px] px-2.5 py-1 rounded-lg transition-all ${
+                            selectedTemplateId === t.id
+                              ? 'bg-[var(--color-primary)]/30 text-[var(--color-text-primary)] border border-[var(--color-primary)]/40'
+                              : 'bg-white/[0.06] text-[var(--color-text-secondary)] hover:bg-white/[0.1] border border-transparent'
+                          }`}
+                        >
+                          {t.country}·{t.visaType}
+                          {t.isSystem && <span className="ml-1 text-[var(--color-info)]">★</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* 老客户快速填充 */}
+                {recentCustomers.length > 0 && (
+                  <div>
+                    <p className="text-[10px] text-[var(--color-text-placeholder)] mb-1.5">老客户快速填充</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {recentCustomers.slice(0, 5).map((c, i) => (
+                        <button key={i}
+                          onClick={() => handleQuickFill(c)}
+                          className="text-[11px] px-2.5 py-1 rounded-lg bg-white/[0.06] text-[var(--color-text-secondary)] hover:bg-white/[0.1] border border-transparent transition-all"
+                        >
+                          {c.customerName} · {c.targetCountry}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 联系人信息 */}
         <div>
           <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-3 pb-2 border-b border-white/5">

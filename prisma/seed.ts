@@ -93,8 +93,6 @@ async function main() {
     console.log(`✅ Template created: ${template.name}`)
   }
 
-  console.log('🎉 Seeding completed!')
-
   // 3. 创建聊天系统用户（M4：用于系统消息 senderId，满足 FK 约束）
   const chatSystemUser = await prisma.user.upsert({
     where: { username: 'chat_system' },
@@ -111,6 +109,8 @@ async function main() {
     },
   })
   console.log('✅ Chat system user created:', chatSystemUser.username)
+
+  console.log('🎉 Seeding completed!')
 }
 
 main()

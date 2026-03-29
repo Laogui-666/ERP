@@ -265,12 +265,24 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
           )}
         </h3>
         {canEdit && (
-          <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors"
-          >
-            {showAddForm ? '取消' : '+ 添加'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors"
+            >
+              {showAddForm ? '取消' : '+ 添加'}
+            </button>
+            <button
+              onClick={() => {
+                // 跳转到模板页面或弹出模板选择
+                window.open('/admin/templates', '_blank')
+              }}
+              className="text-xs text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] transition-colors"
+              title="从模板库选择资料清单"
+            >
+              📄 从模板
+            </button>
+          </div>
         )}
       </div>
 

@@ -44,6 +44,71 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('')
   const [searchText, setSearchText] = useState('')
   const [page, setPage] = useState(1)
+  // 批量操作
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showBatchMenu, setShowBatchMenu] = useState(false)
+  const [batchAction, setBatchAction] = useState<string | null>(null)
+  const [batchTemplateId, setBatchTemplateId] = useState('')
+  const [batchCancelReason, setBatchCancelReason] = useState('')
+  const [templates, setTemplates] = useState<Array<{id:string;name:string}>>([])
+  const [isBatchRunning, setIsBatchRunning] = useState(false)
+
+  const toggleSelect = (id: string) => {
+    const next = new Set(selectedIds)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    setSelectedIds(next)
+  }
+  const toggleSelectAll = () => {
+    if (selectedIds.size === orders.length) { setSelectedIds(new Set()); return }
+    setSelectedIds(new Set(orders.map(o => o.id)))
+  }
+  const clearSelection = () => { setSelectedIds(new Set()); setBatchAction(null) }
+
+  const loadTemplates = async () => {
+    try {
+      const res = await apiFetch('/api/templates')
+      const json = await res.json()
+      if (json.success) setTemplates(json.data.map((t: any) => ({ id: t.id, name: t.name })))
+    } catch {}
+  }
+
+  const handleBatch = async () => {
+    if (selectedIds.size === 0) return
+    if (!batchAction) return
+    setIsBatchRunning(true)
+    try {
+      const payload: Record<string, unknown> = {
+        action: batchAction,
+        orderIds: Array.from(selectedIds),
+      }
+      if (batchAction === 'apply_template') {
+        if (!batchTemplateId) { toast('error', '请选择模板'); setIsBatchRunning(false); return }
+        payload.templateId = batchTemplateId
+      }
+      if (batchAction === 'cancel') {
+        if (!batchCancelReason) { toast('error', '请填写取消原因'); setIsBatchRunning(false); return }
+        payload.cancelReason = batchCancelReason
+      }
+      const res = await apiFetch('/api/orders/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const json = await res.json()
+      if (json.success) {
+        const { successCount, failCount } = json.data
+        toast('success', `批量操作完成：成功 ${successCount}，失败 ${failCount}`)
+        clearSelection()
+        handleFilter()
+      } else {
+        toast('error', json.error?.message ?? '批量操作失败')
+      }
+    } catch {
+      toast('error', '批量操作失败')
+    } finally {
+      setIsBatchRunning(false)
+    }
+  }
 
   // 初始加载
   useEffect(() => {
@@ -141,6 +206,55 @@ export default function OrdersPage() {
         </div>
       </GlassCard>
 
+      {/* 批量操作栏 */}
+      {selectedIds.size > 0 && (
+        <GlassCard className="p-3 animate-fade-in-up flex items-center gap-3 flex-wrap">
+          <span className="text-sm text-[var(--color-text-secondary)]">已选 {selectedIds.size} 单</span>
+          <div className="relative">
+            <button
+              onClick={() => { setShowBatchMenu(!showBatchMenu); if (!showBatchMenu) loadTemplates() }}
+              className="glass-btn-primary px-3 py-1.5 text-xs font-medium"
+            >
+              批量操作 ▾
+            </button>
+            {showBatchMenu && (
+              <div className="absolute top-full mt-1 left-0 z-30 glass-card-static rounded-xl p-2 min-w-[180px] space-y-1 shadow-xl">
+                {['apply_template', 'cancel'].map(a => (
+                  <button key={a} onClick={() => { setBatchAction(a); setShowBatchMenu(false) }}
+                    className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-white/10 text-[var(--color-text-primary)]">
+                    {a === 'apply_template' ? '📄 应用模板' : '❌ 批量取消'}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button onClick={clearSelection} className="text-xs text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]">取消选择</button>
+
+          {/* 应用模板面板 */}
+          {batchAction === 'apply_template' && (
+            <div className="w-full flex items-center gap-2 mt-1">
+              <select value={batchTemplateId} onChange={(e) => setBatchTemplateId(e.target.value)} className="glass-input text-xs flex-1">
+                <option value="">选择模板...</option>
+                {templates.map(t => <option key={t.id} value={t.id} className="bg-[#252B3B]">{t.name}</option>)}
+              </select>
+              <button onClick={handleBatch} disabled={isBatchRunning} className="glass-btn-primary px-3 py-1.5 text-xs disabled:opacity-50">
+                {isBatchRunning ? '执行中...' : '执行'}
+              </button>
+            </div>
+          )}
+
+          {/* 取消订单面板 */}
+          {batchAction === 'cancel' && (
+            <div className="w-full flex items-center gap-2 mt-1">
+              <input value={batchCancelReason} onChange={(e) => setBatchCancelReason(e.target.value)} placeholder="取消原因" className="glass-input text-xs flex-1" />
+              <button onClick={handleBatch} disabled={isBatchRunning} className="glass-btn-primary px-3 py-1.5 text-xs disabled:opacity-50" style={{background:'linear-gradient(135deg, rgba(184,124,124,0.4), rgba(184,124,124,0.2))'}}>
+                {isBatchRunning ? '执行中...' : '确认取消'}
+              </button>
+            </div>
+          )}
+        </GlassCard>
+      )}
+
       {/* 订单列表 */}
       <GlassCard className="overflow-hidden animate-fade-in-up" style={{ animationDelay: '100ms' }}>
         {isLoading ? (
@@ -160,6 +274,10 @@ export default function OrdersPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/5">
+                  <th className="px-2 py-3 w-8">
+                    <input type="checkbox" checked={orders.length > 0 && selectedIds.size === orders.length}
+                      onChange={toggleSelectAll} className="rounded" />
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-placeholder)] uppercase tracking-wider">订单号</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-placeholder)] uppercase tracking-wider">客户</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-placeholder)] uppercase tracking-wider">国家/类型</th>
@@ -176,6 +294,9 @@ export default function OrdersPage() {
                     className="border-b border-white/5 hover:bg-white/[0.02] transition-colors animate-fade-in-up"
                     style={{ animationDelay: `${i * 30}ms` }}
                   >
+                    <td className="px-2 py-3">
+                      <input type="checkbox" checked={selectedIds.has(order.id)} onChange={() => toggleSelect(order.id)} className="rounded" />
+                    </td>
                     <td className="px-4 py-3">
                       <span className="text-sm font-mono text-[var(--color-primary-light)]">{order.orderNo}</span>
                     </td>

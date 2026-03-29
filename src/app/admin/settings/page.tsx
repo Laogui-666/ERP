@@ -1,20 +1,156 @@
 'use client'
-
+import { apiFetch } from '@/lib/api-client'
+import { useEffect, useState, useCallback } from 'react'
 import { GlassCard } from '@/components/layout/glass-card'
 import { PageHeader } from '@/components/layout/page-header'
+import { useToast } from '@/components/ui/toast'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function SettingsPage() {
+  const { user } = useAuth()
+  const { toast } = useToast()
+  const [companyName, setCompanyName] = useState('')
+  const [companyPhone, setCompanyPhone] = useState('')
+  const [companyEmail, setCompanyEmail] = useState('')
+  const [companyAddress, setCompanyAddress] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+
+  const fetchCompany = useCallback(async () => {
+    try {
+      const res = await apiFetch('/api/auth/me')
+      const json = await res.json()
+      if (json.success && json.data.company) {
+        setCompanyName(json.data.company.name ?? '')
+        setCompanyPhone(json.data.company.phone ?? '')
+        setCompanyEmail(json.data.company.email ?? '')
+        setCompanyAddress(json.data.company.address ?? '')
+      }
+    } catch {
+      // 静默失败
+    }
+  }, [])
+
+  useEffect(() => { fetchCompany() }, [fetchCompany])
+
+  const handleSave = async () => {
+    if (!companyName.trim()) {
+      toast('error', '公司名称不能为空')
+      return
+    }
+    setIsSaving(true)
+    try {
+      const res = await apiFetch('/api/companies/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: companyName,
+          phone: companyPhone || undefined,
+          email: companyEmail || undefined,
+          address: companyAddress || undefined,
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        toast('success', '保存成功')
+      } else {
+        toast('error', json.error?.message ?? '保存失败')
+      }
+    } catch {
+      toast('error', '保存失败')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN'
+  const canEdit = user?.role && ['SUPER_ADMIN', 'COMPANY_OWNER'].includes(user.role)
+
   return (
     <div className="space-y-6">
       <PageHeader title="系统设置" description="公司配置与系统管理" />
-      <GlassCard className="p-12 text-center animate-fade-in-up">
-        <svg className="w-16 h-16 mx-auto text-[var(--color-text-placeholder)] mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        <p className="text-lg text-[var(--color-text-primary)] font-medium">系统设置</p>
-        <p className="text-sm text-[var(--color-text-secondary)] mt-1">功能开发中...</p>
+
+      {/* 公司信息 */}
+      <GlassCard className="p-6 animate-fade-in-up space-y-4">
+        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">公司信息</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">公司名称</label>
+            <input
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              disabled={!canEdit}
+              className="w-full glass-input text-sm disabled:opacity-60"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">联系电话</label>
+            <input
+              value={companyPhone}
+              onChange={(e) => setCompanyPhone(e.target.value)}
+              disabled={!canEdit}
+              className="w-full glass-input text-sm disabled:opacity-60"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">邮箱</label>
+            <input
+              value={companyEmail}
+              onChange={(e) => setCompanyEmail(e.target.value)}
+              disabled={!canEdit}
+              className="w-full glass-input text-sm disabled:opacity-60"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">地址</label>
+            <input
+              value={companyAddress}
+              onChange={(e) => setCompanyAddress(e.target.value)}
+              disabled={!canEdit}
+              className="w-full glass-input text-sm disabled:opacity-60"
+            />
+          </div>
+        </div>
+        {canEdit && (
+          <div className="flex justify-end">
+            <button onClick={handleSave} disabled={isSaving} className="glass-btn-primary px-6 py-2 text-sm font-medium disabled:opacity-50">
+              {isSaving ? '保存中...' : '保存'}
+            </button>
+          </div>
+        )}
       </GlassCard>
+
+      {/* 系统信息 */}
+      <GlassCard className="p-6 animate-fade-in-up space-y-3">
+        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">系统信息</h3>
+        <div className="space-y-2 text-sm">
+          <InfoRow label="当前用户" value={user?.realName ?? '-'} />
+          <InfoRow label="角色" value={user?.role ?? '-'} />
+          <InfoRow label="系统版本" value="V25.0" />
+          <InfoRow label="技术栈" value="Next.js 15.5 + React 19 + Prisma + MySQL" />
+        </div>
+      </GlassCard>
+
+      {/* 超管专属：数据库信息 */}
+      {isSuperAdmin && (
+        <GlassCard className="p-6 animate-fade-in-up space-y-3">
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">数据库信息（仅超管可见）</h3>
+          <div className="space-y-2 text-sm">
+            <InfoRow label="数据库" value="阿里云 RDS MySQL 8.0" />
+            <InfoRow label="数据表" value="14 张（erp_ 前缀）" />
+            <InfoRow label="文件存储" value="阿里云 OSS (oss-cn-beijing)" />
+            <InfoRow label="实时通信" value="Socket.io 4.8" />
+          </div>
+        </GlassCard>
+      )}
+    </div>
+  )
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
+      <span className="text-[var(--color-text-secondary)]">{label}</span>
+      <span className="text-[var(--color-text-primary)] font-medium">{value}</span>
     </div>
   )
 }

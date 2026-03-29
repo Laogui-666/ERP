@@ -32,10 +32,32 @@ export default function OrderDetailPage() {
   const [preselectedStatus, setPreselectedStatus] = useState<OrderStatus | null>(null)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
+  // 智能检查
+  const [checkWarnings, setCheckWarnings] = useState<Array<{level:string;message:string;field?:string}>>([])
+  const [showCheck, setShowCheck] = useState(false)
 
   useEffect(() => {
     fetchOrder(orderId)
   }, [orderId, fetchOrder])
+
+  // 智能资料检查
+  const runSmartCheck = useCallback(async () => {
+    try {
+      const res = await apiFetch(`/api/orders/${orderId}/check`)
+      const json = await res.json()
+      if (json.success && json.data.warnings.length > 0) {
+        setCheckWarnings(json.data.warnings)
+        setShowCheck(true)
+      } else {
+        setCheckWarnings([])
+        setShowCheck(false)
+      }
+    } catch {}
+  }, [orderId])
+
+  useEffect(() => {
+    if (currentOrder) runSmartCheck()
+  }, [currentOrder, runSmartCheck])
 
   // 可执行的状态流转
   const getAvailableActions = useCallback((): { toStatus: OrderStatus; label: string }[] => {
@@ -221,6 +243,24 @@ export default function OrderDetailPage() {
           ) : undefined
         }
       />
+
+      {/* 智能检查警告 */}
+      {showCheck && checkWarnings.length > 0 && (
+        <GlassCard className="p-4 animate-fade-in-up border-l-2" style={{ borderLeftColor: checkWarnings.some(w => w.level === 'error') ? 'var(--color-error)' : 'var(--color-warning)' }}>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-semibold text-[var(--color-text-secondary)]">⚠️ 智能检查</h4>
+            <button onClick={() => setShowCheck(false)} className="text-xs text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]">忽略</button>
+          </div>
+          <div className="space-y-1.5">
+            {checkWarnings.map((w, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs">
+                <span className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${w.level === 'error' ? 'bg-[var(--color-error)]' : w.level === 'warning' ? 'bg-[var(--color-warning)]' : 'bg-[var(--color-info)]'}`} />
+                <span className="text-[var(--color-text-primary)]">{w.message}</span>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 左侧：客户信息 + 签证信息 */}

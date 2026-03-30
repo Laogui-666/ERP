@@ -24,6 +24,36 @@ export function useToast() {
   return useContext(ToastContext)
 }
 
+const iconMap: Record<ToastType, ReactNode> = {
+  success: (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
+  ),
+  error: (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  ),
+  warning: (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+  ),
+  info: (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+}
+
+const colorMap: Record<ToastType, string> = {
+  success: 'bg-[rgba(127,168,122,0.15)] border-[var(--color-success)]/20 text-[var(--color-success)]',
+  error: 'bg-[rgba(184,124,124,0.15)] border-[var(--color-error)]/20 text-[var(--color-error)]',
+  warning: 'bg-[rgba(196,169,125,0.15)] border-[var(--color-warning)]/20 text-[var(--color-warning)]',
+  info: 'bg-[rgba(124,168,184,0.15)] border-[var(--color-info)]/20 text-[var(--color-info)]',
+}
+
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
@@ -32,39 +62,25 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => [...prev, { id, type, message }])
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id))
-    }, 4000)
+    }, 3500)
   }, [])
-
-  const icons: Record<ToastType, string> = {
-    success: '✓',
-    error: '✕',
-    warning: '⚠',
-    info: 'ℹ',
-  }
-
-  const colors: Record<ToastType, string> = {
-    success: 'bg-emerald-500/90 border-emerald-400/50',
-    error: 'bg-red-500/90 border-red-400/50',
-    warning: 'bg-amber-500/90 border-amber-400/50',
-    info: 'bg-blue-500/90 border-blue-400/50',
-  }
 
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
       {typeof document !== 'undefined' &&
         createPortal(
-          <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2">
+          <div className="fixed bottom-5 right-5 z-[100] flex flex-col gap-2.5 max-w-[340px]">
             {toasts.map((t) => (
               <div
                 key={t.id}
                 className={cn(
-                  'flex items-center gap-3 px-4 py-3 rounded-lg border backdrop-blur-md text-white shadow-lg animate-slide-in-right min-w-[280px]',
-                  colors[t.type],
+                  'flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-xl shadow-xl animate-fade-in-right min-w-[260px]',
+                  colorMap[t.type],
                 )}
               >
-                <span className="text-lg">{icons[t.type]}</span>
-                <span className="text-sm font-medium">{t.message}</span>
+                <span className="shrink-0">{iconMap[t.type]}</span>
+                <span className="text-[13px] font-medium leading-snug">{t.message}</span>
               </div>
             ))}
           </div>,

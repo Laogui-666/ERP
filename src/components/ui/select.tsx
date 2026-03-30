@@ -24,29 +24,36 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={selectId}
-            className="block text-sm font-medium text-morandi-gray-light mb-1.5"
+            className="block text-[12px] font-medium text-[var(--color-text-secondary)] mb-1.5 tracking-wide uppercase"
           >
             {label}
           </label>
         )}
-        <select
-          ref={ref}
-          id={selectId}
-          className={cn(
-            'glass-input w-full appearance-none cursor-pointer',
-            error && 'border-red-400/50',
-            className,
-          )}
-          onChange={(e) => onChange?.(e.target.value)}
-          {...props}
-        >
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value} className="bg-gray-800 text-white">
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
+        <div className="relative">
+          <select
+            ref={ref}
+            id={selectId}
+            className={cn(
+              'glass-input w-full appearance-none cursor-pointer pr-10',
+              error && 'border-[var(--color-error)]/40 animate-shake',
+              className,
+            )}
+            onChange={(e) => onChange?.(e.target.value)}
+            {...props}
+          >
+            {options.map((opt) => (
+              <option key={opt.value} value={opt.value} className="bg-[#1F2536] text-[var(--color-text-primary)]">
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <svg className="w-3.5 h-3.5 text-[var(--color-text-placeholder)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+        {error && <p className="mt-1.5 text-[12px] text-[var(--color-error)]">{error}</p>}
       </div>
     )
   },

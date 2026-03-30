@@ -11,8 +11,8 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className, padding = 'md', children, ...props }, ref) => {
     const paddings = {
       none: '',
-      sm: 'p-3',
-      md: 'p-4',
+      sm: 'p-3.5',
+      md: 'p-5',
       lg: 'p-6',
     }
 
@@ -39,7 +39,7 @@ CardHeader.displayName = 'CardHeader'
 
 const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn('text-lg font-semibold text-morandi-cream', className)} {...props} />
+    <h3 ref={ref} className={cn('text-[15px] font-semibold text-[var(--color-text-primary)] tracking-wide', className)} {...props} />
   ),
 )
 CardTitle.displayName = 'CardTitle'

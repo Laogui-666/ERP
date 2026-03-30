@@ -52,7 +52,6 @@ function ResetPasswordForm() {
         return
       }
 
-      // 重置成功，自动登录，跳转到客户订单页
       router.push('/customer/orders')
       router.refresh()
     } catch {
@@ -71,28 +70,26 @@ function ResetPasswordForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="bg-decoration" />
-
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center animate-fade-in-up">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--color-warning)]/30 to-[var(--color-primary)]/20 backdrop-blur-xl border border-white/10">
+      <div className="w-full max-w-[400px]">
+        <div className="mb-8 text-center anim-initial animate-spring-in">
+          <div className="mx-auto mb-5 flex h-[60px] w-[60px] items-center justify-center rounded-[18px] bg-gradient-to-br from-[var(--color-warning)]/25 to-[var(--color-primary)]/15 backdrop-blur-xl border border-white/[0.08] shadow-lg shadow-[var(--color-warning)]/5">
             <svg className="w-7 h-7 text-[var(--color-warning)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
+          <h1 className="text-[22px] font-bold text-[var(--color-text-primary)] tracking-tight">
             首次登录 · 设置密码
           </h1>
-          <p className="mt-2 text-[var(--color-text-secondary)] text-sm">
+          <p className="mt-2 text-[var(--color-text-secondary)] text-[13px]">
             验证身份后设置您的登录密码
           </p>
         </div>
 
-        <div className="glass-card p-8 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+        <div className="glass-card p-7 md:p-8 anim-initial animate-fade-in-up delay-150">
           <form onSubmit={handleSubmit} className="space-y-4">
             {fields.map((field) => (
               <div key={field.key}>
-                <label className="mb-1.5 block text-sm font-medium text-[var(--color-text-secondary)]">
+                <label className="mb-1.5 block text-[12px] font-medium text-[var(--color-text-secondary)] tracking-wide uppercase">
                   {field.label}
                 </label>
                 <input
@@ -108,10 +105,10 @@ function ResetPasswordForm() {
             ))}
 
             {error && (
-              <div className="rounded-lg bg-[var(--color-error)]/10 border border-[var(--color-error)]/20 px-4 py-3 text-sm text-[var(--color-error)] animate-fade-in-up">
-                <div className="flex items-center gap-2">
+              <div className="rounded-xl bg-[var(--color-error)]/10 border border-[var(--color-error)]/15 px-4 py-3 text-[13px] text-[var(--color-error)] animate-shake">
+                <div className="flex items-center gap-2.5">
                   <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {error}
                 </div>
@@ -121,10 +118,10 @@ function ResetPasswordForm() {
             <button
               type="submit"
               disabled={loading}
-              className="glass-btn-primary w-full py-3 text-center font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="glass-btn-primary w-full py-3 text-center text-[14px] font-semibold tracking-wide disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
+                <span className="flex items-center justify-center gap-2.5">
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -135,9 +132,9 @@ function ResetPasswordForm() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-[var(--color-text-placeholder)]">
+          <p className="mt-6 text-center text-[13px] text-[var(--color-text-placeholder)]">
             已有密码？
-            <Link href="/login" className="ml-1 text-[var(--color-primary)] hover:text-[var(--color-primary-light)] transition-colors">
+            <Link href="/login" className="ml-1.5 text-[var(--color-primary)] hover:text-[var(--color-primary-light)] transition-colors duration-200 font-medium">
               直接登录
             </Link>
           </p>
@@ -149,7 +146,11 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-[var(--color-text-placeholder)]">加载中...</div>}>
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-[var(--color-text-placeholder)] text-[13px] animate-pulse">加载中...</div>
+      </div>
+    }>
       <ResetPasswordForm />
     </Suspense>
   )

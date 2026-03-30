@@ -61,31 +61,29 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="bg-decoration" />
-
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-[420px]">
         {/* 标题 */}
-        <div className="mb-8 text-center animate-fade-in-up">
-          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
+        <div className="mb-8 text-center anim-initial animate-spring-in">
+          <h1 className="text-[24px] font-bold text-[var(--color-text-primary)] tracking-tight">
             公司入驻
           </h1>
-          <p className="mt-2 text-[var(--color-text-secondary)] text-sm">
+          <p className="mt-2 text-[var(--color-text-secondary)] text-[13px]">
             注册账号，开始使用签证 ERP 系统
           </p>
         </div>
 
         {/* 注册表单 */}
-        <div className="glass-card p-8 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+        <div className="glass-card p-7 md:p-8 anim-initial animate-fade-in-up delay-100">
           <form onSubmit={handleSubmit} className="space-y-4">
             {fields.map((field) => (
               <div key={field.key}>
-                <label className="mb-1.5 block text-sm font-medium text-[var(--color-text-secondary)]">
+                <label className="mb-1.5 block text-[12px] font-medium text-[var(--color-text-secondary)] tracking-wide uppercase">
                   {field.label}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <svg className="w-4 h-4 text-[var(--color-text-placeholder)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={field.icon} />
+                    <svg className="w-[16px] h-[16px] text-[var(--color-text-placeholder)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={field.icon} />
                     </svg>
                   </div>
                   <input
@@ -104,10 +102,10 @@ export default function RegisterPage() {
             ))}
 
             {error && (
-              <div className="rounded-lg bg-[var(--color-error)]/10 border border-[var(--color-error)]/20 px-4 py-3 text-sm text-[var(--color-error)] animate-fade-in-up">
-                <div className="flex items-center gap-2">
+              <div className="rounded-xl bg-[var(--color-error)]/10 border border-[var(--color-error)]/15 px-4 py-3 text-[13px] text-[var(--color-error)] animate-shake">
+                <div className="flex items-center gap-2.5">
                   <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {error}
                 </div>
@@ -117,10 +115,10 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="glass-btn-primary w-full py-3 text-center font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="glass-btn-primary w-full py-3 text-center text-[14px] font-semibold tracking-wide disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
+                <span className="flex items-center justify-center gap-2.5">
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -131,15 +129,15 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-[var(--color-text-placeholder)]">
+          <p className="mt-6 text-center text-[13px] text-[var(--color-text-placeholder)]">
             已有账号？
-            <Link href="/login" className="ml-1 text-[var(--color-primary)] hover:text-[var(--color-primary-light)] transition-colors">
+            <Link href="/login" className="ml-1.5 text-[var(--color-primary)] hover:text-[var(--color-primary-light)] transition-colors duration-200 font-medium">
               直接登录
             </Link>
           </p>
         </div>
 
-        <p className="mt-8 text-center text-xs text-[var(--color-text-placeholder)] animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+        <p className="mt-8 text-center text-[11px] text-[var(--color-text-placeholder)] opacity-50 anim-initial animate-fade-in delay-250 tracking-wide">
           Visa ERP v0.1.0 · 沐海旅行 © 2026
         </p>
       </div>

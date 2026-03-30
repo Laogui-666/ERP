@@ -95,9 +95,9 @@ describe('generateOrderNo', () => {
     expect(orderNo.startsWith('HX')).toBe(true)
   })
 
-  it('should have correct format: HX + YYYYMMDD + 4 chars', () => {
+  it('should have correct format: HX + YYYYMMDD + 6 hex chars', () => {
     const orderNo = generateOrderNo()
-    expect(orderNo.length).toBe(14) // HX(2) + 20260322(8) + 4 = 14
+    expect(orderNo.length).toBe(16) // HX(2) + YYYYMMDD(8) + 6 = 16
   })
 
   it('should generate unique order numbers', () => {

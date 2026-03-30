@@ -5,6 +5,7 @@ import { requirePermission, getDataScopeFilter } from '@/lib/rbac'
 import { AppError, createSuccessResponse } from '@/types/api'
 import { uploadFile, buildOssKey } from '@/lib/oss'
 import { emitToUser } from '@/lib/socket'
+import { MAX_FILE_SIZE } from '@/lib/file-types'
 
 // GET /api/orders/[id]/materials - 获取签证材料列表
 export async function GET(
@@ -70,7 +71,7 @@ export async function POST(
     }
 
     // 文件大小校验
-    if (file.size > 50 * 1024 * 1024) {
+    if (file.size > MAX_FILE_SIZE) {
       throw new AppError('FILE_TOO_LARGE', '文件大小超出限制（最大 50MB）', 400)
     }
 

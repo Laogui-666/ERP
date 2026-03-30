@@ -8,7 +8,7 @@ const ACCESS_TOKEN_SECRET = new TextEncoder().encode(
     if (process.env.NODE_ENV === 'production') {
       throw new Error('JWT_SECRET environment variable is required in production')
     }
-    console.warn('[SECURITY] Using default JWT_SECRET — NOT SECURE. Set JWT_SECRET in .env.local')
+    process.stderr.write('[SECURITY] Using default JWT_SECRET — NOT SECURE. Set JWT_SECRET in .env.local\n')
     return 'default-access-secret-dev-only'
   })(),
 )
@@ -18,7 +18,7 @@ const REFRESH_TOKEN_SECRET = new TextEncoder().encode(
     if (process.env.NODE_ENV === 'production') {
       throw new Error('JWT_REFRESH_SECRET environment variable is required in production')
     }
-    console.warn('[SECURITY] Using default JWT_REFRESH_SECRET — NOT SECURE. Set JWT_REFRESH_SECRET in .env.local')
+    process.stderr.write('[SECURITY] Using default JWT_REFRESH_SECRET — NOT SECURE. Set JWT_REFRESH_SECRET in .env.local\n')
     return 'default-refresh-secret-dev-only'
   })(),
 )

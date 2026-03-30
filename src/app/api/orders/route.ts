@@ -60,6 +60,12 @@ export async function GET(request: NextRequest) {
     )
 
     const scopeFilter = getDataScopeFilter(user)
+
+    // 日期范围条件：startDate 和 endDate 必须合并为一个 createdAt 对象，否则 spread 覆盖
+    const dateFilter: Record<string, unknown> = {}
+    if (params.startDate) dateFilter.gte = new Date(params.startDate)
+    if (params.endDate) dateFilter.lte = new Date(params.endDate)
+
     const where: Prisma.OrderWhereInput = {
       ...scopeFilter,
       ...(params.status && { status: params.status as Prisma.EnumOrderStatusFilter }),
@@ -69,12 +75,7 @@ export async function GET(request: NextRequest) {
           { customerName: { contains: params.search } },
         ],
       }),
-      ...(params.startDate && {
-        createdAt: { gte: new Date(params.startDate) },
-      }),
-      ...(params.endDate && {
-        createdAt: { lte: new Date(params.endDate) },
-      }),
+      ...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter }),
     }
 
     const [orders, total] = await Promise.all([

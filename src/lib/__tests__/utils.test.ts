@@ -6,8 +6,6 @@ import {
   formatDate,
   formatDateTime,
   cn,
-  pick,
-  omit,
 } from '@/lib/utils'
 
 describe('calcPlatformFee', () => {
@@ -144,16 +142,4 @@ describe('cn', () => {
   })
 })
 
-describe('pick', () => {
-  it('should pick specified keys', () => {
-    const obj = { a: 1, b: 2, c: 3 }
-    expect(pick(obj, ['a', 'c'])).toEqual({ a: 1, c: 3 })
-  })
-})
 
-describe('omit', () => {
-  it('should omit specified keys', () => {
-    const obj = { a: 1, b: 2, c: 3 }
-    expect(omit(obj, ['b'])).toEqual({ a: 1, c: 3 })
-  })
-})

@@ -4,8 +4,8 @@ import type { OrderStatus } from '@/types/order'
 import type { UserRole } from '@/types/user'
 
 describe('TRANSITION_RULES', () => {
-  it('should have exactly 14 rules', () => {
-    expect(TRANSITION_RULES).toHaveLength(14)
+  it('should have exactly 15 rules', () => {
+    expect(TRANSITION_RULES).toHaveLength(15)
   })
 
   it('should cover all expected status transitions', () => {
@@ -13,6 +13,7 @@ describe('TRANSITION_RULES', () => {
     expect(transitions).toContain('PENDING_CONNECTION→CONNECTED')
     expect(transitions).toContain('CONNECTED→COLLECTING_DOCS')
     expect(transitions).toContain('COLLECTING_DOCS→PENDING_REVIEW')
+    expect(transitions).toContain('COLLECTING_DOCS→UNDER_REVIEW')
     expect(transitions).toContain('PENDING_REVIEW→UNDER_REVIEW')
     expect(transitions).toContain('UNDER_REVIEW→COLLECTING_DOCS')
     expect(transitions).toContain('UNDER_REVIEW→MAKING_MATERIALS')
@@ -54,9 +55,10 @@ describe('getAvailableTransitions', () => {
 
   it('DOC_COLLECTOR can submit for review from COLLECTING_DOCS', () => {
     const transitions = getAvailableTransitions('COLLECTING_DOCS', 'DOC_COLLECTOR')
-    // Can: COLLECTING_DOCS→COLLECTING_DOCS, COLLECTING_DOCS→PENDING_REVIEW
-    expect(transitions.length).toBeGreaterThanOrEqual(1)
+    // Can: COLLECTING_DOCS→COLLECTING_DOCS, COLLECTING_DOCS→PENDING_REVIEW, COLLECTING_DOCS→UNDER_REVIEW
+    expect(transitions.length).toBeGreaterThanOrEqual(2)
     expect(transitions.some((t) => t.to === 'PENDING_REVIEW')).toBe(true)
+    expect(transitions.some((t) => t.to === 'UNDER_REVIEW')).toBe(true)
   })
 
   it('OPERATOR can review and reject from UNDER_REVIEW', () => {

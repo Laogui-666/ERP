@@ -80,11 +80,17 @@ export default function OrderDetailPage() {
         break
       case 'COLLECTING_DOCS':
         if (['DOC_COLLECTOR', 'VISA_ADMIN'].includes(role)) {
-          // 检查是否为复审场景（操作员曾打回过）
+          // 检查是否为复审场景（操作员曾打回过 + 已有操作员）
           const wasRejected = currentOrder.orderLogs?.some(
             (l) => l.fromStatus === 'UNDER_REVIEW' && l.toStatus === 'COLLECTING_DOCS'
           )
-          actions.push({ toStatus: 'PENDING_REVIEW', label: wasRejected ? '提交复审' : '提交审核' })
+          if (wasRejected && currentOrder.operatorId) {
+            // 复审：直达操作员（无需重新接单）
+            actions.push({ toStatus: 'UNDER_REVIEW', label: '提交复审' })
+          } else {
+            // 首次提交：推送到公共池
+            actions.push({ toStatus: 'PENDING_REVIEW', label: '提交审核' })
+          }
         }
         break
       case 'PENDING_REVIEW':

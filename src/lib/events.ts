@@ -128,6 +128,7 @@ eventBus.on(EVENTS.ORDER_STATUS_CHANGED, async (data) => {
     'PENDING_CONNECTION→CONNECTED': '资料员已接单，将协助您准备资料',
     'CONNECTED→COLLECTING_DOCS': '请按清单上传所需资料',
     'COLLECTING_DOCS→PENDING_REVIEW': '资料已提交审核',
+    'COLLECTING_DOCS→UNDER_REVIEW': '资料已提交复审，操作员正在审核',
     'PENDING_REVIEW→UNDER_REVIEW': '操作员正在审核资料',
     'UNDER_REVIEW→MAKING_MATERIALS': '资料审核通过，等待制作签证材料',
     'UNDER_REVIEW→COLLECTING_DOCS': '资料需要修改，请查看聊天中的具体说明',

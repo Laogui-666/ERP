@@ -49,6 +49,20 @@ export const TRANSITION_RULES: TransitionRule[] = [
     allowedRoles: ['DOC_COLLECTOR', 'VISA_ADMIN'],
     action: '提交审核',
   },
+  // 提交复审：操作员已分配过，直接回流到操作员（不需要重新接单）
+  {
+    from: 'COLLECTING_DOCS',
+    to: 'UNDER_REVIEW',
+    allowedRoles: ['DOC_COLLECTOR', 'VISA_ADMIN'],
+    action: '提交复审',
+    validate: async (order) => {
+      const freshOrder = await prisma.order.findUnique({
+        where: { id: order.id },
+        select: { operatorId: true },
+      })
+      return !!freshOrder?.operatorId
+    },
+  },
 
   // === 阶段三：操作员审核 ===
   {
@@ -211,7 +225,9 @@ export async function transitionOrder(input: {
     // 绑定操作人
     if (toStatus === 'CONNECTED') {
       updateData.collectorId = userId
-    } else if (toStatus === 'UNDER_REVIEW') {
+    } else if (toStatus === 'UNDER_REVIEW' && freshOrder.status === 'PENDING_REVIEW') {
+      // 仅首次从 PENDING_REVIEW 接单时绑定操作员
+      // 复审场景（COLLECTING_DOCS → UNDER_REVIEW）保留原操作员
       updateData.operatorId = userId
     }
 

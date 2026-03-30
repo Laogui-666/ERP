@@ -72,9 +72,11 @@ export async function POST(request: NextRequest) {
 
         if (existing) continue
 
-        // 通知管理员 + 创建者
+        // 通知管理员 + 创建者 + 具体负责人
         const notifyUserIds = new Set<string>()
         if (order.createdBy) notifyUserIds.add(order.createdBy)
+        if (order.collectorId) notifyUserIds.add(order.collectorId)
+        if (order.operatorId) notifyUserIds.add(order.operatorId)
 
         // 查找该公司所有 COMPANY_OWNER 和 CS_ADMIN/VISA_ADMIN
         const admins = await prisma.user.findMany({

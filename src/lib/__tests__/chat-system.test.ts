@@ -9,6 +9,7 @@ describe('Chat System', () => {
       'PENDING_CONNECTION→CONNECTED': '资料员已接单，将协助您准备资料',
       'CONNECTED→COLLECTING_DOCS': '请按清单上传所需资料',
       'COLLECTING_DOCS→PENDING_REVIEW': '资料已提交审核',
+      'COLLECTING_DOCS→UNDER_REVIEW': '资料已提交复审，操作员正在审核',
       'PENDING_REVIEW→UNDER_REVIEW': '操作员正在审核资料',
       'UNDER_REVIEW→MAKING_MATERIALS': '资料审核通过，等待制作签证材料',
       'UNDER_REVIEW→COLLECTING_DOCS': '资料需要修改，请查看聊天中的具体说明',
@@ -19,8 +20,8 @@ describe('Chat System', () => {
       'PENDING_DELIVERY→MAKING_MATERIALS': '材料需要修改，请查看说明',
     }
 
-    it('should cover all 11 workflow transitions', () => {
-      expect(Object.keys(systemMessages)).toHaveLength(11)
+    it('should cover all 12 workflow transitions', () => {
+      expect(Object.keys(systemMessages)).toHaveLength(12)
     })
 
     it('should have non-empty message for each transition', () => {
@@ -48,7 +49,7 @@ describe('Chat System', () => {
   })
 
   describe('terminal status archiving', () => {
-    const terminalStatuses = ['APPROVED', 'REJECTED']
+    const terminalStatuses = ['APPROVED', 'REJECTED', 'PARTIAL']
 
     it('should identify APPROVED as terminal', () => {
       expect(terminalStatuses).toContain('APPROVED')
@@ -58,8 +59,8 @@ describe('Chat System', () => {
       expect(terminalStatuses).toContain('REJECTED')
     })
 
-    it('should not include PARTIAL as terminal', () => {
-      expect(terminalStatuses).not.toContain('PARTIAL')
+    it('should identify PARTIAL as terminal', () => {
+      expect(terminalStatuses).toContain('PARTIAL')
     })
 
     it('should not include DELIVERED as terminal', () => {

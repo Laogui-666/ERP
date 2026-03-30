@@ -2,9 +2,9 @@
 
 # 产品需求文档 (PRD)
 
-> **文档版本**: V15.0
+> **文档版本**: V16.0
 > **生成日期**: 2026-03-19
-> **最后更新**: 2026-03-30 02:30
+> **最后更新**: 2026-03-30 22:10
 > **所属公司**: 沐海旅行  
 > **产品定位**: 签证办理行业专属 SaaS 多租户 ERP 系统  
 
@@ -19,7 +19,7 @@
 5. [签证统计与数据导出](#5-签证统计与数据导出基于手工表优化)
 6. [签证行业专项优化](#6-签证行业专项优化)
 7. [非功能性需求](#7-非功能性需求)
-8. [UI/UX 设计规范（玻璃拟态 + 莫兰迪冷色系）](#8-uiux-设计规范)
+8. [UI/UX 设计规范（液态玻璃 + 莫兰迪冷色系）](#8-uiux-设计规范)
 9. [里程碑与优先级](#9-里程碑与优先级)
 
 ---
@@ -602,289 +602,354 @@ npx tsx scripts/import-excel.ts ./签证统计表2026.3.xlsx
 
 ## 8. UI/UX 设计规范
 
-### 8.1 设计风格：玻璃拟态 + 莫兰迪冷色系
+### 8.1 设计风格：液态玻璃 (Liquid Glass) + 莫兰迪冷色系
 
 **核心设计语言**：
-- **玻璃拟态 (Glassmorphism)**：半透明毛玻璃卡片，`backdrop-blur` 模糊效果
-- **莫兰迪冷色系**：低饱和度、柔和的冷色调，高级感克制
-- **简约高级**：大面积留白，精致间距，拒绝廉价感
-- **强交互**：丰富的微交互动画，状态变化有视觉反馈
+- **液态玻璃 (Liquid Glass)**：半透明毛玻璃组件系统，含 4 级强度（light / medium / heavy / accent），桌面端悬停时展现液态光泽层 + 鼠标跟随光效
+- **莫兰迪冷色系**：低饱和度、柔和的冷色调，高级感克制，通过 Tailwind `morandi` 色板 + CSS 变量双通道管理
+- **动态背景**：桌面端 4 个浮动渐变光球 + 微光网格线 + 鼠标跟随光晕；移动端自动降级为静态渐变装饰
+- **弹簧阻尼动效**：所有交互使用物理弹簧缓动（非线性），4 种预设缓动曲线：`--ease-spring` / `--ease-damping` / `--ease-smooth` / `--ease-bounce`
+- **响应式双模式**：桌面端管理端布局（侧边栏 + 顶栏），移动端客户端布局（顶栏 + 底部 Tab）
 
-### 8.2 色彩系统
+### 8.2 CSS 变量体系（globals.css :root）
 
+所有设计 Token 通过 CSS 自定义属性统一管理，Tailwind 和原生 CSS 共用：
+
+```css
+:root {
+  /* 莫兰迪冷色系 */
+  --color-primary: #7C8DA6;          /* 主色 - 灰蓝 */
+  --color-primary-dark: #5A6B82;     /* 深沉蓝灰 */
+  --color-primary-light: #A8B5C7;    /* 浅灰蓝 */
+  --color-primary-glow: rgba(124, 141, 166, 0.25);
+  --color-secondary: #8FA3A6;        /* 青灰 */
+  --color-accent: #9B8EC4;           /* 紫灰 */
+  --color-accent-glow: rgba(155, 142, 196, 0.2);
+
+  /* 状态色 */
+  --color-success: #7FA87A;          /* 莫兰迪绿灰 */
+  --color-warning: #C4A97D;          /* 莫兰迪暖黄 */
+  --color-error: #B87C7C;            /* 莫兰迪红灰 */
+  --color-info: #7CA8B8;             /* 莫兰迪蓝 */
+
+  /* 背景 */
+  --color-bg-from: #1A1F2E;          /* 深蓝黑 */
+  --color-bg-to: #252B3B;            /* 深蓝灰 */
+  --color-bg-mid: #1F2536;           /* 中间过渡 */
+
+  /* 文字层级 */
+  --color-text-primary: #E8ECF1;     /* 冷白 */
+  --color-text-secondary: #8E99A8;   /* 灰蓝 */
+  --color-text-placeholder: #5A6478; /* 深灰蓝 */
+
+  /* 液态玻璃核心变量 */
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-bg-hover: rgba(255, 255, 255, 0.10);
+  --glass-bg-active: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.14);
+  --glass-blur: 20px;
+  --glass-blur-heavy: 30px;
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --glass-shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.2);
+  --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  /* 缓动曲线 */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-damping: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* 圆角系统 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+}
 ```
-主色 (Primary):        #7C8DA6  (莫兰迪灰蓝)
-主色深 (Primary Dark):  #5A6B82  (深沉蓝灰)
-主色浅 (Primary Light): #A8B5C7  (浅灰蓝)
 
-辅助色 (Secondary):    #8FA3A6  (莫兰迪青灰)
-强调色 (Accent):       #9B8EC4  (莫兰迪紫灰)
+### 8.3 色彩系统
 
-成功 (Success):        #7FA87A  (莫兰迪绿灰)
-警告 (Warning):        #C4A97D  (莫兰迪暖黄)
-错误 (Error):          #B87C7C  (莫兰迪红灰)
-信息 (Info):           #7CA8B8  (莫兰迪蓝)
+#### Tailwind morandi 色板（tailwind.config.ts）
 
-背景渐变:
-  从: #1A1F2E  (深蓝黑)
-  到: #252B3B  (深蓝灰)
-
-卡片玻璃背景:
-  rgba(255, 255, 255, 0.06) ~ rgba(255, 255, 255, 0.10)
-  backdrop-blur: 20px
-
-文字:
-  主文字: #E8ECF1  (冷白)
-  次文字: #8E99A8  (灰蓝)
-  占位符: #5A6478  (深灰蓝)
+```typescript
+colors: {
+  morandi: {
+    blue: '#7C8DA6',
+    'blue-dark': '#5A6B82',
+    'blue-light': '#A8B5C7',
+    gray: '#8E99A8',
+    'gray-light': '#A8B5C7',
+    'gray-dark': '#5A6478',
+    green: '#7FA87A',
+    'green-light': '#A3C4AD',
+    coral: '#B87C7C',
+    'coral-light': '#D4ADA9',
+    purple: '#9B8EC4',
+    'purple-light': '#B8ADCF',
+    cream: '#E8ECF1',
+    'cream-dark': '#D4CFC8',
+  },
+}
 ```
 
-### 8.3 状态色彩标识
+#### 状态色彩标识
 
-| 状态 | 颜色 | 色值 |
-|---|---|---|
-| 待对接 | 灰蓝 | `#8E99A8` |
-| 已对接 | 莫兰迪蓝 | `#7CA8B8` |
-| 资料收集中 | 莫兰迪黄 | `#C4A97D` |
-| 待审核 | 莫兰迪橙 | `#C49A7D` |
-| 资料审核中 | 莫兰迪紫 | `#9B8EC4` |
-| 材料制作中 | 莫兰迪青 | `#7DADA8` |
-| 待交付 | 莫兰迪靛 | `#8B8EC4` |
-| 已交付 | 莫兰迪绿 | `#7FA87A` |
-| 出签 | 莫兰迪绿 | `#7FA87A` |
-| 拒签 | 莫兰迪红 | `#B87C7C` |
+| 状态 | 颜色 | 色值 | Badge variant |
+|---|---|---|---|
+| 待对接 | 灰蓝 | `#8E99A8` | `default` |
+| 已对接 | 莫兰迪蓝 | `#7CA8B8` | `info` |
+| 资料收集中 | 莫兰迪黄 | `#C4A97D` | `warning` |
+| 待审核 | 莫兰迪橙 | `#C49A7D` | `warning` |
+| 资料审核中 | 莫兰迪紫 | `#9B8EC4` | `purple` |
+| 材料制作中 | 莫兰迪青 | `#7DADA8` | `info` |
+| 待交付 | 莫兰迪靛 | `#8B8EC4` | `purple` |
+| 已交付 | 莫兰迪绿 | `#7FA87A` | `success` |
+| 部分出签 | 莫兰迪黄 | `#C4A97D` | `warning` |
+| 出签 | 莫兰迪绿 | `#7FA87A` | `success` |
+| 拒签 | 莫兰迪红 | `#B87C7C` | `danger` |
 
 ### 8.4 排版系统
 
-| 层级 | 字号 | 字重 | 用途 |
-|---|---|---|---|
-| Display | 36px / 2.25rem | 700 | 页面大标题 |
-| H1 | 28px / 1.75rem | 700 | 区域标题 |
-| H2 | 22px / 1.375rem | 600 | 卡片标题 |
-| H3 | 18px / 1.125rem | 600 | 小节标题 |
-| Body | 15px / 0.9375rem | 400 | 正文 |
-| Caption | 13px / 0.8125rem | 400 | 辅助说明 |
-| Small | 11px / 0.6875rem | 400 | 标签/角标 |
+| 层级 | 字号 | 字重 | 用途 | 实现 |
+|---|---|---|---|---|
+| Display | 28px | 700 | 登录页大标题 | `text-[28px] font-bold` |
+| H1 | 22px | 700 | 区域标题 | `text-[22px] font-bold` |
+| H2 | 18px | 600 | 卡片标题 | `text-[18px] font-semibold` |
+| H3 | 16px | 600 | 小节标题 | `text-[16px] font-semibold` |
+| Body | 14px | 400 | 正文/表格 | `text-[14px]` |
+| Caption | 13px | 400/500 | 辅助说明/输入标签 | `text-[13px]` |
+| Small | 12px | 400 | 辅助文字/状态副文本 | `text-[12px]` |
+| Tiny | 11px | 400/500 | 标签/角标/面包屑 | `text-[11px]` |
 
 **字体栈**：
-- 拉丁: `Inter, system-ui, sans-serif`
-- 中文: `"Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif`
-
-### 8.5 玻璃拟态组件规范
-
-#### 玻璃卡片 (Glass Card)
 ```css
+font-family: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+```
+
+**排版细节**：
+- 标题使用 `tracking-tight`（紧凑字距）
+- 标签使用 `tracking-wide` + `uppercase`（宽松大写）
+- 中文正文使用默认字距
+
+### 8.5 液态玻璃组件规范
+
+#### 8.5.1 玻璃卡片 — 4 级强度
+
+| 变体 | CSS 类 | 用途 |
+|---|---|---|
+| Light | `glass-card-light` | 次要信息、轻量容器 |
+| Medium | `glass-card` | 主内容卡片（默认） |
+| Heavy | `glass-card-static` | 高对比容器、弹窗 |
+| Accent | `glass-card-accent` | 高亮卡片、选中项 |
+
+**默认卡片（glass-card）**：
+```css
+background: var(--glass-bg);                    /* rgba(255,255,255,0.06) */
+backdrop-filter: blur(var(--glass-blur));       /* 20px */
+border: 1px solid var(--glass-border);          /* rgba(255,255,255,0.08) */
+border-radius: var(--radius-lg);                /* 16px */
+box-shadow: var(--glass-shadow), var(--glass-inset);
+```
+
+**桌面端悬停效果**：
+- 背景提亮 → `--glass-bg-hover`（rgba 0.10）
+- 边框增亮 → `--glass-border-hover`（rgba 0.14）
+- 阴影加深 → `--glass-shadow-hover`（0 16px 48px）
+- 浮起 2px → `translateY(-2px)`
+- 液态光泽层渐显 → `::before` pseudo-element opacity 0→1
+
+**点击反馈**：`translateY(0) scale(0.99)` + 背景降为 active 态
+
+**GlassCard 组件 Props**（`glass-card.tsx`）：
+```typescript
+interface GlassCardProps {
+  intensity?: 'light' | 'medium' | 'heavy' | 'accent'
+  hover?: boolean          // 是否启用悬停增强
+  glow?: boolean           // 鼠标跟随光效（仅桌面端）
+  animated?: boolean       // 入场动画
+  delay?: number           // 动画延迟 (ms)
+}
+```
+
+#### 8.5.2 玻璃输入框 (Glass Input)
+
+```css
+background: rgba(255, 255, 255, 0.04);
+backdrop-filter: blur(10px);
+border: 1px solid rgba(255, 255, 255, 0.06);
+border-radius: var(--radius-md);                /* 12px */
+padding: 11px 16px;
+font-size: 14px;
+/* focus 时 */
 background: rgba(255, 255, 255, 0.06);
-backdrop-filter: blur(20px);
--webkit-backdrop-filter: blur(20px);
-border: 1px solid rgba(255, 255, 255, 0.08);
-border-radius: 16px;
-box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+border-color: rgba(124, 141, 166, 0.4);
+box-shadow: 0 0 0 3px rgba(124, 141, 166, 0.1), var(--glass-inset);
 ```
 
-#### 玻璃输入框 (Glass Input)
+#### 8.5.3 玻璃按钮 — 5 种变体
+
+| 变体 | CSS 类 | 用途 |
+|---|---|---|
+| Primary | `glass-btn-primary` | 主操作（提交、确认） |
+| Secondary | `glass-btn-secondary` | 次要操作（取消、返回） |
+| Ghost | Tailwind inline | 轻量操作（图标按钮） |
+| Danger | `glass-btn-danger` | 危险操作（删除、取消订单） |
+| Success | `glass-btn-success` | 确认操作（通过、交付） |
+
+**主按钮细节**：
+- 渐变背景：`linear-gradient(135deg, rgba(124,141,166,0.35), rgba(124,141,166,0.18))`
+- 悬停时**光泽扫过效果**：`::before` pseudo-element 从左到右滑过（`left: -100% → 100%`）
+- 悬停浮起 `translateY(-1px)` + 阴影 `0 6px 20px`
+- 点击缩放 `scale(0.98)` + 极速响应 `transition-duration: 0.08s`
+
+**Button 组件**（`ui/button.tsx`）：
+```typescript
+interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success'
+  size?: 'sm' | 'md' | 'lg'
+  isLoading?: boolean    // 显示 spinner + 禁用
+}
+```
+
+#### 8.5.4 玻璃弹窗 (Glass Modal)
+
 ```css
-background: rgba(255, 255, 255, 0.05);
+/* 遮罩层 */
+background: rgba(10, 13, 20, 0.6);
+backdrop-filter: blur(6px);
+animation: fadeIn 0.25s var(--ease-damping);
+
+/* 弹窗主体 */
+background: rgba(32, 38, 54, 0.96);
+backdrop-filter: blur(40px);
+border: 1px solid rgba(255, 255, 255, 0.07);
+border-radius: var(--radius-xl);                /* 20px */
+box-shadow: 0 32px 80px rgba(0, 0, 0, 0.35), var(--glass-inset);
+animation: springInScale 0.45s var(--ease-spring);  /* 弹簧缩放入场 */
+```
+
+#### 8.5.5 玻璃侧边栏
+
+```css
+background: rgba(22, 27, 41, 0.88);
+backdrop-filter: blur(var(--glass-blur-heavy));  /* 30px */
+border-right: 1px solid rgba(255, 255, 255, 0.04);
+box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+```
+
+#### 8.5.6 玻璃顶栏
+
+```css
+background: rgba(22, 27, 41, 0.72);
+backdrop-filter: blur(var(--glass-blur));        /* 20px */
+border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+```
+
+#### 8.5.7 状态徽章 (Badge)
+
+6 种变体：`default` / `success` / `warning` / `danger` / `info` / `purple`
+
+```css
+padding: 4px 12px;
+border-radius: 20px;
+font-size: 12px;
+font-weight: 500;
 backdrop-filter: blur(10px);
-border: 1px solid rgba(255, 255, 255, 0.08);
-border-radius: 12px;
-transition: all 0.3s ease;
-/* focus时 */
-border-color: rgba(124, 141, 166, 0.5);
-box-shadow: 0 0 0 3px rgba(124, 141, 166, 0.15);
+border: 1px solid rgba(对应色, 0.15);
+background: rgba(对应色, 0.12);
 ```
 
-#### 玻璃按钮 (Glass Button)
+#### 8.5.8 Toast 通知
+
+4 种类型色码：
+| 类型 | 背景 | 边框 |
+|---|---|---|
+| success | `rgba(127,168,122,0.15)` | `var(--color-success)/20` |
+| error | `rgba(184,124,124,0.15)` | `var(--color-error)/20` |
+| warning | `rgba(196,169,125,0.15)` | `var(--color-warning)/20` |
+| info | `rgba(124,168,184,0.15)` | `var(--color-info)/20` |
+
+位置：右下角 `fixed bottom-5 right-5`，3.5 秒自动消失，入场 `animate-fade-in-right`
+
+#### 8.5.9 玻璃表格
+
 ```css
-/* 主按钮 */
-background: linear-gradient(135deg, rgba(124, 141, 166, 0.4), rgba(124, 141, 166, 0.2));
-backdrop-filter: blur(10px);
-border: 1px solid rgba(124, 141, 166, 0.3);
-border-radius: 12px;
-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-/* hover */
-background: linear-gradient(135deg, rgba(124, 141, 166, 0.55), rgba(124, 141, 166, 0.35));
-transform: translateY(-1px);
-box-shadow: 0 4px 16px rgba(124, 141, 166, 0.2);
-/* active */
-transform: translateY(0);
+thead th:
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+tbody tr: hover → background rgba(255, 255, 255, 0.03)
+tbody td: border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 ```
 
-#### 玻璃侧边栏 (Glass Sidebar)
+#### 8.5.10 自定义滚动条
+
 ```css
-background: rgba(26, 31, 46, 0.85);
-backdrop-filter: blur(30px);
-border-right: 1px solid rgba(255, 255, 255, 0.05);
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+/* Firefox */
+scrollbar-width: thin;
+scrollbar-color: rgba(255,255,255,0.08) transparent;
 ```
 
-### 8.6 各角色界面设计
+### 8.6 动态背景系统
 
-#### 管理端通用布局
+#### 桌面端（>= 769px）
+
+DynamicBackground 组件渲染 4 层：
+1. **浮动渐变光球**（4 个 orb）：不同尺寸/颜色/动画路径，`filter: blur(80px)`，20-25s 循环
+2. **微光网格线**：60px 间距半透明网格，中心渐隐遮罩
+3. **鼠标跟随光晕**：400px 径向渐变，`transition: 0.8s damping` 平滑追踪
+
+#### 移动端（< 768px）
+
+动态背景自动隐藏（`display: none`），降级为静态渐变装饰：
+- 2 个固定位置的径向渐变圆（更小尺寸、更低透明度）
+
+### 8.7 响应式布局规范
+
+#### 管理端（Desktop-first）
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Top Bar (Glass)                                              │
-│  [Logo]  [面包屑导航]          [全局搜索] [通知🔔] [个人中心▼]  │
-├──────────┬──────────────────────────────────────────────────┤
-│          │                                                    │
-│ Sidebar  │              Main Content Area                     │
-│ (Glass)  │                                                    │
-│          │   ┌─ Glass Card ─────────────────────────────┐    │
-│ [仪表盘]  │   │                                          │    │
-│ [订单管理] │   │    内容区域                                │    │
-│ [公共池]  │   │                                          │    │
-│ [我的工作台]│   └──────────────────────────────────────────┘    │
-│ [资料模板] │                                                    │
-│ [团队管理] │   ┌─ Glass Card ─────────────────────────────┐    │
-│ [数据统计] │   │                                          │    │
-│ [系统设置] │   └──────────────────────────────────────────┘    │
-│          │                                                    │
-├──────────┴──────────────────────────────────────────────────┤
-│  Status Bar: 在线人数 | 当前服务器时间 | 版本号                 │
-└─────────────────────────────────────────────────────────────┘
-```
+桌面端 (>= 768px):
+┌─────────────────────────────────────────────────┐
+│ glass-sidebar (fixed, w-64 = 256px)              │
+│ glass-topbar (h-[60px], ml-64)                   │
+│ main content (ml-64, p-6)                        │
+└─────────────────────────────────────────────────┘
 
-#### 客服工作台 (CUSTOMER_SERVICE)
-```
-┌──────────────────────────────────────────────┐
-│  我的工作台                                    │
-│                                              │
-│  ┌─ 快捷统计 ──────────────────────────────┐ │
-│  │  📋 今日录单 12  │  ⏳ 待对接 5  │ ✅ 已交付 8 │ │
-│  └────────────────────────────────────────┘ │
-│                                              │
-│  ┌─ 订单列表 (Glass Table) ─────────────────┐ │
-│  │  状态筛选: [全部▼] [待对接] [已对接] ...   │ │
-│  │  ┌──────────────────────────────────┐   │ │
-│  │  │ 订单号 │ 客户 │ 国家 │ 状态 │ 操作 │   │ │
-│  │  │ V20260319001 │ 张三 │ 法国 │ 待对接│ 查看 │   │ │
-│  │  │ V20260319002 │ 李四 │ 美国 │ 已对接│ 查看 │   │ │
-│  │  └──────────────────────────────────┘   │ │
-│  │  [+ 新建订单]                            │ │
-│  └────────────────────────────────────────┘ │
-└──────────────────────────────────────────────┘
-```
-
-#### 资料员工作台 (DOC_COLLECTOR)
-```
-┌──────────────────────────────────────────────┐
-│  我的工作台                                    │
-│                                              │
-│  ┌─ 看板视图 (Kanban) ──────────────────────┐ │
-│  │                                          │ │
-│  │  ⏳ 待接单    │  📋 资料收集中  │  ⏰ 待审核 │ │
-│  │  ┌────────┐  │  ┌──────────┐  │  ┌──────┐│ │
-│  │  │订单A   │  │  │订单C     │  │  │订单E  ││ │
-│  │  │法国·张三│  │  │日本·王五  │  │  │美国·赵││ │
-│  │  └────────┘  │  │进度:3/6  │  │  │六    ││ │
-│  │  ┌────────┐  │  └──────────┘  │  └──────┘│ │
-│  │  │订单B   │  │  ┌──────────┐  │          │ │
-│  │  │美国·李四│  │  │订单D     │  │          │ │
-│  │  └────────┘  │  │澳·孙七   │  │          │ │
-│  │              │  │进度:5/7  │  │          │ │
-│  │              │  └──────────┘  │          │ │
-│  └──────────────────────────────────────────┘ │
-└──────────────────────────────────────────────┘
-```
-
-#### 操作员工作台 (OPERATOR)
-```
-┌──────────────────────────────────────────────┐
-│  我的工作台                                    │
-│                                              │
-│  ┌─ 分屏视图 (Split Pane) ──────────────────┐ │
-│  │                                          │ │
-│  │  左侧面板 (30%)  │  右侧面板 (70%)        │ │
-│  │  ┌────────────┐  │  ┌──────────────────┐│ │
-│  │  │客户信息    │  │  │ 资料清单          ││ │
-│  │  │姓名: 张三  │  │  │ ✅ 护照          ││ │
-│  │  │手机: 138***│  │  │ ✅ 照片          ││ │
-│  │  │护照: EA*** │  │  │ ✅ 在职证明      ││ │
-│  │  │            │  │  │ ❌ 银行流水      ││ │
-│  │  │操作日志    │  │  │    建议: 近6个月  ││ │
-│  │  │───────────│  │  │ ⏳ 行程单        ││ │
-│  │  │ 14:30 提交 │  │  │ ⏳ 酒店预订      ││ │
-│  │  │ 15:20 审核 │  │  │                  ││ │
-│  │  │            │  │  │ [全部合格] [打回] ││ │
-│  │  └────────────┘  │  └──────────────────┘│ │
-│  └──────────────────────────────────────────┘ │
-└──────────────────────────────────────────────┘
-```
-
-#### 公司负责人驾驶舱 (COMPANY_OWNER)
-```
-┌──────────────────────────────────────────────┐
-│  经营驾驶舱                                    │
-│                                              │
-│  ┌─ 核心指标 ─────────────────────────────┐  │
-│  │ 💰 总营收 ¥128,500  │ 📊 总订单 256    │  │
-│  │ ✅ 出签率 94.2%     │ ⏳ 进行中 45     │  │
-│  └───────────────────────────────────────┘  │
-│                                              │
-│  ┌─ 趋势图 ──────────┐  ┌─ 状态分布 ─────┐  │
-│  │   📈 接单量趋势    │  │   🍩 饼图      │  │
-│  │   (折线图)         │  │   各状态占比    │  │
-│  └──────────────────┘  └───────────────┘  │
-│                                              │
-│  ┌─ 人员负荷 ─────────────────────────────┐  │
-│  │  客服部: 王芳(12单) 李明(8单) 张伟(15单)│  │
-│  │  签证部: 陈静(18单) 赵刚(10单)          │  │
-│  └───────────────────────────────────────┘  │
-│                                              │
-│  ┌─ 异常监控 ─────────────────────────────┐  │
-│  │  ⚠️ 订单 V20260317045 "待审核" 超48h    │  │
-│  │  ⚠️ 订单 V20260316023 "资料收集中" 超72h │  │
-│  └───────────────────────────────────────┘  │
-└──────────────────────────────────────────────┘
-```
-
-#### 客户端 (CUSTOMER) - 移动端优先
-```
+移动端 (< 768px):
 ┌─────────────────────┐
-│     沐海旅行          │
-│  ─────────────────── │
-│                      │
-│  ┌─ 当前订单 ──────┐ │
-│  │                  │ │
-│  │  🇫🇷 法国旅游签证  │ │
-│  │  订单号: HX2026... │ │
-│  │                  │ │
-│  │  ●──●──●──○──○  │ │
-│  │  已对接  资料收集中 │ │
-│  │                  │ │
-│  │  进度: 3/6 项资料  │ │
-│  │  ████████░░░░    │ │
-│  │                  │ │
-│  │  [查看详情]       │ │
-│  └──────────────────┘ │
-│                      │
-│  ┌─ 通知 ──────────┐ │
-│  │ 🔔 资料员已审核   │ │
-│  │    您的银行流水需  │ │
-│  │    补充近6个月... │ │
-│  └──────────────────┘ │
-│                      │
-│ ┌────┬────┬────┬────┐│
-│ │ 🏠 │ 📋 │ 💬 │ 👤 ││
-│ │首页 │订单 │消息 │我的 ││
-│ └────┴────┴────┴────┘│
+│ 移动端顶栏 (h-[56px]) │  ← glass-topbar + 汉堡菜单
+│ 侧边栏抽屉 (overlay)  │  ← 滑入动画 + 遮罩
+│ main content (p-4)   │
 └─────────────────────┘
 ```
 
-### 8.7 微交互与动效规范
+#### 客户端（Mobile-first）
 
-| 场景 | 动效 | 时长 | 缓动函数 |
-|---|---|---|---|
-| 卡片悬停 | 浮起 + 阴影增强 | 300ms | `cubic-bezier(0.4, 0, 0.2, 1)` |
-| 按钮点击 | 缩放 0.97 + 波纹 | 150ms | `ease-out` |
-| 页面切换 | 淡入 + 微上移 | 400ms | `cubic-bezier(0, 0, 0.2, 1)` |
-| 状态变更 | 脉冲光晕 | 600ms | `ease-in-out` |
-| 列表加载 | 骨架屏闪烁 | 1.5s | `ease-in-out infinite` |
-| 通知弹入 | 从右滑入 + 淡入 | 350ms | `spring` |
-| 看板拖拽 | 半透明 + 放大 1.05 | 实时 | — |
-| 表单验证错误 | 左右抖动 | 400ms | `ease-in-out` |
-| 加载完成 | 成功勾号绘制 | 500ms | `ease-out` |
-| 数据更新 | 数字滚动 | 800ms | `ease-out` |
+```
+┌─────────────────────┐
+│ glass-topbar (sticky, py-3.5)  ← 品牌名 + 用户名 + 退出
+│ main (max-w-lg, px-4, py-4)    ← 内容限宽 448px
+│ 底部 Tab (fixed, pb safe-area) ← 3 Tab: 订单/消息/我的
+│ pb-[68px]                       ← 底部留白避开 Tab
+└─────────────────────┘
+```
+
+#### 断点
+
+| 断点 | 宽度 | 用途 |
+|---|---|---|
+| sm | 640px | 大屏手机 |
+| md | 768px | 管理端侧边栏切换点 |
+| lg | 1024px | 小桌面 |
+| xl | 1280px | 桌面 |
 
 ---
 

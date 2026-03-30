@@ -2,9 +2,9 @@
 
 # 开发规范
 
-> **文档版本**: V14.0
+> **文档版本**: V15.0
 > **生成日期**: 2026-03-19
-> **最后更新**: 2026-03-30 02:30
+> **最后更新**: 2026-03-30 22:10
 > **适用范围**: 全团队所有开发人员
 
 ---
@@ -644,71 +644,147 @@ async function main() {
 
 ## 7. UI/样式开发规范
 
+> **设计系统**：液态玻璃 (Liquid Glass) + 莫兰迪冷色系
+> **样式文件**：`globals.css`（变量/动效/背景） + `glassmorphism.css`（组件） + `tailwind.config.ts`（色板/动画）
+
 ### 7.1 Tailwind 使用规范
 
 ```tsx
 // ✅ 正确：使用 Tailwind 原子类
 <div className="flex items-center gap-3 rounded-lg bg-white/5 p-4 backdrop-blur-xl">
 
-// ✅ 正确：玻璃拟态使用自定义 CSS 类
+// ✅ 正确：液态玻璃使用自定义 CSS 类
 <div className="glass-card p-5">
 
-// ❌ 错误：内联 style（除非动态值）
-<div style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+// ✅ 正确：使用 CSS 变量（与 glassmorphism.css 共享 Token）
+<div className="bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20">
 
-// ❌ 错过：过长的 className（拆分为组件）
+// ✅ 正确：使用 morandi 色板
+<div className="text-morandi-blue bg-morandi-purple/10">
+
+// ❌ 错误：硬编码颜色值（应使用 CSS 变量或 morandi 色板）
+<div style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+<div className="text-[#7C8DA6]">  // 应写 text-[var(--color-primary)]
+
+// ❌ 错误：过长 className（拆分为组件或 CSS 类）
 <div className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3 backdrop-blur-xl border border-white/8 shadow-lg hover:bg-white/10 transition-all duration-300 ease-out">
 ```
 
-### 7.2 响应式设计
+### 7.2 液态玻璃组件使用规范
+
+| 场景 | 使用 | 说明 |
+|---|---|---|
+| 内容卡片 | `glass-card` | 默认 medium 强度 |
+| 静态容器（弹窗背景） | `glass-card-static` | 无悬停动效 |
+| 轻量容器（用户信息条） | `glass-card-light` | 最低透明度 |
+| 高亮/选中卡片 | `glass-card-accent` | 渐变 + 光晕 |
+| 主按钮 | `glass-btn-primary` | 或 `<Button variant="primary">` |
+| 次要按钮 | `glass-btn-secondary` | 或 `<Button variant="secondary">` |
+| 危险操作 | `glass-btn-danger` | 或 `<Button variant="danger">` |
+| 确认操作 | `glass-btn-success` | 或 `<Button variant="success">` |
+| 输入框 | `glass-input` | focus 时自动光晕 |
+| 弹窗 | `<Modal>` 组件 | 内部使用 `glass-modal` |
+| 状态标签 | `<Badge>` 组件 | 6 种 variant |
+| Toast | `toast(type, message)` | 4 种类型，右下角 3.5s |
+
+**GlassCard 组件 Props**：
+```tsx
+<GlassCard intensity="medium" hover glow animated delay={100}>
+  // intensity: 'light' | 'medium' | 'heavy' | 'accent'
+  // hover: 桌面端悬停增强
+  // glow: 鼠标跟随光效（仅桌面端）
+  // animated: 入场动画 (fadeInUp)
+  // delay: 动画延迟 ms
+</GlassCard>
+```
+
+### 7.3 响应式设计
 
 ```
-断点 (Tailwind 默认):
+断点:
 - sm:  640px   (大屏手机)
-- md:  768px   (平板)
+- md:  768px   (管理端侧边栏折叠切换点)
 - lg:  1024px  (小桌面)
 - xl:  1280px  (桌面)
-- 2xl: 1536px  (大桌面)
 
 策略:
-- 客户端 (Customer): mobile-first，sm 起步
-- 管理端 (Admin): desktop-first，md 以下折叠侧边栏
+- 客户端 (Customer): mobile-first，max-w-lg (448px) 限宽
+- 管理端 (Admin): desktop-first，md 以下侧边栏变抽屉
+
+关键布局尺寸:
+- 管理端侧边栏: w-64 (256px) fixed
+- 管理端顶栏: h-[60px] 桌面 / h-[56px] 移动
+- 客户端底部 Tab: fixed + safe-area-bottom
+- 客户端内容区: pb-[68px] 避开 Tab
 ```
 
-### 7.3 状态颜色使用
+### 7.4 动效使用规范
+
+**优先使用预定义 CSS 类**，不要手写 animation：
 
 ```tsx
-// 使用统一的状态颜色映射，不要硬编码颜色
-import { STATUS_COLORS } from '@/lib/constants'
+// 入场动效
+<div className="animate-fade-in-up">           // 淡入上移（最常用）
+<div className="animate-fade-in-left">         // 侧边栏导航项
+<div className="animate-fade-in-right">        // Toast 通知
+<div className="animate-spring-in">            // 弹性缩放（登录页 Logo）
+<div className="animate-scale-in">             // 弹窗内容
+<div className="animate-shake">                // 表单校验错误
 
-<span className={cn(
-  'status-badge',
-  STATUS_COLORS[order.status]?.bg,
-  STATUS_COLORS[order.status]?.text,
-)}>
-  {STATUS_LABELS[order.status]}
-</span>
-```
+// 循环动效
+<div className="animate-pulse-glow">           // 侧边栏 active 圆点
+<div className="skeleton">                     // 骨架屏加载
 
-### 7.4 动效使用
-
-```tsx
-// 使用统一的动效类名
-<div className="animate-fade-in-up">          // 淡入上移
-<div className="animate-slide-in-right">      // 滑入
-<button className="glass-btn-primary">        // 按钮悬停自动动效
-
-// Stagger 动效（列表项依次出现）
+// Stagger 列表入场（使用 delay 辅助类）
 {orders.map((order, i) => (
   <div
     key={order.id}
-    className="animate-fade-in-up"
-    style={{ animationDelay: `${i * 50}ms` }}
+    className="animate-fade-in-up anim-initial"
+    style={{ animationDelay: `${30 + i * 50}ms` }}
   >
     <OrderCard order={order} />
   </div>
 ))}
 ```
+
+**4 种缓动曲线**（CSS 变量，globals.css 定义）：
+
+| 变量 | 值 | 用途 |
+|---|---|---|
+| `--ease-spring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | 缩放/弹性位移 |
+| `--ease-damping` | `cubic-bezier(0.25, 0.46, 0.45, 0.94)` | 淡入/平滑过渡 |
+| `--ease-smooth` | `cubic-bezier(0.4, 0, 0.2, 1)` | 通用标准缓动 |
+| `--ease-bounce` | `cubic-bezier(0.68, -0.55, 0.265, 1.55)` | 强弹性效果 |
+
+**桌面端 vs 移动端差异**：
+- 桌面端（`@media (hover: hover)`）：卡片悬停浮起、按钮光泽扫过、鼠标跟随光效
+- 移动端：纯触控反馈（`:active` scale），无悬停效果
+
+### 7.5 状态颜色使用
+
+```tsx
+// Badge 组件（6 种 variant）
+<Badge variant="success" size="sm">出签</Badge>
+<Badge variant="danger" size="sm">拒签</Badge>
+<Badge variant="warning" size="sm">待审核</Badge>
+<Badge variant="info" size="sm">已对接</Badge>
+<Badge variant="purple" size="sm">审核中</Badge>
+<Badge variant="default" size="sm">待对接</Badge>
+
+// StatusBadge 组件（自动映射 11 种状态到 variant）
+<StatusBadge status={order.status} />
+
+// CSS 变量直接使用
+<div className="text-[var(--color-success)]">     // 绿色文字
+<div className="bg-[var(--color-error)]/10">      // 红色背景 10% 透明
+<div className="border-[var(--color-warning)]/20"> // 黄色边框
+```
+
+### 7.6 动态背景
+
+- 桌面端自动渲染 `DynamicBackground`（全局 layout.tsx 已引入）
+- 组件内不需要手动处理，CSS media query 自动切换桌面/移动端
+- 管理端 `glass-sidebar` 的 z-index 为 40，内容层 `z-10`，不冲突
 
 ---
 

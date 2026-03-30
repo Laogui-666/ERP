@@ -2,8 +2,8 @@
 
 # 项目状态 — 全知手册
 
-> **文档版本**: V26.0
-> **更新日期**: 2026-03-30 02:30
+> **文档版本**: V27.0
+> **更新日期**: 2026-03-30 22:10
 > **用途**: 本文件是项目唯一真相源。任何开发者/AI助手拿到本文件 + Git仓库即可完整恢复开发上下文。
 > **当前阶段**: M1 ✅ → M2 ✅ → M5 ✅ → **技术债务修复完成 ✅** → **全面深度审查完成 ✅** → **M3 全部完成 ✅** → **工作流完整性验证 ✅** → **M4 全部完成 ✅** → **M6 全部完成 ✅**
 
@@ -329,7 +329,7 @@ UserStatus: ACTIVE | INACTIVE | LOCKED
 
 | 文件 | 路径 | 状态 | 说明 |
 |---|---|:---:|---|
-| `(auth)/login/page.tsx` | `/login` | ✅ | 登录页（玻璃拟态） |
+| `(auth)/login/page.tsx` | `/login` | ✅ | 登录页（液态玻璃 + 弹簧动效） |
 | `(auth)/register/page.tsx` | `/register` | ✅ | 注册页（公司入驻） |
 | `(auth)/reset-password/page.tsx` | `/reset-password` | ✅ | 客户首次登录重置密码 |
 | `admin/dashboard/page.tsx` | `/admin/dashboard` | ✅ | 管理端仪表盘（核心指标+快捷操作+工作流） |
@@ -359,7 +359,8 @@ UserStatus: ACTIVE | INACTIVE | LOCKED
 |---|:---:|---|
 | `layout/sidebar.tsx` | ✅ | 动态侧边栏（按角色过滤菜单） |
 | `layout/topbar.tsx` | ✅ | 顶栏（面包屑+通知+个人中心） |
-| `layout/glass-card.tsx` | ✅ | 玻璃拟态卡片组件 |
+| `layout/glass-card.tsx` | ✅ | 液态玻璃卡片组件（4级强度 + 鼠标光效 + glow） |
+| `layout/dynamic-bg.tsx` | ✅ | 动态背景（桌面光球+网格+光晕 / 移动静态降级） |
 | `layout/page-header.tsx` | ✅ | 页面标题组件（支持返回链接+action插槽） |
 | `orders/status-badge.tsx` | ✅ | 订单状态徽章（11种颜色，含PARTIAL） |
 | `orders/status-timeline.tsx` | ✅ | 状态时间线组件（6步进度条+完成时间+终态展示） |
@@ -657,7 +658,7 @@ class AppError extends Error { code, statusCode, details?, toJSON() }
 | SMS | 🔲 | 501 预留 |
 | 脱敏 | ✅ | OUTSOURCE 角色自动脱敏（订单列表+详情 API） |
 | 操作日志 | ✅ | 数据模型 + 全流程写入（创建/状态/审核/上传） |
-| 登录/注册 UI | ✅ | 玻璃拟态风格 |
+| 登录/注册 UI | ✅ | 液态玻璃风格 + 弹簧动效 + 动态背景 |
 | 管理端布局 | ✅ | 侧边栏+顶栏（9个菜单项+角色过滤） |
 | **M5：Applicant 数据模型** | **✅** | **erp_applicants 表 + VisaResult 枚举 + PARTIAL 状态 + Order 12 扩展字段** |
 | **M5：autoResolveOrderStatus** | **✅** | **多人自动终态判断（全部出签/全部拒签/部分出签）** |
@@ -850,7 +851,7 @@ scope: order / auth / document / notification / user / db / ui / socket
 | 项目脚手架 | 2026-03-20 | 57 源文件，~4700 行 |
 | Prisma Schema | 2026-03-20 | 10 张表，erp_ 前缀 |
 | 数据库建表+种子 | 2026-03-20 | 10 表 + 超管 + 3 模板 |
-| 登录/注册 UI | 2026-03-20 | 玻璃拟态风格 |
+| 登录/注册 UI | 2026-03-20 | 液态玻璃风格 + 弹簧动效 |
 | 管理端布局 | 2026-03-20 | 侧边栏+顶栏+仪表盘 |
 | M1 代码审查 | 2026-03-20 | 7严重+5中等问题 |
 | M1 第一批修复 | 2026-03-20 | #1/#8/#9/#11 已完成 |
@@ -974,7 +975,7 @@ scope: order / auth / document / notification / user / db / ui / socket
 | 3 | Shared Database + companyId 隔离 | 2026-03-19 | 租户可控，成本低 |
 | 4 | 阿里云 OSS + 预签名直传 | 2026-03-19 | 文件不经过服务器 |
 | 5 | SMS 搁置，预留接口 | 2026-03-19 | 甲方要求 |
-| 6 | 玻璃拟态 + 莫兰迪冷色系 | 2026-03-19 | 甲方设计要求 |
+| 6 | 液态玻璃 + 莫兰迪冷色系 | 2026-03-19 | 甲方设计要求；已实现为完整 Liquid Glass 组件系统 |
 | 7 | Zustand + Server Components | 2026-03-19 | 轻量、TS友好 |
 | 8 | 9级角色 RBAC | 2026-03-19 | 甲方完整角色体系 |
 | 9 | erp_ 表前缀隔离 | 2026-03-20 | 同库有其他项目14张表 |

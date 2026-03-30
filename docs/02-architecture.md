@@ -2,9 +2,9 @@
 
 # 架构实现方案
 
-> **文档版本**: V15.0
+> **文档版本**: V16.0
 > **生成日期**: 2026-03-19
-> **最后更新**: 2026-03-30 02:30
+> **最后更新**: 2026-03-30 22:10
 > **技术栈**: Next.js 15.5.14 + React 19.2.4 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
 > **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
@@ -148,11 +148,12 @@ ERP/
 │   │   ├── layout.tsx
 │   │   └── page.tsx
 │   ├── components/
-│   │   ├── ui/                    # 基础 UI 组件 (Shadcn)
+│   │   ├── ui/                    # 基础 UI 组件
 │   │   ├── layout/                # 布局组件
 │   │   │   ├── sidebar.tsx
 │   │   │   ├── topbar.tsx
-│   │   │   ├── glass-card.tsx
+│   │   │   ├── glass-card.tsx     # 液态玻璃卡片（4级强度 + 鼠标光效）
+│   │   │   ├── dynamic-bg.tsx     # 动态背景（桌面光球+网格 / 移动端静态）
 │   │   │   └── page-header.tsx
 │   │   ├── orders/                # 订单相关组件
 │   │   │   └── status-badge.tsx
@@ -186,8 +187,8 @@ ERP/
 │   │   └── api.ts
 │   ├── middleware.ts              # Next.js 中间件 (认证+租户)
 │   └── styles/
-│       ├── globals.css            # 全局样式 + CSS变量
-│       └── glassmorphism.css      # 玻璃拟态工具类
+│       ├── globals.css            # 全局样式 + CSS变量 + 动效 + 骨架屏 + 动态背景
+│       └── glassmorphism.css      # 液态玻璃组件系统（4级卡片/5种按钮/弹窗/表格/导航）
 ├── public/
 │   └── ...
 ├── docs/                          # 项目文档
@@ -211,7 +212,7 @@ ERP/
 | 前端 UI | React | 19.2.4 | 成熟生态，RSC 性能优势 |
 | ORM | Prisma | 5.x | 类型安全，MySQL 完善支持，事务/迁移内置 |
 | 数据库 | 阿里云 RDS MySQL | 8.0 | 托管服务，自动备份，高可用 |
-| 样式 | Tailwind CSS | 3.x | 原子化 CSS，配合玻璃拟态自定义 |
+| 样式 | Tailwind CSS | 3.x | 原子化 CSS + morandi 色板 + 液态玻璃组件系统 |
 | 组件库 | Shadcn UI | latest | 可定制，Radix UI 基础，不引入额外依赖 |
 | 状态管理 | Zustand | 4.x | 轻量，TypeScript 友好 |
 | 实时通信 | Socket.io | 4.x | 自动重连，房间管理，跨浏览器兼容 |
@@ -1366,11 +1367,15 @@ export async function POST(request: NextRequest) {
 │           React Components          │
 ├─────────────────────────────────────┤
 │    Custom Hooks (数据获取+逻辑)      │
+│    useAuth / useOrders / useChat    │
 ├─────────────────────────────────────┤
 │    Zustand Stores (客户端状态)       │
 │    - authStore (用户/Token)         │
 │    - orderStore (订单列表/详情)      │
 │    - notificationStore (通知)       │
+│    - chatStore (聊天会话/消息)       │
+├─────────────────────────────────────┤
+│    apiFetch (401自动刷新+重试)       │
 ├─────────────────────────────────────┤
 │    API Routes (服务端数据)           │
 ├─────────────────────────────────────┤
@@ -1378,189 +1383,204 @@ export async function POST(request: NextRequest) {
 └─────────────────────────────────────┘
 ```
 
-### 11.2 玻璃拟态全局样式
+### 11.2 液态玻璃主题系统
+
+主题系统由 3 个文件组成：
+
+| 文件 | 用途 |
+|---|---|
+| `src/styles/globals.css` | CSS 变量 + 背景系统 + 动效 + 骨架屏 + 滚动条 |
+| `src/styles/glassmorphism.css` | 液态玻璃组件（4 级卡片 / 5 种按钮 / 弹窗 / 表格 / 导航） |
+| `tailwind.config.ts` | morandi 色板 + 动画注册 + 圆角扩展 |
+
+#### 11.2.1 CSS 变量体系（globals.css :root）
 
 ```css
-/* src/styles/globals.css */
-
 :root {
   /* 莫兰迪冷色系 */
-  --color-bg-from: #1A1F2E;
-  --color-bg-to: #252B3B;
   --color-primary: #7C8DA6;
   --color-primary-dark: #5A6B82;
   --color-primary-light: #A8B5C7;
+  --color-primary-glow: rgba(124, 141, 166, 0.25);
   --color-secondary: #8FA3A6;
   --color-accent: #9B8EC4;
+  --color-accent-glow: rgba(155, 142, 196, 0.2);
+
+  /* 状态色 */
   --color-success: #7FA87A;
   --color-warning: #C4A97D;
   --color-error: #B87C7C;
   --color-info: #7CA8B8;
 
-  /* 文字 */
+  /* 背景 */
+  --color-bg-from: #1A1F2E;
+  --color-bg-to: #252B3B;
+  --color-bg-mid: #1F2536;
+
+  /* 文字层级 */
   --color-text-primary: #E8ECF1;
   --color-text-secondary: #8E99A8;
   --color-text-placeholder: #5A6478;
 
-  /* 玻璃效果 */
+  /* 液态玻璃 */
   --glass-bg: rgba(255, 255, 255, 0.06);
   --glass-bg-hover: rgba(255, 255, 255, 0.10);
+  --glass-bg-active: rgba(255, 255, 255, 0.04);
   --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.14);
   --glass-blur: 20px;
+  --glass-blur-heavy: 30px;
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-}
+  --glass-shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.2);
+  --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
-body {
-  background: linear-gradient(135deg, var(--color-bg-from), var(--color-bg-to));
-  color: var(--color-text-primary);
-  font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
-  min-height: 100vh;
-}
+  /* 弹簧阻尼缓动 */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-damping: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-/* 玻璃卡片 */
-.glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  box-shadow: var(--glass-shadow);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.glass-card:hover {
-  background: var(--glass-bg-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
-}
-
-/* 玻璃输入框 */
-.glass-input {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  color: var(--color-text-primary);
-  padding: 10px 14px;
-  transition: all 0.3s ease;
-}
-
-.glass-input:focus {
-  outline: none;
-  border-color: rgba(124, 141, 166, 0.5);
-  box-shadow: 0 0 0 3px rgba(124, 141, 166, 0.15);
-}
-
-.glass-input::placeholder {
-  color: var(--color-text-placeholder);
-}
-
-/* 玻璃按钮 */
-.glass-btn-primary {
-  background: linear-gradient(135deg, rgba(124, 141, 166, 0.4), rgba(124, 141, 166, 0.2));
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(124, 141, 166, 0.3);
-  border-radius: 12px;
-  color: var(--color-text-primary);
-  padding: 10px 20px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.glass-btn-primary:hover {
-  background: linear-gradient(135deg, rgba(124, 141, 166, 0.55), rgba(124, 141, 166, 0.35));
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(124, 141, 166, 0.2);
-}
-
-.glass-btn-primary:active {
-  transform: translateY(0);
-}
-
-/* 玻璃侧边栏 */
-.glass-sidebar {
-  background: rgba(26, 31, 46, 0.85);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* 玻璃顶栏 */
-.glass-topbar {
-  background: rgba(26, 31, 46, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* 状态徽章 */
-.status-badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  backdrop-filter: blur(10px);
-}
-
-/* 动效 */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 141, 166, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(124, 141, 166, 0); }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.4s cubic-bezier(0, 0, 0.2, 1) forwards;
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.35s cubic-bezier(0, 0, 0.2, 1) forwards;
+  /* 圆角系统 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
 }
 ```
 
-### 11.3 背景装饰
+#### 11.2.2 液态玻璃组件（glassmorphism.css）
 
-全局背景使用渐变 + 微妙的几何装饰：
+**4 级玻璃卡片**：
 
-```css
-/* 背景装饰层 */
-.bg-decoration {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
+| 变体 | CSS 类 | 透明度 | blur | 用途 |
+|---|---|---|---|---|
+| Light | `glass-card-light` | 0.03 | 12px | 次要容器 |
+| Medium | `glass-card` | 0.06 | 20px | 主内容卡片 |
+| Heavy | `glass-card-static` | 0.06 | 20px | 弹窗/高对比 |
+| Accent | `glass-card-accent` | 渐变 | 20px | 高亮/选中 |
+
+**桌面端悬停效果**（`@media (hover: hover)`）：
+- 背景提亮 + 边框增亮 + 阴影加深 + 浮起 2px
+- `::before` 伪元素液态光泽层渐显（135° 渐变）
+- 点击 `scale(0.99)` 极速反馈
+
+**5 种按钮变体**：
+
+| 变体 | CSS 类 | 特效 |
+|---|---|---|
+| Primary | `glass-btn-primary` | 渐变 + 悬停光泽扫过 `::before` |
+| Secondary | `glass-btn-secondary` | 透明 + 悬停提亮 |
+| Ghost | Tailwind inline | 无背景 + hover:bg-white/5 |
+| Danger | `glass-btn-danger` | 红色渐变 + 阴影 |
+| Success | `glass-btn-success` | 绿色渐变 + 阴影 |
+
+**弹窗**：`glass-modal` — 背景 `rgba(32,38,54,0.96)` + blur(40px) + `springInScale` 弹簧入场动画
+
+**表格**：`glass-table` — 表头半透明背景 + 行 hover 提亮 + 细边框
+
+**导航项**：`nav-item` — 左侧竖线指示器（height 0→60% 过渡）+ 悬停右移 + active 发光圆点
+
+#### 11.2.3 动效系统（globals.css）
+
+**12 种关键帧动画**：
+
+| 动画 | 时长 | 缓动 | 用途 |
+|---|---|---|---|
+| `fadeInUp` | 0.5s | damping | 卡片入场（最常用） |
+| `fadeInDown` | 0.5s | damping | 下拉菜单 |
+| `fadeInLeft` | 0.5s | damping | 侧边栏导航项 |
+| `fadeInRight` | 0.5s | damping | Toast 通知 |
+| `fadeIn` | 0.4s | smooth | 遮罩层 |
+| `scaleIn` | 0.4s | spring | 弹窗内容 |
+| `springIn` | 0.6s | spring | 登录页 Logo + 表单（弹性缩放+位移） |
+| `springInScale` | 0.5s | spring | 玻璃弹窗 |
+| `pulseGlow` | 2.5s | smooth ∞ | 侧边栏 active 圆点 |
+| `shimmer` | 1.8s | ease-in-out ∞ | 骨架屏 + 加载态 |
+| `shake` | 0.4s | smooth | 表单校验错误 |
+| `ripple` | 0.6s | ease-out | 按钮点击波纹 |
+
+**延迟辅助类**：`.delay-50` ~ `.delay-500`（Stagger 列表入场）
+
+**初始隐藏**：`.anim-initial { opacity: 0 }` — 等待 JS 触发动画
+
+#### 11.2.4 动态背景（DynamicBackground 组件）
+
+**桌面端**（>= 769px）4 层叠加：
+1. 4 个浮动渐变光球（500px/400px/300px/250px），`blur(80px)`，20-25s 循环路径动画
+2. 微光网格线（60px 间距），中心渐隐遮罩
+3. 鼠标跟随光晕（400px 径向渐变），`transition: 0.8s damping`
+
+**移动端**（< 768px）：动态背景隐藏，降级为 2 个静态渐变圆
+
+#### 11.2.5 Tailwind 扩展（tailwind.config.ts）
+
+```typescript
+// morandi 色板（14 色）
+colors.morandi: { blue, blue-dark, blue-light, gray, gray-light, gray-dark,
+  green, green-light, coral, coral-light, purple, purple-light, cream, cream-dark }
+
+// 注册到 Tailwind 的动画（9 种）
+animation: { fade-in-up, fade-in-down, fade-in-left, fade-in-right,
+  scale-in, spring-in, pulse-glow, shimmer, shake, float }
+
+// 圆角扩展
+borderRadius: { '2xl': '16px', '3xl': '20px', '4xl': '24px' }
+```
+
+### 11.3 响应式架构
+
+#### 管理端布局（Desktop-first）
+
+```
+桌面端 (md+):
+  Sidebar: fixed, w-64, glass-sidebar, z-40
+  Topbar:  h-60px, ml-64, glass-topbar
+  Main:    ml-64, pt-0, p-6
+
+移动端 (<md):
+  移动端顶栏: fixed, h-56px, glass-topbar, 汉堡菜单按钮
+  侧边栏抽屉: translateX 动画 + 黑色遮罩 backdrop-blur
+  Main: pt-56px, p-4
+```
+
+#### 客户端布局（Mobile-first）
+
+```
+容器: max-w-lg (448px), mx-auto
+Topbar: sticky, glass-topbar, 品牌名 + 用户名 + 退出
+Main:   px-4, py-4, pb-68px (底部留白)
+Tab:    fixed bottom-0, glass-topbar, 3 Tab (订单/消息/我的)
+  - active 指示: 底部 5px × 2px 圆角横线
+  - 未读角标: 红色圆点 + shadow
+  - safe-area-bottom (刘海屏适配)
+```
+
+### 11.4 GlassCard 组件 API
+
+```typescript
+interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
+  intensity?: 'light' | 'medium' | 'heavy' | 'accent'
+  hover?: boolean       // 启用悬停增强
+  glow?: boolean        // 鼠标跟随光效（仅桌面端，通过 CSS 变量 --mouse-x/--mouse-y）
+  animated?: boolean    // 入场动画（anim-initial + animate-fade-in-up）
+  delay?: number        // 动画延迟 (ms)
 }
+```
 
-.bg-decoration::before {
-  content: '';
-  position: absolute;
-  top: -20%;
-  right: -10%;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(124, 141, 166, 0.08) 0%, transparent 70%);
-  border-radius: 50%;
-}
+### 11.5 全局布局（layout.tsx）
 
-.bg-decoration::after {
-  content: '';
-  position: absolute;
-  bottom: -10%;
-  left: -5%;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(155, 142, 196, 0.06) 0%, transparent 70%);
-  border-radius: 50%;
-}
+```tsx
+<html lang="zh-CN">
+  <body className="min-h-screen antialiased">
+    <DynamicBackground />        {/* 桌面动态 / 移动静态 */}
+    <div className="relative z-10">
+      <ToastProvider>            {/* 全局 Toast */}
+        {children}
+      </ToastProvider>
+    </div>
+  </body>
+</html>
 ```
 
 ---

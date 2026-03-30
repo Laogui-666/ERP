@@ -68,7 +68,7 @@ export default function OrdersPage() {
     try {
       const res = await apiFetch('/api/templates')
       const json = await res.json()
-      if (json.success) setTemplates(json.data.map((t: any) => ({ id: t.id, name: t.name })))
+      if (json.success) setTemplates(json.data.map((t: { id: string; name: string }) => ({ id: t.id, name: t.name })))
     } catch {}
   }
 

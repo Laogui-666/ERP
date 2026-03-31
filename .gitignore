@@ -52,3 +52,11 @@ prisma/*.db
 .turbo/
 tsconfig.tsbuildinfo
 next-env.d.ts
+
+# 本地初始化文件（不入仓库）
+ERP-BOOTSTRAP.sh
+ERP-README.md
+
+# 本地初始化文件（不入仓库）
+ERP-BOOTSTRAP.sh
+ERP-README.md

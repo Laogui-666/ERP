@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AppError } from '@/types/api'
+import { AppError } from '@shared/types/api'
 
 // POST /api/sms/send - 发送短信（预留接口）
 export async function POST(_request: NextRequest) {

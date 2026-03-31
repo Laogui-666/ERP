@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { requirePermission, getDataScopeFilter } from '@/lib/rbac'
-import { AppError, createSuccessResponse } from '@/types/api'
-import { transitionOrder } from '@/lib/transition'
-import type { OrderStatus } from '@/types/order'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { requirePermission, getDataScopeFilter } from '@shared/lib/rbac'
+import { AppError, createSuccessResponse } from '@shared/types/api'
+import { transitionOrder } from '@erp/lib/transition'
+import type { OrderStatus } from '@erp/types/order'
 import { z } from 'zod'
 
 // POST /api/orders/batch - 批量操作

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { createSuccessResponse, AppError } from '@/types/api'
-import type { OrderStatus } from '@/types/order'
+import { prisma } from '@shared/lib/prisma'
+import { createSuccessResponse, AppError } from '@shared/types/api'
+import type { OrderStatus } from '@erp/types/order'
 
 /**
  * POST /api/cron/timeout-check

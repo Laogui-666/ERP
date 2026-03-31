@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/auth'
-import { AppError, createSuccessResponse } from '@/types/api'
-import { prisma } from '@/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { AppError, createSuccessResponse } from '@shared/types/api'
+import { prisma } from '@shared/lib/prisma'
 
 // PATCH /api/notifications/[id] - 标记单条已读
 export async function PATCH(

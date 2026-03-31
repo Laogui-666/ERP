@@ -3,11 +3,11 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
-import { useAuth } from '@/hooks/use-auth'
-import { useNotificationStore } from '@/stores/notification-store'
-import { useChatStore } from '@/stores/chat-store'
-import { useSocketClient, registerChatMessageHandler } from '@/hooks/use-socket-client'
-import { cn } from '@/lib/utils'
+import { useAuth } from '@shared/hooks/use-auth'
+import { useNotificationStore } from '@shared/stores/notification-store'
+import { useChatStore } from '@erp/stores/chat-store'
+import { useSocketClient, registerChatMessageHandler } from '@shared/hooks/use-socket-client'
+import { cn } from '@shared/lib/utils'
 
 const TABS = [
   { href: '/customer/orders', label: '订单', icon: '📋' },

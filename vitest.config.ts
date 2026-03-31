@@ -9,13 +9,15 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary'],
-      include: ['src/lib/**/*.ts'],
-      exclude: ['src/lib/prisma.ts', 'src/lib/socket.ts'],
+      include: ['src/shared/lib/**/*.ts', 'src/modules/erp/lib/**/*.ts'],
+      exclude: ['src/shared/lib/prisma.ts', 'src/shared/lib/socket.ts'],
     },
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@shared': path.resolve(__dirname, './src/shared'),
+      '@erp': path.resolve(__dirname, './src/modules/erp'),
     },
   },
 })

@@ -15,7 +15,9 @@
     "incremental": true,
     "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@erp/*": ["./src/modules/erp/*"]
     },
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,

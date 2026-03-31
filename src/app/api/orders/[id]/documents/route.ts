@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { requirePermission, getDataScopeFilter } from '@/lib/rbac'
-import { AppError, createSuccessResponse } from '@/types/api'
-import { emitToUser } from '@/lib/socket'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { requirePermission, getDataScopeFilter } from '@shared/lib/rbac'
+import { AppError, createSuccessResponse } from '@shared/types/api'
+import { emitToUser } from '@shared/lib/socket'
 import { z } from 'zod'
-import type { OrderStatus } from '@/types/order'
+import type { OrderStatus } from '@erp/types/order'
 
 // GET /api/orders/[id]/documents - 获取订单资料清单
 export async function GET(

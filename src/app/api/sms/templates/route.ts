@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AppError } from '@/types/api'
+import { AppError } from '@shared/types/api'
 
 // GET /api/sms/templates - 短信模板列表（预留接口）
 export async function GET(_request: NextRequest) {

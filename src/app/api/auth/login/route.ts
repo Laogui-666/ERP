@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { signAccessToken, signRefreshToken, setAuthCookies } from '@/lib/auth'
-import { AppError, createSuccessResponse } from '@/types/api'
+import { prisma } from '@shared/lib/prisma'
+import { signAccessToken, signRefreshToken, setAuthCookies } from '@shared/lib/auth'
+import { AppError, createSuccessResponse } from '@shared/types/api'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 

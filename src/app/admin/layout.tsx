@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Sidebar } from '@/components/layout/sidebar'
-import { Topbar } from '@/components/layout/topbar'
+import { Sidebar } from '@erp/components/layout/sidebar'
+import { Topbar } from '@erp/components/layout/topbar'
 
 export default function AdminLayout({
   children,

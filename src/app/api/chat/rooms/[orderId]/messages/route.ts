@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { AppError, createSuccessResponse } from '@/types/api'
-import { emitToRoom, emitToUser } from '@/lib/socket'
-import { logApiError } from '@/lib/logger'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { AppError, createSuccessResponse } from '@shared/types/api'
+import { emitToRoom, emitToUser } from '@shared/lib/socket'
+import { logApiError } from '@shared/lib/logger'
 import { z } from 'zod'
-import type { ChatMessageItem } from '@/types/chat'
+import type { ChatMessageItem } from '@erp/types/chat'
 
 /** 校验用户有权访问订单的聊天（订单关联 或 管理者角色） */
 async function verifyChatAccess(

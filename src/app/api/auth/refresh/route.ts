@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyRefreshToken, signAccessToken, signRefreshToken, setAuthCookies } from '@/lib/auth'
-import { AppError, createSuccessResponse } from '@/types/api'
+import { verifyRefreshToken, signAccessToken, signRefreshToken, setAuthCookies } from '@shared/lib/auth'
+import { AppError, createSuccessResponse } from '@shared/types/api'
 
 export async function POST(request: NextRequest) {
   try {

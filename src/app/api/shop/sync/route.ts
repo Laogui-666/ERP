@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AppError } from '@/types/api'
+import { AppError } from '@shared/types/api'
 
 // POST /api/shop/sync - 店铺订单同步（预留接口）
 // 将来支持从网店（淘宝/拼多多/独立站等）一键同步订单到 ERP

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/auth'
-import { requirePermission } from '@/lib/rbac'
-import { transitionOrder } from '@/lib/transition'
-import { AppError, createSuccessResponse } from '@/types/api'
+import { getCurrentUser } from '@shared/lib/auth'
+import { requirePermission } from '@shared/lib/rbac'
+import { transitionOrder } from '@erp/lib/transition'
+import { AppError, createSuccessResponse } from '@shared/types/api'
 import { z } from 'zod'
-import type { OrderStatus } from '@/types/order'
+import type { OrderStatus } from '@erp/types/order'
 
 const statusSchema = z.object({
   toStatus: z.string().min(1),

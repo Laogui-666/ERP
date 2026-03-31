@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getCurrentUser } from '@/lib/auth'
-import { canAccessRoute } from '@/lib/rbac'
+import { getCurrentUser } from '@shared/lib/auth'
+import { canAccessRoute } from '@shared/lib/rbac'
 
 // 公开路由
 const PUBLIC_ROUTES = [

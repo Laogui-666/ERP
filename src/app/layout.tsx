@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import '@/styles/globals.css'
-import '@/styles/glassmorphism.css'
-import { ToastProvider } from '@/components/ui/toast'
-import { DynamicBackground } from '@/components/layout/dynamic-bg'
+import '@shared/styles/globals.css'
+import '@shared/styles/glassmorphism.css'
+import { ToastProvider } from '@shared/ui/toast'
+import { DynamicBackground } from '@shared/ui/dynamic-bg'
 
 export const metadata: Metadata = {
   title: '沐海旅行 - 签证ERP系统',

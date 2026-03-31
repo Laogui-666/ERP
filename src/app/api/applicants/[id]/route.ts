@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { requirePermission } from '@/lib/rbac'
-import { AppError, createSuccessResponse } from '@/types/api'
-import { autoResolveOrderStatus } from '@/lib/transition'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { requirePermission } from '@shared/lib/rbac'
+import { AppError, createSuccessResponse } from '@shared/types/api'
+import { autoResolveOrderStatus } from '@erp/lib/transition'
 import { z } from 'zod'
 
 const updateSchema = z.object({

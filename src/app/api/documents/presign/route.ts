@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { requirePermission } from '@/lib/rbac'
-import { AppError, createSuccessResponse } from '@/types/api'
-import { buildOssKey, generatePresignedPutUrl } from '@/lib/oss'
-import { ALLOWED_FILE_TYPES } from '@/lib/file-types'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { requirePermission } from '@shared/lib/rbac'
+import { AppError, createSuccessResponse } from '@shared/types/api'
+import { buildOssKey, generatePresignedPutUrl } from '@shared/lib/oss'
+import { ALLOWED_FILE_TYPES } from '@shared/lib/file-types'
 import { z } from 'zod'
 
 const presignSchema = z.object({

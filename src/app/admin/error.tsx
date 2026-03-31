@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { GlassCard } from '@/components/layout/glass-card'
+import { GlassCard } from '@shared/ui/glass-card'
 
 export default function AdminError({
   error,

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { requirePermission } from '@/lib/rbac'
-import { AppError, createSuccessResponse } from '@/types/api'
-import { emitToUser } from '@/lib/socket'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { requirePermission } from '@shared/lib/rbac'
+import { AppError, createSuccessResponse } from '@shared/types/api'
+import { emitToUser } from '@shared/lib/socket'
 import { z } from 'zod'
-import type { DocReqStatus } from '@/types/order'
+import type { DocReqStatus } from '@erp/types/order'
 
 // PATCH /api/documents/[id] - 更新资料需求状态（审核）
 const updateSchema = z.object({
@@ -186,8 +186,8 @@ export async function DELETE(
       select: { ossKey: true },
     })
     if (files.length > 0) {
-      const { deleteFiles } = await import('@/lib/oss')
-      const { logApiError } = await import('@/lib/logger')
+      const { deleteFiles } = await import('@shared/lib/oss')
+      const { logApiError } = await import('@shared/lib/logger')
       await deleteFiles(files.map((f) => f.ossKey)).catch((err: unknown) => {
         logApiError('oss-delete', err)
       })

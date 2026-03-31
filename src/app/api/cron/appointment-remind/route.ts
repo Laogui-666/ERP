@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { createSuccessResponse, AppError } from '@/types/api'
+import { prisma } from '@shared/lib/prisma'
+import { createSuccessResponse, AppError } from '@shared/types/api'
 
 /**
  * POST /api/cron/appointment-remind

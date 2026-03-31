@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AppError } from '@/types/api'
+import { AppError } from '@shared/types/api'
 
 // POST /api/shop/webhook - 店铺订单回调（预留接口）
 // 将来支持网店平台推送订单变更事件到 ERP

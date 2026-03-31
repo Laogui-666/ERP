@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { requirePermission } from '@/lib/rbac'
-import { AppError, createSuccessResponse } from '@/types/api'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { requirePermission } from '@shared/lib/rbac'
+import { AppError, createSuccessResponse } from '@shared/types/api'
 import { z } from 'zod'
 
 // GET /api/order-templates — 获取订单模板列表
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     const data = quickCreateSchema.parse(body)
 
     // 生成订单号
-    const { generateOrderNo } = await import('@/lib/utils')
+    const { generateOrderNo } = await import('@shared/lib/utils')
     const orderNo = generateOrderNo()
 
     // 查询或创建客户

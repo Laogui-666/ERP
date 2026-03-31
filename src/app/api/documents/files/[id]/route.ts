@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { requirePermission } from '@/lib/rbac'
-import { AppError, createSuccessResponse } from '@/types/api'
-import { deleteFile } from '@/lib/oss'
-import { logApiError } from '@/lib/logger'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { requirePermission } from '@shared/lib/rbac'
+import { AppError, createSuccessResponse } from '@shared/types/api'
+import { deleteFile } from '@shared/lib/oss'
+import { logApiError } from '@shared/lib/logger'
 
 // DELETE /api/documents/files/[id] - 删除单个文件（OSS + DB）
 export async function DELETE(

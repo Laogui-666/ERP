@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { clearAuthCookies } from '@/lib/auth'
-import { createSuccessResponse, AppError } from '@/types/api'
+import { clearAuthCookies } from '@shared/lib/auth'
+import { createSuccessResponse, AppError } from '@shared/types/api'
 
 // POST /api/auth/logout - 登出，清除 Cookie
 export async function POST(_request: NextRequest) {

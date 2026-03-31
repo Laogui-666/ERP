@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { AppError, createSuccessResponse } from '@/types/api'
-import { emitToUser } from '@/lib/socket'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { AppError, createSuccessResponse } from '@shared/types/api'
+import { emitToUser } from '@shared/lib/socket'
 
 // POST /api/orders/[id]/submit - 客户确认提交资料
 export async function POST(

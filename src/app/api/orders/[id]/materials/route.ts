@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { requirePermission, getDataScopeFilter } from '@/lib/rbac'
-import { AppError, createSuccessResponse } from '@/types/api'
-import { uploadFile, buildOssKey } from '@/lib/oss'
-import { emitToUser } from '@/lib/socket'
-import { MAX_FILE_SIZE } from '@/lib/file-types'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { requirePermission, getDataScopeFilter } from '@shared/lib/rbac'
+import { AppError, createSuccessResponse } from '@shared/types/api'
+import { uploadFile, buildOssKey } from '@shared/lib/oss'
+import { emitToUser } from '@shared/lib/socket'
+import { MAX_FILE_SIZE } from '@shared/lib/file-types'
 
 // GET /api/orders/[id]/materials - 获取签证材料列表
 export async function GET(

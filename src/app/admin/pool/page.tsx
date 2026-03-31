@@ -1,14 +1,14 @@
 'use client'
-import { apiFetch } from '@/lib/api-client'
+import { apiFetch } from '@shared/lib/api-client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useAuth } from '@/hooks/use-auth'
-import { StatusBadge } from '@/components/orders/status-badge'
-import { GlassCard } from '@/components/layout/glass-card'
-import { PageHeader } from '@/components/layout/page-header'
-import { useToast } from '@/components/ui/toast'
-import { formatDateTime } from '@/lib/utils'
-import type { Order } from '@/types/order'
+import { useAuth } from '@shared/hooks/use-auth'
+import { StatusBadge } from '@erp/components/orders/status-badge'
+import { GlassCard } from '@shared/ui/glass-card'
+import { PageHeader } from '@shared/components/layout/page-header'
+import { useToast } from '@shared/ui/toast'
+import { formatDateTime } from '@shared/lib/utils'
+import type { Order } from '@erp/types/order'
 
 export default function PoolPage() {
   const { user } = useAuth()

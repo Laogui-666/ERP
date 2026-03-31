@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
-import { AppError, createSuccessResponse } from '@/types/api'
+import { getCurrentUser } from '@shared/lib/auth'
+import { prisma } from '@shared/lib/prisma'
+import { AppError, createSuccessResponse } from '@shared/types/api'
 
 export async function GET(request: NextRequest) {
   try {

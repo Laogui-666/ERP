@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { AppError, createSuccessResponse } from '@/types/api'
-import type { ChatRoomSummary } from '@/types/chat'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { AppError, createSuccessResponse } from '@shared/types/api'
+import type { ChatRoomSummary } from '@erp/types/chat'
 
 // GET /api/chat/rooms - 我的会话列表（含未读数 + 最后消息）
 export async function GET(request: NextRequest) {

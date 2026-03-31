@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { requirePermission } from '@/lib/rbac'
-import { AppError } from '@/types/api'
-import { ORDER_STATUS_LABELS } from '@/types/order'
-import { formatDate } from '@/lib/utils'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { requirePermission } from '@shared/lib/rbac'
+import { AppError } from '@shared/types/api'
+import { ORDER_STATUS_LABELS } from '@erp/types/order'
+import { formatDate } from '@shared/lib/utils'
 import { z } from 'zod'
 
 /**

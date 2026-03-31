@@ -1,14 +1,14 @@
 'use client'
-import { apiFetch } from '@/lib/api-client'
+import { apiFetch } from '@shared/lib/api-client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useAuth } from '@/hooks/use-auth'
-import { PageHeader } from '@/components/layout/page-header'
-import { GlassCard } from '@/components/layout/glass-card'
-import { StatCard } from '@/components/analytics/stat-card'
-import { TrendChart } from '@/components/analytics/trend-chart'
-import { RankingTable } from '@/components/analytics/ranking-table'
-import { useToast } from '@/components/ui/toast'
+import { useAuth } from '@shared/hooks/use-auth'
+import { PageHeader } from '@shared/components/layout/page-header'
+import { GlassCard } from '@shared/ui/glass-card'
+import { StatCard } from '@erp/components/analytics/stat-card'
+import { TrendChart } from '@erp/components/analytics/trend-chart'
+import { RankingTable } from '@erp/components/analytics/ranking-table'
+import { useToast } from '@shared/ui/toast'
 
 interface OverviewData {
   month: string

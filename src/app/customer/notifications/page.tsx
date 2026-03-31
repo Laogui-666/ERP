@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { apiFetch } from '@/lib/api-client'
-import { GlassCard } from '@/components/layout/glass-card'
-import { useToast } from '@/components/ui/toast'
-import { formatDateTime } from '@/lib/utils'
-import { NOTIFICATION_ICONS, getNotificationRoute } from '@/lib/notification-icons'
+import { apiFetch } from '@shared/lib/api-client'
+import { GlassCard } from '@shared/ui/glass-card'
+import { useToast } from '@shared/ui/toast'
+import { formatDateTime } from '@shared/lib/utils'
+import { NOTIFICATION_ICONS, getNotificationRoute } from '@shared/lib/notification-icons'
 
 interface Notification {
   id: string

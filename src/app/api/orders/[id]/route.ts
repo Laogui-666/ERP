@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { requirePermission, getDataScopeFilter } from '@/lib/rbac'
-import { AppError, createSuccessResponse } from '@/types/api'
-import { desensitizeOrderData } from '@/lib/desensitize'
-import { calcPlatformFee, calcGrossProfit } from '@/lib/utils'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { requirePermission, getDataScopeFilter } from '@shared/lib/rbac'
+import { AppError, createSuccessResponse } from '@shared/types/api'
+import { desensitizeOrderData } from '@erp/lib/desensitize'
+import { calcPlatformFee, calcGrossProfit } from '@shared/lib/utils'
 import { z } from 'zod'
 
 // GET /api/orders/[id] - 订单详情

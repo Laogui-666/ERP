@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { AppError, createSuccessResponse } from '@/types/api'
-import type { ChatRoom } from '@/types/chat'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { AppError, createSuccessResponse } from '@shared/types/api'
+import type { ChatRoom } from '@erp/types/chat'
 
 // GET /api/chat/rooms/[orderId] - 获取或创建订单的聊天会话
 export async function GET(

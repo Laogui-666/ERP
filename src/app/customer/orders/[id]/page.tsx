@@ -2,17 +2,17 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { apiFetch } from '@/lib/api-client'
-import { StatusBadge } from '@/components/orders/status-badge'
-import { StatusTimeline } from '@/components/orders/status-timeline'
-import { CustomerUpload } from '@/components/documents/customer-upload'
-import { MaterialChecklist } from '@/components/orders/material-checklist'
-import { ChatPanel } from '@/components/chat/chat-panel'
-import { useChatStore } from '@/stores/chat-store'
-import { GlassCard } from '@/components/layout/glass-card'
-import { useToast } from '@/components/ui/toast'
-import { formatDateTime, formatDate } from '@/lib/utils'
-import type { OrderDetail } from '@/types/order'
+import { apiFetch } from '@shared/lib/api-client'
+import { StatusBadge } from '@erp/components/orders/status-badge'
+import { StatusTimeline } from '@erp/components/orders/status-timeline'
+import { CustomerUpload } from '@erp/components/documents/customer-upload'
+import { MaterialChecklist } from '@erp/components/orders/material-checklist'
+import { ChatPanel } from '@erp/components/chat/chat-panel'
+import { useChatStore } from '@erp/stores/chat-store'
+import { GlassCard } from '@shared/ui/glass-card'
+import { useToast } from '@shared/ui/toast'
+import { formatDateTime, formatDate } from '@shared/lib/utils'
+import type { OrderDetail } from '@erp/types/order'
 
 export default function CustomerOrderDetailPage() {
   const params = useParams()

@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/hooks/use-auth'
-import { GlassCard } from '@/components/layout/glass-card'
-import { useToast } from '@/components/ui/toast'
-import { apiFetch } from '@/lib/api-client'
-import { USER_ROLE_LABELS } from '@/types/user'
+import { useAuth } from '@shared/hooks/use-auth'
+import { GlassCard } from '@shared/ui/glass-card'
+import { useToast } from '@shared/ui/toast'
+import { apiFetch } from '@shared/lib/api-client'
+import { USER_ROLE_LABELS } from '@shared/types/user'
 
 export default function CustomerProfilePage() {
   const router = useRouter()

@@ -1,4 +1,4 @@
-import { GlassCard } from '@/components/layout/glass-card'
+import { GlassCard } from '@shared/ui/glass-card'
 
 export default function OrderDetailLoading() {
   return (

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { requirePermission } from '@/lib/rbac'
-import { transitionOrder } from '@/lib/transition'
-import { AppError, createSuccessResponse } from '@/types/api'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { requirePermission } from '@shared/lib/rbac'
+import { transitionOrder } from '@erp/lib/transition'
+import { AppError, createSuccessResponse } from '@shared/types/api'
 
 // POST /api/orders/[id]/claim - 从公共池接单
 export async function POST(

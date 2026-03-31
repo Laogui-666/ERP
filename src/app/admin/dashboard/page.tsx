@@ -1,10 +1,10 @@
 'use client'
-import { apiFetch } from '@/lib/api-client'
+import { apiFetch } from '@shared/lib/api-client'
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { GlassCard } from '@/components/layout/glass-card'
-import { StatCard } from '@/components/analytics/stat-card'
+import { GlassCard } from '@shared/ui/glass-card'
+import { StatCard } from '@erp/components/analytics/stat-card'
 
 interface OverviewData {
   month: string

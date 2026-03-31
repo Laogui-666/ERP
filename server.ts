@@ -1,7 +1,7 @@
 import { createServer } from 'http'
 import { parse } from 'url'
 import next from 'next'
-import { initSocketServer } from '@/lib/socket'
+import { initSocketServer } from '@shared/lib/socket'
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = '0.0.0.0'

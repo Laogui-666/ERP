@@ -9,12 +9,12 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { apiFetch } from '@/lib/api-client'
-import { GlassCard } from '@/components/layout/glass-card'
-import { StatusBadge } from '@/components/orders/status-badge'
-import { formatDate } from '@/lib/utils'
-import { ORDER_STATUS_LABELS } from '@/types/order'
-import type { Order } from '@/types/order'
+import { apiFetch } from '@shared/lib/api-client'
+import { GlassCard } from '@shared/ui/glass-card'
+import { StatusBadge } from '@erp/components/orders/status-badge'
+import { formatDate } from '@shared/lib/utils'
+import { ORDER_STATUS_LABELS } from '@erp/types/order'
+import type { Order } from '@erp/types/order'
 
 // 状态 → 待办提示
 const STATUS_HINTS: Record<string, string> = {

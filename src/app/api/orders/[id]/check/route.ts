@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { requirePermission, getDataScopeFilter } from '@/lib/rbac'
-import { AppError, createSuccessResponse } from '@/types/api'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { requirePermission, getDataScopeFilter } from '@shared/lib/rbac'
+import { AppError, createSuccessResponse } from '@shared/types/api'
 
 // GET /api/orders/[id]/check - 智能资料检查
 export async function GET(

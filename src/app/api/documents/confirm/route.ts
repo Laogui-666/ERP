@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth'
-import { requirePermission } from '@/lib/rbac'
-import { AppError, createSuccessResponse } from '@/types/api'
-import { getSignedUrl, getOssClient } from '@/lib/oss'
-import { logApiError } from '@/lib/logger'
+import { prisma } from '@shared/lib/prisma'
+import { getCurrentUser } from '@shared/lib/auth'
+import { requirePermission } from '@shared/lib/rbac'
+import { AppError, createSuccessResponse } from '@shared/types/api'
+import { getSignedUrl, getOssClient } from '@shared/lib/oss'
+import { logApiError } from '@shared/lib/logger'
 import { z } from 'zod'
 
 const confirmSchema = z.object({

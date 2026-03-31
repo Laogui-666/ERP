@@ -11,6 +11,8 @@ const PUBLIC_ROUTES = [
   '/api/auth/reset-password',
   '/api/health',
   '/api/cron/',
+  '/api/shop/',
+  '/api/sms/',
   '/login',
   '/register',
   '/reset-password',
@@ -25,6 +27,11 @@ export async function middleware(request: NextRequest) {
 
   // 公开路由直接放行
   if (isPublicRoute(pathname)) {
+    return NextResponse.next()
+  }
+
+  // 首页公开可浏览（未登录也能看门户首页）
+  if (pathname === '/') {
     return NextResponse.next()
   }
 
@@ -53,21 +60,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // 客户角色自动跳转到客户端（必须在权限检查之前，否则先命中 403）
-  if (user.role === 'CUSTOMER' && pathname.startsWith('/admin')) {
-    return NextResponse.redirect(new URL('/customer/orders', request.url))
+  // 门户页面 → 所有登录用户可访问
+  if (pathname.startsWith('/portal')) {
+    return NextResponse.next()
   }
 
-  // 路由级权限检查
+  // 客户访问 /admin → 跳转门户首页
+  if (user.role === 'CUSTOMER' && pathname.startsWith('/admin')) {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  // 员工访问 /customer → 跳转门户首页
+  if (user.role !== 'CUSTOMER' && pathname.startsWith('/customer')) {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  // /admin 和 /customer 路由权限检查
   if (pathname.startsWith('/admin') || pathname.startsWith('/customer')) {
     if (!canAccessRoute(user.role, pathname)) {
       return NextResponse.redirect(new URL('/403', request.url))
     }
-  }
-
-  // 管理角色自动跳转到管理端
-  if (user.role !== 'CUSTOMER' && pathname === '/') {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
   }
 
   return NextResponse.next()

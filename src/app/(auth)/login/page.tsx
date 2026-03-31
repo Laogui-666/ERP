@@ -34,12 +34,8 @@ export default function LoginPage() {
         return
       }
 
-      const user = data.data.user
-      if (user.role === 'CUSTOMER') {
-        router.push('/customer/orders')
-      } else {
-        router.push('/admin/dashboard')
-      }
+      // Phase 1: 所有角色登录后跳转门户首页
+      router.push('/')
       router.refresh()
     } catch {
       setError('网络错误，请重试')

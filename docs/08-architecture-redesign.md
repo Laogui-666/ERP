@@ -2,13 +2,13 @@
 
 # 架构升级方案 — 分层模块化 + 门户化改造
 
-> **文档版本**: V5.0
+> **文档版本**: V5.1
 > **创建日期**: 2026-03-31
-> **最后更新**: 2026-04-01
-> **基于**: 143 源文件实际依赖扫描 + 逐文件 import 追踪
+> **最后更新**: 2026-04-01 01:00
+> **基于**: 154 源文件实际依赖扫描 + 逐文件 import 追踪
 > **目标**: 将现有 ERP 系统重构为平台的一个业务模块，新建门户层和共享基础设施层，实现真正的模块化架构
 > **原则**: 源码级模块化、故障隔离、可扩展、门户首页精心设计
-> **当前状态**: Phase 0 目录重构 ✅ 已完成（tsc 0 错误 / build 通过 / 91 测试通过）
+> **当前状态**: Phase 0 目录重构 ✅ 已完成 | Phase 1 入口改造 ✅ 已完成（tsc 0 错误 / build 通过 / 91 测试通过）
 
 ---
 
@@ -37,28 +37,41 @@
 
 | 维度 | 数量 |
 |---|---|
-| 源文件 | 143 个（未变，仅目录重组） |
-| 代码行数 | ~18,649 行 |
+| 源文件 | 154 个（Phase 1 新增 11 个 portal 文件） |
+| 代码行数 | ~19,200 行 |
 | API 路由 | 50 个 |
-| 页面 | 18 个 |
+| 页面 | 28 个（含 portal 10 个） |
 | 组件 | 31 个 |
 | Hooks | 5 个 |
 | Stores | 4 个 |
 | lib/ 工具 | 14 个 |
 | 测试 | 5 个（91 用例） |
 | Prisma 表 | 14 张 |
-| 里程碑 | M1-M6 全部 ✅ 100% |
+| 里程碑 | M1-M6 全部 ✅ 100% | M7 Phase 0-1 ✅ |
 
-### 1.2 当前目录结构（Phase 0 已完成 — 分层模块化）
+### 1.2 当前目录结构（Phase 1 已完成 — 分层模块化 + 门户层）
 
 ```
 src/
-├── app/                              # Next.js App Router（路由层，不变）
-│   ├── admin/*                       ← ERP 管理端
-│   ├── customer/*                    ← ERP 客户端
+├── app/                              # Next.js App Router（路由层）
+│   ├── page.tsx                      ✅ Phase 1 Portal 首页（登录/注册+6工具预览）
+│   ├── admin/*                       ← ERP 管理端（不变）
+│   ├── customer/*                    ← ERP 客户端（不变）
 │   ├── (auth)/*                      ← 认证页面
 │   ├── api/*                         ← 50 个 API 路由
-│   └── page.tsx                      ← 根路径（当前 redirect('/login')，Phase 1 改为 Portal 首页）
+│   └── portal/                       ✅ Phase 1 新增门户路由
+│       ├── layout.tsx                # 门户布局壳（底部 4 Tab）
+│       ├── page.tsx                  # redirect → /
+│       ├── orders/page.tsx           # redirect → /customer/orders
+│       ├── notifications/page.tsx    # redirect → /customer/notifications
+│       ├── profile/page.tsx          # 账号面板（用户信息+ERP入口+退出）
+│       └── tools/
+│           ├── news/page.tsx         # 签证资讯（占位）
+│           ├── itinerary/page.tsx    # 行程助手（占位）
+│           ├── form-helper/page.tsx  # 申请表助手（占位）
+│           ├── assessment/page.tsx   # 签证评估（占位）
+│           ├── translator/page.tsx   # 翻译助手（占位）
+│           └── documents/page.tsx    # 证明文件（占位）
 │
 ├── shared/                           ✅ Phase 0 已迁移
 │   ├── lib/                          # prisma/auth/rbac/utils/api-client/oss/socket/logger/file-types/notification-icons
@@ -987,14 +1000,22 @@ model GeneratedDocument {
 
 > **Phase 0 完成时间**: 2026-04-01 00:00 | **实际工时**: ~2h | **验证结果**: tsc 0 错误 / build 通过 / 91 测试通过 / 无旧代码残留
 
-### Phase 1：入口改造 ~0.5h
+### Phase 1：入口改造 ✅ 已完成
 
-| 步骤 | 文件 | 改动 |
-|---|---|---|
-| 1 | `src/app/page.tsx` | `redirect('/login')` → 渲染 `PortalHomePage` |
-| 2 | `src/app/(auth)/login/page.tsx` | 跳转目标改为 `/` |
-| 3 | `src/middleware.ts` | 根路径放行 + /portal 鉴权 + 角色跳转改为 `/` |
-| 4 | **`npx tsc --noEmit` + `npm run build`** | ✅ |
+| 步骤 | 文件 | 改动 | 状态 |
+|---|---|---|:---:|
+| 1 | `src/app/page.tsx` | `redirect('/login')` → 渲染 Portal 首页（登录/注册入口+6工具预览） | ✅ |
+| 2 | `src/app/(auth)/login/page.tsx` | 所有角色登录后跳转 `/`（门户首页） | ✅ |
+| 3 | `src/middleware.ts` | 根路径公开 + /portal 鉴权放行 + shop/sms 公开路由 + 客户/员工互斥跳转 `/` | ✅ |
+| 4 | `src/app/portal/layout.tsx` | 门户布局壳（底部 4 Tab：首页/订单/消息/我的） | ✅ |
+| 5 | `src/app/portal/page.tsx` | redirect → / | ✅ |
+| 6 | `src/app/portal/orders/page.tsx` | redirect → /customer/orders | ✅ |
+| 7 | `src/app/portal/notifications/page.tsx` | redirect → /customer/notifications | ✅ |
+| 8 | `src/app/portal/profile/page.tsx` | 账号面板（用户信息+ERP入口+订单/消息+退出） | ✅ |
+| 9 | `src/app/portal/tools/*/page.tsx` | 6 大工具占位页（资讯/行程/申请表/评估/翻译/证明文件） | ✅ |
+| 10 | **`npx tsc --noEmit` + `npm run build` + `npx vitest run`** | 0 错误 / build 通过 / 91 测试通过 | ✅ |
+
+> **Phase 1 完成时间**: 2026-04-01 01:00 | **实际工时**: ~0.5h | **新增文件**: 11 个（portal 布局+路由+工具占位） | **修改文件**: 3 个（page.tsx/login/middleware） | **源文件**: 154 个 / 50 API 路由 / 28 页面
 
 ### Phase 2：门户首页（精心打造）~3h
 
@@ -1275,7 +1296,7 @@ fix(portal): 修复底部 Tab 角标不更新
 | 优先级 | 阶段 | 内容 | 预估工时 | 状态 |
 |:---:|---|---|:---:|:---:|
 | P0 | Phase 0 | 目录重构（模块化基础：shared/ + modules/erp/ + import 迁移） | 2h | ✅ 完成 |
-| P0 | Phase 1 | 入口改造（middleware + page.tsx + login） | 0.5h | 🔲 待开发 |
+| P0 | Phase 1 | 入口改造（middleware + page.tsx + login + portal 布局 + 11 新文件） | 0.5h | ✅ 完成 |
 | P0 | Phase 2 | 门户首页（Hero + 工具网格 + 数据统计 + 目的地 + 顶栏 + 布局） | 3h | 🔲 待开发 |
 | P0 | Phase 3 | ERP 入口页面（订单/消息/我的） | 0.5h | 🔲 待开发 |
 | P1 | Phase 4 | 6大工具模块骨架 | 1h | 🔲 待开发 |

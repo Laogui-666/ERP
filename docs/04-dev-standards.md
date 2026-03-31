@@ -2,9 +2,9 @@
 
 # 开发规范
 
-> **文档版本**: V15.0
+> **文档版本**: V16.0
 > **生成日期**: 2026-03-19
-> **最后更新**: 2026-03-30 22:10
+> **最后更新**: 2026-03-31 17:12
 > **适用范围**: 全团队所有开发人员
 
 ---
@@ -39,8 +39,9 @@
 
 ### 1.2 TypeScript 严格配置
 
-> ⚠️ **路由结构约定**：管理端使用实际路径段 `admin/`（非路由组 `(admin)/`），客户端同理使用 `customer/`。
-> 路由组 `()` 不参与 URL 路径，仅用于 `auth` 等不需要路径前缀的场景。新增页面必须放在 `admin/` 或 `customer/` 实际目录下。
+> ⚠️ **路由结构约定**：管理端使用实际路径段 `admin/`（非路由组 `(admin)/`），客户端同理使用 `customer/`，门户使用 `portal/`。
+> 路由组 `()` 不参与 URL 路径，仅用于 `auth` 等不需要路径前缀的场景。新增页面必须放在 `admin/`、`customer/` 或 `portal/` 实际目录下。
+> **ERP 代码零改动原则**（M7 起生效）：`admin/*`、`customer/*`、`api/*`、`lib/*`、`hooks/*`、`stores/*` 下的现有文件禁止修改。新模块代码统一放 `portal/` 和 `components/portal/`。
 
 ```json
 // tsconfig.json
@@ -1217,6 +1218,74 @@ npm run build          # 完整构建验证
 | 密码重置 | `/api/auth/reset-password` 端点 + 页面已实现 | 2026-03-20 |
 | Notification API | 创建 GET/PATCH/POST 三个路由，前端 store 全链路就绪 | 2026-03-20 |
 | DATABASE_URL 编码 | 密码含@特殊字符，URL编码为%40 | 2026-03-20 |
+
+---
+
+## 15. 门户开发规范（M7 起生效）
+
+### 15.1 核心原则
+
+**ERP 零改动**：`admin/*`、`customer/*`、`api/*`、`lib/*`、`hooks/*`、`stores/*`、`types/*` 下的现有文件 **禁止修改**。门户和新模块是纯增量代码。
+
+### 15.2 目录规范
+
+| 内容 | 放置位置 |
+|---|---|
+| 门户页面 | `src/app/portal/*` |
+| 门户通用组件 | `src/components/portal/*` |
+| 工具模块页面 | `src/app/portal/tools/{module}/page.tsx` |
+| 工具模块 API | `src/app/api/{module}/route.ts` |
+| 工具模块组件 | `src/components/portal/{module}/*.tsx`（或页面内联） |
+
+### 15.3 import 规范
+
+```typescript
+// ✅ 正确：直接复用现有基础设施
+import { prisma } from '@/lib/prisma'
+import { getCurrentUser } from '@/lib/auth'
+import { apiFetch } from '@/lib/api-client'
+import { useAuth } from '@/hooks/use-auth'
+import { GlassCard } from '@/components/layout/glass-card'
+import { cn } from '@/lib/utils'
+import type { UserRole } from '@/types/user'
+
+// ❌ 禁止：修改现有文件的 import 路径
+// ❌ 禁止：从 portal/ 向 admin/ 或 customer/ 添加 import
+```
+
+### 15.4 新增 Prisma Model 规范
+
+继承第 6 节数据库规范，额外要求：
+- 所有新表必须带 `erp_` 前缀
+- 新表必须包含 `companyId String?` 字段（如需多租户隔离）
+- 新表必须包含 `createdAt DateTime @default(now())`
+
+### 15.5 Portal 布局规范
+
+- 门户使用独立 `layout.tsx`，不复用 admin/customer 布局
+- 底部 Tab 使用 `glass-topbar` 样式（与 customer layout 统一）
+- 门户页面默认 `max-w-lg mx-auto`（移动端优先）
+- 首页 `/` 是 Server Component（SEO），交互部分用 Client Component
+
+### 15.6 验证清单
+
+每次提交门户代码前，必须确认：
+
+```bash
+# 1. ERP 功能零影响
+npx tsc --noEmit          # 0 errors
+npm run build              # 通过
+npx vitest run             # 93 tests pass
+
+# 2. ERP 路由正常
+# 浏览器访问 /admin/dashboard → 正常
+# 浏览器访问 /customer/orders → 正常
+# 浏览器访问 /api/health → 正常
+
+# 3. 无违规修改
+git diff --name-only | grep -v "^src/app/portal/\|^src/components/portal/\|^src/app/page.tsx\|^src/app/(auth)/login/\|^src/middleware.ts"
+# 期望: 空（只改了允许的文件）
+```
 
 ---
 

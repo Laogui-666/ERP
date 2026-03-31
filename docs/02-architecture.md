@@ -2,9 +2,9 @@
 
 # 架构实现方案
 
-> **文档版本**: V16.0
+> **文档版本**: V17.0
 > **生成日期**: 2026-03-19
-> **最后更新**: 2026-03-30 22:10
+> **最后更新**: 2026-03-31 17:12
 > **技术栈**: Next.js 15.5.14 + React 19.2.4 + Prisma ORM + 阿里云 MySQL RDS + Tailwind CSS + Zustand + Socket.io  
 > **部署**: 阿里云 ECS (223.6.248.154:3002) + 阿里云 RDS + 阿里云 OSS
 
@@ -199,6 +199,47 @@ ERP/
 ├── tsconfig.json
 └── package.json
 ```
+
+### 1.4 门户层路由（M7 新增）
+
+M7 门户化改造采用 **不动存量、纯增量** 方案。ERP 路由（`/admin/*`、`/customer/*`）完全不变，新增门户路由：
+
+```
+src/
+├── app/
+│   ├── page.tsx                         # 🆕 Portal 首页（替代原 redirect('/login')）
+│   ├── portal/
+│   │   ├── layout.tsx                   # 🆕 门户布局（顶栏+底部4Tab）
+│   │   ├── page.tsx                     # 🆕 redirect to /
+│   │   ├── orders/page.tsx              # 🆕 → redirect('/customer/orders')
+│   │   ├── notifications/page.tsx       # 🆕 → redirect('/customer/notifications')
+│   │   ├── profile/page.tsx             # 🆕 账号面板（含ERP管理入口）
+│   │   └── tools/
+│   │       ├── news/page.tsx            # 🆕 签证资讯
+│   │       ├── itinerary/page.tsx       # 🆕 行程助手
+│   │       ├── form-helper/page.tsx     # 🆕 申请表助手
+│   │       ├── assessment/page.tsx      # 🆕 签证评估
+│   │       ├── translator/page.tsx      # 🆕 翻译助手
+│   │       └── documents/page.tsx       # 🆕 证明文件
+│   └── (auth)/login/page.tsx            # ✏️ 改跳转目标为 /
+├── components/portal/
+│   ├── portal-home.tsx                  # 🆕 首页组件
+│   ├── portal-topbar.tsx                # 🆕 门户顶栏
+│   ├── tool-grid.tsx                    # 🆕 6大工具入口
+│   └── hero-banner.tsx                  # 🆕 广告 Banner
+└── middleware.ts                         # ✏️ 新增 /portal 鉴权逻辑
+```
+
+**路由权限规则**：
+
+| 路径 | 权限 | 说明 |
+|---|---|---|
+| `/` | 公开可浏览 | Portal 首页，未登录可看 |
+| `/portal/*` | 已登录 | 所有登录用户可访问 |
+| `/admin/*` | Lv1-8 员工 | ERP 管理端（不变） |
+| `/customer/*` | Lv9 客户 | ERP 客户端（不变） |
+
+> 详见 `docs/08-architecture-redesign.md V3.0` 完整方案。
 
 ---
 

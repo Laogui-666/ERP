@@ -489,3 +489,151 @@ model ChatRead {
   @@index([userId])
   @@map("erp_chat_reads")
 }
+
+// ==================== M7: 签证资讯 ====================
+
+model NewsArticle {
+  id          String    @id @default(cuid())
+  companyId   String?   @db.VarChar(30) @map("company_id")
+  title       String    @db.VarChar(200)
+  content     String    @db.Text
+  coverImage  String?   @db.Text @map("cover_image")
+  category    String    @db.VarChar(50)
+  tags        Json?
+  authorId    String    @db.VarChar(30) @map("author_id")
+  viewCount   Int       @default(0) @map("view_count")
+  isPublished Boolean   @default(false) @map("is_published")
+  isPinned    Boolean   @default(false) @map("is_pinned")
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@index([isPublished, publishedAt])
+  @@index([companyId])
+  @@map("erp_news_articles")
+}
+
+// ==================== M7: 行程助手 ====================
+
+model Itinerary {
+  id          String    @id @default(cuid())
+  userId      String    @db.VarChar(30) @map("user_id")
+  companyId   String?   @db.VarChar(30) @map("company_id")
+  title       String    @db.VarChar(200)
+  destination String    @db.VarChar(100)
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+  days        Json      // [{day, date, activities:[{time, place, desc, tips}]}]
+  budget      Decimal?  @db.Decimal(10,2)
+  preferences Json?
+  coverImage  String?   @db.Text @map("cover_image")
+  isPublic    Boolean   @default(false) @map("is_public")
+  isTemplate  Boolean   @default(false) @map("is_template")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([companyId])
+  @@map("erp_itineraries")
+}
+
+// ==================== M7: 申请表助手 ====================
+
+model FormTemplate {
+  id        String   @id @default(cuid())
+  country   String   @db.VarChar(50)
+  visaType  String   @db.VarChar(50) @map("visa_type")
+  name      String   @db.VarChar(200)
+  fields    Json     // [{label, key, type, required, hint, example}]
+  isSystem  Boolean  @default(false) @map("is_system")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([country])
+  @@index([country, visaType])
+  @@map("erp_form_templates")
+}
+
+model FormRecord {
+  id         String   @id @default(cuid())
+  userId     String   @db.VarChar(30) @map("user_id")
+  templateId String   @db.VarChar(30) @map("template_id")
+  data       Json
+  progress   Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([templateId])
+  @@map("erp_form_records")
+}
+
+// ==================== M7: 签证评估 ====================
+
+model VisaAssessment {
+  id          String    @id @default(cuid())
+  userId      String    @db.VarChar(30) @map("user_id")
+  companyId   String?   @db.VarChar(30) @map("company_id")
+  country     String    @db.VarChar(50)
+  visaType    String    @db.VarChar(50) @map("visa_type")
+  answers     Json
+  score       Int       @default(0)
+  level       String    @db.VarChar(20) // high/medium/low
+  suggestions Json?
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([companyId])
+  @@map("erp_visa_assessments")
+}
+
+// ==================== M7: 翻译助手 ====================
+
+model TranslationRequest {
+  id         String    @id @default(cuid())
+  userId     String    @db.VarChar(30) @map("user_id")
+  companyId  String?   @db.VarChar(30) @map("company_id")
+  sourceLang String    @db.VarChar(10) @map("source_lang")
+  targetLang String    @db.VarChar(10) @map("target_lang")
+  docType    String    @db.VarChar(30) @map("doc_type")
+  sourceUrl  String?   @db.Text @map("source_url")
+  resultText String?   @db.Text @map("result_text")
+  resultUrl  String?   @db.Text @map("result_url")
+  status     String    @db.VarChar(20) @default("pending")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([companyId])
+  @@map("erp_translation_requests")
+}
+
+// ==================== M7: 证明文件助手 ====================
+
+model DocHelperTemplate {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(200)
+  type      String   @db.VarChar(50)   // 在职证明/收入证明/邀请函等
+  language  String   @db.VarChar(10)
+  fields    Json
+  template  String   @db.Text
+  isSystem  Boolean  @default(false) @map("is_system")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([type])
+  @@map("erp_doc_helper_templates")
+}
+
+model GeneratedDocument {
+  id         String   @id @default(cuid())
+  userId     String   @db.VarChar(30) @map("user_id")
+  companyId  String?  @db.VarChar(30) @map("company_id")
+  templateId String   @db.VarChar(30) @map("template_id")
+  data       Json
+  fileUrl    String   @db.Text @map("file_url")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([companyId])
+  @@map("erp_generated_documents")
+}

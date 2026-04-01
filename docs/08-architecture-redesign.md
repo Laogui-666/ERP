@@ -8,7 +8,7 @@
 > **基于**: 160 源文件实际依赖扫描 + 逐文件 import 追踪
 > **目标**: 将现有 ERP 系统重构为平台的一个业务模块，新建门户层和共享基础设施层，实现真正的模块化架构
 > **原则**: 源码级模块化、故障隔离、可扩展、门户首页精心设计
-> **当前状态**: Phase 0 ✅ | Phase 1 ✅ | Phase 2 ✅ | Phase 3 ✅ | Phase 4 ✅ | 架构合规修复 ✅（tsc 0 错误 / build 通过 / 91 测试通过）
+> **当前状态**: Phase 0 ✅ | Phase 1 ✅ | Phase 2 ✅ | Phase 3 ✅ | Phase 4 ✅ | 架构合规修复 ✅ | Phase 5 ✅（tsc 0 错误 / build 通过 / 91 测试通过 / 166 源文件 / 20,770 行）
 
 ---
 
@@ -37,17 +37,17 @@
 
 | 维度 | 数量 |
 |---|---|
-| 源文件 | 158 个（Phase 2 新增 6 个 Portal 组件） |
-| 代码行数 | ~19,200 行 |
-| API 路由 | 50 个 |
-| 页面 | 28 个（含 portal 10 个） |
-| 组件 | 31 个 |
+| 源文件 | 166 个 |
+| 代码行数 | ~20,770 行 |
+| API 路由 | 57 个 |
+| 页面 | 28 个（含 portal 16 个） |
+| 组件 | 37 个 |
 | Hooks | 5 个 |
 | Stores | 4 个 |
 | lib/ 工具 | 14 个 |
 | 测试 | 5 个（91 用例） |
-| Prisma 表 | 14 张 |
-| 里程碑 | M1-M6 全部 ✅ 100% | M7 Phase 0-2 ✅ |
+| Prisma 表 | 22 张 |
+| 里程碑 | M1-M6 全部 ✅ 100% | M7 Phase 0-5 ✅ |
 
 ### 1.2 当前目录结构（Phase 2 已完成 — 分层模块化 + 门户首页）
 
@@ -1093,14 +1093,29 @@ Phase 0-4 完成后深度审查发现 5 项架构违规/缺口，已全部修复
 - `src/app/` → 引用 `@shared/*` + `@erp/*` ✅（组装层允许）
 - `src/components/portal/` → 仅引用 `@shared/*` ✅
 
-### Phase 5：工具模块内容开发（按需）
+### Phase 5：工具模块内容开发 ✅ 已完成
 
-每个模块按以下流程：
-1. Prisma Schema 新增 Model（erp_ 前缀 + @@map）
-2. `npx prisma migrate dev`
-3. 创建 `/api/{module}/` API 路由（放 `src/app/api/` 下）
-4. 实现页面 UI（复用 `@shared/*` + 新增模块专属组件）
-5. tsc + build + test 验证
+| 文件 | 说明 | 状态 |
+|---|---|:---:|
+| Prisma Schema | 新增 8 个 Model（NewsArticle/Itinerary/FormTemplate/FormRecord/VisaAssessment/TranslationRequest/DocHelperTemplate/GeneratedDocument）| ✅ |
+| Migration | `prisma/migrations/20260402_add_m7_tool_modules/migration.sql` | ✅ |
+| `/api/news` | 资讯列表+创建 API（分类筛选+分页+置顶） | ✅ |
+| `/api/itineraries` | 行程 CRUD API（创建/列表/日期/预算） | ✅ |
+| `/api/form-templates` | 申请表模板列表+创建 API | ✅ |
+| `/api/form-records` | 申请表填写记录 API | ✅ |
+| `/api/visa-assessments` | 签证评估 API（4题评分+level+suggestions） | ✅ |
+| `/api/translations` | 翻译请求 API（多语言+记录） | ✅ |
+| `/api/doc-helper` | 证明文件模板+生成 API（模板渲染） | ✅ |
+| `portal/tools/news/page.tsx` | 签证资讯页（分类筛选+列表+置顶标记+骨架屏） | ✅ |
+| `portal/tools/itinerary/page.tsx` | 行程助手页（创建表单+列表+Modal） | ✅ |
+| `portal/tools/form-helper/page.tsx` | 申请表助手页（模板分组+动态表单+进度保存） | ✅ |
+| `portal/tools/assessment/page.tsx` | 签证评估页（选国家→4步问卷→评分环形图+建议） | ✅ |
+| `portal/tools/translator/page.tsx` | 翻译助手页（语言选择+文档类型+输入+历史记录） | ✅ |
+| `portal/tools/documents/page.tsx` | 证明文件页（模板分组+动态字段+模板渲染+复制） | ✅ |
+| Initial Migration | `prisma/migrations/0000_init_full_schema/migration.sql`（完整初始Schema 381行） | ✅ |
+| **验证** | **tsc 0 错误 / build 通过 / 91 tests pass** | ✅ |
+
+> **完成时间**: 2026-04-02 01:37 | **新增文件**: 13 个（7 API + 6 页面） | **修改文件**: 1 个（prisma schema） | **源文件**: 166 个 / 20,770 行 / 57 API 路由
 
 ### 阶段验证清单
 
@@ -1340,8 +1355,8 @@ fix(portal): 修复底部 Tab 角标不更新
 | P0 | Phase 2 | 门户首页（Hero + 工具网格 + 数据统计 + 目的地 + 顶栏 + 布局） | 3h | ✅ 完成 |
 | P0 | Phase 3 | ERP 入口页面（角色分流Tab+修改密码+动态背景） | 0.5h | ✅ 完成 |
 | P1 | Phase 4 | 6大工具模块骨架 | 1h | ✅ 完成 |
-| P2 | Phase 5 | 工具模块内容开发 | 按需 | 🔲 待开发 |
-| | | **Phase 0-4 骨架合计** | **~7h（已完成）** | |
+| P2 | Phase 5 | 工具模块内容开发（8 Model + 7 API + 6 页面） | 2h | ✅ 完成 |
+| | | **Phase 0-5 全部合计** | **~9h（已完成）** | |
 
 ## 附录 B：验证清单
 

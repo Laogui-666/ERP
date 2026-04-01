@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@shared/lib/utils'
 import { PortalTopbar } from '@/components/portal/portal-topbar'
+import { DynamicBackground } from '@shared/ui/dynamic-bg'
 
 const TABS = [
   { href: '/', label: '首页', icon: HomeIcon },
@@ -17,6 +18,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="flex min-h-screen flex-col">
+      <DynamicBackground />
       <PortalTopbar />
 
       {/* 内容区（顶栏 56px + 底部 Tab 68px） */}

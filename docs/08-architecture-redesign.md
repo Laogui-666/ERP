@@ -2,13 +2,13 @@
 
 # 架构升级方案 — 分层模块化 + 门户化改造
 
-> **文档版本**: V5.2
+> **文档版本**: V5.3
 > **创建日期**: 2026-03-31
-> **最后更新**: 2026-04-01 14:45
+> **最后更新**: 2026-04-01 17:36
 > **基于**: 158 源文件实际依赖扫描 + 逐文件 import 追踪
 > **目标**: 将现有 ERP 系统重构为平台的一个业务模块，新建门户层和共享基础设施层，实现真正的模块化架构
 > **原则**: 源码级模块化、故障隔离、可扩展、门户首页精心设计
-> **当前状态**: Phase 0 目录重构 ✅ | Phase 1 入口改造 ✅ | Phase 2 门户首页 ✅（tsc 0 错误 / build 通过 / 91 测试通过）| Phase 3 ERP 入口 🔲 | Phase 4 工具骨架 🔲
+> **当前状态**: Phase 0 目录重构 ✅ | Phase 1 入口改造 ✅ | Phase 2 门户首页 ✅ | Phase 3 ERP 入口 ✅ | Phase 4 工具骨架 ✅（tsc 0 错误 / build 通过 / 91 测试通过）
 
 ---
 
@@ -1043,28 +1043,35 @@ model GeneratedDocument {
 
 > **完成时间**: 2026-04-01 14:45 | **实际工时**: ~0.5h | **新增文件**: 6 个 Portal 组件 | **修改文件**: 3 个 | **源文件**: 158 个
 
-### Phase 3：ERP 入口页面 ~0.5h
+### Phase 3：ERP 入口页面 ✅ 已完成
 
-| 文件 | 说明 |
-|---|---|
-| `src/app/portal/orders/page.tsx` | redirect → /customer/orders |
-| `src/app/portal/notifications/page.tsx` | redirect → /customer/notifications |
-| `src/app/portal/profile/page.tsx` | 账号面板（用户信息+ERP入口+设置+退出） |
-| **验证** | **端到端测试：登录→首页→Tab切换→进入ERP→返回** |
+| 文件 | 说明 | 状态 |
+|---|---|:---:|
+| `src/app/portal/orders/page.tsx` | 按角色分流：CUSTOMER → /customer/orders，员工 → /admin/workspace | ✅ |
+| `src/app/portal/notifications/page.tsx` | 按角色分流：CUSTOMER → /customer/notifications，员工 → /admin/dashboard | ✅ |
+| `src/app/portal/profile/page.tsx` | 账号面板（用户信息+ERP入口+修改密码+订单/消息链接+退出登录） | ✅ |
+| **验证** | **tsc 0 错误 / build 通过 / 91 tests pass** | ✅ |
 
-> ⚠️ Phase 3 实际已在 Phase 1 中完成（portal/orders、portal/notifications、portal/profile 均已存在且功能正常），仅需端到端验证即可标记完成。
+**关键修复（2026-04-01）**：
+- P0：Portal 底部 Tab "订单"和"消息"对员工失效（redirect 到 /customer/* 被 middleware 拦截）→ 改为客户端按角色分流
+- P0：Portal 个人中心缺少"修改密码" → 复用 customer/profile 的密码修改逻辑（旧密码校验+强度条+可见性切换）
+- P1：Portal 布局缺少 DynamicBackground → portal/layout.tsx 引入
 
-### Phase 4：6大工具骨架 ~1h
+> **完成时间**: 2026-04-01 17:36 | **修改文件**: 3 个（orders/notifications/profile page.tsx）+ 1 个（portal/layout.tsx）
 
-| 文件 | 说明 |
-|---|---|
-| `src/app/portal/tools/news/page.tsx` | 签证资讯（glass-card 占位） |
-| `src/app/portal/tools/itinerary/page.tsx` | 行程助手（glass-card 占位） |
-| `src/app/portal/tools/form-helper/page.tsx` | 申请表助手（glass-card 占位） |
-| `src/app/portal/tools/assessment/page.tsx` | 签证评估（glass-card 占位） |
-| `src/app/portal/tools/translator/page.tsx` | 翻译助手（glass-card 占位） |
-| `src/app/portal/tools/documents/page.tsx` | 证明文件（glass-card 占位） |
-| **验证** | **tsc 0 + build 通过 + 93 tests pass** |
+### Phase 4：6大工具骨架 ✅ 已完成
+
+| 文件 | 说明 | 状态 |
+|---|---|:---:|
+| `src/app/portal/tools/news/page.tsx` | 签证资讯（glass-card 占位 + metadata） | ✅ |
+| `src/app/portal/tools/itinerary/page.tsx` | 行程助手（glass-card 占位 + metadata） | ✅ |
+| `src/app/portal/tools/form-helper/page.tsx` | 申请表助手（glass-card 占位 + metadata） | ✅ |
+| `src/app/portal/tools/assessment/page.tsx` | 签证评估（glass-card 占位 + metadata） | ✅ |
+| `src/app/portal/tools/translator/page.tsx` | 翻译助手（glass-card 占位 + metadata） | ✅ |
+| `src/app/portal/tools/documents/page.tsx` | 证明文件（glass-card 占位 + metadata） | ✅ |
+| **验证** | **tsc 0 错误 / build 通过 / 91 tests pass** | ✅ |
+
+> 6个工具页在 Phase 1 中创建，每个均为标准"即将上线"占位页，带 title metadata，UI 风格统一。
 
 ### Phase 5：工具模块内容开发（按需）
 
@@ -1311,11 +1318,10 @@ fix(portal): 修复底部 Tab 角标不更新
 | P0 | Phase 0 | 目录重构（模块化基础：shared/ + modules/erp/ + import 迁移） | 2h | ✅ 完成 |
 | P0 | Phase 1 | 入口改造（middleware + page.tsx + login + portal 布局 + 11 新文件） | 0.5h | ✅ 完成 |
 | P0 | Phase 2 | 门户首页（Hero + 工具网格 + 数据统计 + 目的地 + 顶栏 + 布局） | 3h | ✅ 完成 |
-| P0 | Phase 3 | ERP 入口页面（订单/消息/我的） | 0.5h | ✅ 已在 Phase 1 完成 |
-| P0 | Phase 3 | ERP 入口页面（订单/消息/我的） | 0.5h | 🔲 待开发 |
-| P1 | Phase 4 | 6大工具模块骨架 | 1h | 🔲 待开发 |
+| P0 | Phase 3 | ERP 入口页面（角色分流Tab+修改密码+动态背景） | 0.5h | ✅ 完成 |
+| P1 | Phase 4 | 6大工具模块骨架 | 1h | ✅ 完成 |
 | P2 | Phase 5 | 工具模块内容开发 | 按需 | 🔲 待开发 |
-| | | **骨架合计** | **~7h 剩余** | |
+| | | **Phase 0-4 骨架合计** | **~7h（已完成）** | |
 
 ## 附录 B：验证清单
 

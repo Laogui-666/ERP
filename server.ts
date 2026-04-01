@@ -1,3 +1,7 @@
+// 加载环境变量（必须在其他 import 之前）
+import { config } from 'dotenv'
+config({ path: '.env.local' })
+
 import { createServer } from 'http'
 import { parse } from 'url'
 import next from 'next'

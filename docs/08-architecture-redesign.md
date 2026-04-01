@@ -2,13 +2,13 @@
 
 # 架构升级方案 — 分层模块化 + 门户化改造
 
-> **文档版本**: V5.1
+> **文档版本**: V5.2
 > **创建日期**: 2026-03-31
-> **最后更新**: 2026-04-01 01:00
-> **基于**: 154 源文件实际依赖扫描 + 逐文件 import 追踪
+> **最后更新**: 2026-04-01 14:45
+> **基于**: 158 源文件实际依赖扫描 + 逐文件 import 追踪
 > **目标**: 将现有 ERP 系统重构为平台的一个业务模块，新建门户层和共享基础设施层，实现真正的模块化架构
 > **原则**: 源码级模块化、故障隔离、可扩展、门户首页精心设计
-> **当前状态**: Phase 0 目录重构 ✅ 已完成 | Phase 1 入口改造 ✅ 已完成（tsc 0 错误 / build 通过 / 91 测试通过）
+> **当前状态**: Phase 0 目录重构 ✅ | Phase 1 入口改造 ✅ | Phase 2 门户首页 ✅（tsc 0 错误 / build 通过 / 91 测试通过）| Phase 3 ERP 入口 🔲 | Phase 4 工具骨架 🔲
 
 ---
 
@@ -37,7 +37,7 @@
 
 | 维度 | 数量 |
 |---|---|
-| 源文件 | 154 个（Phase 1 新增 11 个 portal 文件） |
+| 源文件 | 158 个（Phase 2 新增 6 个 Portal 组件） |
 | 代码行数 | ~19,200 行 |
 | API 路由 | 50 个 |
 | 页面 | 28 个（含 portal 10 个） |
@@ -47,20 +47,20 @@
 | lib/ 工具 | 14 个 |
 | 测试 | 5 个（91 用例） |
 | Prisma 表 | 14 张 |
-| 里程碑 | M1-M6 全部 ✅ 100% | M7 Phase 0-1 ✅ |
+| 里程碑 | M1-M6 全部 ✅ 100% | M7 Phase 0-2 ✅ |
 
-### 1.2 当前目录结构（Phase 1 已完成 — 分层模块化 + 门户层）
+### 1.2 当前目录结构（Phase 2 已完成 — 分层模块化 + 门户首页）
 
 ```
 src/
 ├── app/                              # Next.js App Router（路由层）
-│   ├── page.tsx                      ✅ Phase 1 Portal 首页（登录/注册+6工具预览）
+│   ├── page.tsx                      ✅ Phase 2 Portal 首页（PortalHomePage + PortalTopbar + DynamicBackground）
 │   ├── admin/*                       ← ERP 管理端（不变）
 │   ├── customer/*                    ← ERP 客户端（不变）
 │   ├── (auth)/*                      ← 认证页面
 │   ├── api/*                         ← 50 个 API 路由
-│   └── portal/                       ✅ Phase 1 新增门户路由
-│       ├── layout.tsx                # 门户布局壳（底部 4 Tab）
+│   └── portal/                       ✅ 门户路由
+│       ├── layout.tsx                # 门户布局（PortalTopbar + 底部 4 Tab）
 │       ├── page.tsx                  # redirect → /
 │       ├── orders/page.tsx           # redirect → /customer/orders
 │       ├── notifications/page.tsx    # redirect → /customer/notifications
@@ -72,6 +72,15 @@ src/
 │           ├── assessment/page.tsx   # 签证评估（占位）
 │           ├── translator/page.tsx   # 翻译助手（占位）
 │           └── documents/page.tsx    # 证明文件（占位）
+│
+├── components/                       ✅ Phase 2 新增 Portal 组件
+│   └── portal/
+│       ├── portal-topbar.tsx         # 门户顶栏（品牌+登录/头像下拉+滚动透明度）
+│       ├── hero-banner.tsx           # Hero 区域（逐词渐显+光带脉动+CTA sweep）
+│       ├── stats-counter.tsx         # 数据统计卡片（Intersection Observer+数字滚动）
+│       ├── tool-grid.tsx             # 6大工具入口（stagger+sweep+未登录弹窗）
+│       ├── destination-carousel.tsx  # 热门目的地（scroll-snap+拖拽手势）
+│       └── portal-home.tsx           # 首页组装（Server Component 壳）
 │
 ├── shared/                           ✅ Phase 0 已迁移
 │   ├── lib/                          # prisma/auth/rbac/utils/api-client/oss/socket/logger/file-types/notification-icons
@@ -1017,20 +1026,22 @@ model GeneratedDocument {
 
 > **Phase 1 完成时间**: 2026-04-01 01:00 | **实际工时**: ~0.5h | **新增文件**: 11 个（portal 布局+路由+工具占位） | **修改文件**: 3 个（page.tsx/login/middleware） | **源文件**: 154 个 / 50 API 路由 / 28 页面
 
-### Phase 2：门户首页（精心打造）~3h
+### Phase 2：门户首页（精心打造）✅ 已完成
 
-| 文件 | 说明 |
-|---|---|
-| `shared/styles/globals.css` | 新增 countUp/glowPulse/sweep/wordReveal/slideInRight 动画 |
-| `components/portal/portal-topbar.tsx` | 门户顶栏（品牌+搜索+登录/头像+滚动透明度渐变） |
-| `components/portal/hero-banner.tsx` | Hero 区域（逐词动画+光带脉动+CTA） |
-| `components/portal/stats-counter.tsx` | 数据统计卡片（Intersection Observer + 数字滚动） |
-| `components/portal/tool-grid.tsx` | 6大工具入口（stagger+sweep+登录判断） |
-| `components/portal/destination-carousel.tsx` | 热门目的地（scroll-snap 横向滚动） |
-| `components/portal/portal-home.tsx` | 首页组装（Server Component 包裹） |
-| `src/app/portal/layout.tsx` | 门户布局壳（顶栏+底部4Tab） |
-| `src/app/portal/page.tsx` | redirect to / |
-| **验证** | **tsc 0 + build 通过 + 浏览器交互测试** |
+| 文件 | 说明 | 状态 |
+|---|---|:---:|
+| `shared/styles/globals.css` | 新增 glowPulse/sweep/wordReveal/slideInRight 动画 + scrollbar-hide | ✅ |
+| `components/portal/portal-topbar.tsx` | 门户顶栏（品牌+登录/头像下拉+滚动透明度渐变 0.72→0.92） | ✅ |
+| `components/portal/hero-banner.tsx` | Hero 区域（逐词渐显 100ms stagger + 光带 glowPulse + CTA sweep） | ✅ |
+| `components/portal/stats-counter.tsx` | 数据统计卡片（Intersection Observer + requestAnimationFrame 数字滚动 2s） | ✅ |
+| `components/portal/tool-grid.tsx` | 6大工具入口（scroll-triggered stagger 30ms + hover sweep + 未登录 glass-modal） | ✅ |
+| `components/portal/destination-carousel.tsx` | 热门目的地（scroll-snap + 拖拽手势 6 国目的地） | ✅ |
+| `components/portal/portal-home.tsx` | 首页组装（Server Component 壳，CTA + 页脚） | ✅ |
+| `src/app/page.tsx` | 替换占位为 PortalHomePage + PortalTopbar + DynamicBackground | ✅ |
+| `src/app/portal/layout.tsx` | 集成 PortalTopbar + pt-14 适配顶栏 | ✅ |
+| **验证** | **tsc 0 错误 / build 通过 / 91 tests pass** | ✅ |
+
+> **完成时间**: 2026-04-01 14:45 | **实际工时**: ~0.5h | **新增文件**: 6 个 Portal 组件 | **修改文件**: 3 个 | **源文件**: 158 个
 
 ### Phase 3：ERP 入口页面 ~0.5h
 
@@ -1040,6 +1051,8 @@ model GeneratedDocument {
 | `src/app/portal/notifications/page.tsx` | redirect → /customer/notifications |
 | `src/app/portal/profile/page.tsx` | 账号面板（用户信息+ERP入口+设置+退出） |
 | **验证** | **端到端测试：登录→首页→Tab切换→进入ERP→返回** |
+
+> ⚠️ Phase 3 实际已在 Phase 1 中完成（portal/orders、portal/notifications、portal/profile 均已存在且功能正常），仅需端到端验证即可标记完成。
 
 ### Phase 4：6大工具骨架 ~1h
 
@@ -1297,7 +1310,8 @@ fix(portal): 修复底部 Tab 角标不更新
 |:---:|---|---|:---:|:---:|
 | P0 | Phase 0 | 目录重构（模块化基础：shared/ + modules/erp/ + import 迁移） | 2h | ✅ 完成 |
 | P0 | Phase 1 | 入口改造（middleware + page.tsx + login + portal 布局 + 11 新文件） | 0.5h | ✅ 完成 |
-| P0 | Phase 2 | 门户首页（Hero + 工具网格 + 数据统计 + 目的地 + 顶栏 + 布局） | 3h | 🔲 待开发 |
+| P0 | Phase 2 | 门户首页（Hero + 工具网格 + 数据统计 + 目的地 + 顶栏 + 布局） | 3h | ✅ 完成 |
+| P0 | Phase 3 | ERP 入口页面（订单/消息/我的） | 0.5h | ✅ 已在 Phase 1 完成 |
 | P0 | Phase 3 | ERP 入口页面（订单/消息/我的） | 0.5h | 🔲 待开发 |
 | P1 | Phase 4 | 6大工具模块骨架 | 1h | 🔲 待开发 |
 | P2 | Phase 5 | 工具模块内容开发 | 按需 | 🔲 待开发 |

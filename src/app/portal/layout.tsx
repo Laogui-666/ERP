@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@shared/lib/utils'
+import { PortalTopbar } from '@/components/portal/portal-topbar'
 
 const TABS = [
   { href: '/', label: '首页', icon: HomeIcon },
@@ -16,8 +17,10 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="flex min-h-screen flex-col">
-      {/* 内容区 */}
-      <main className="flex-1 pb-[68px]">{children}</main>
+      <PortalTopbar />
+
+      {/* 内容区（顶栏 56px + 底部 Tab 68px） */}
+      <main className="flex-1 pb-[68px] pt-14">{children}</main>
 
       {/* 底部 Tab 导航 */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.06] bg-[rgba(22,27,41,0.92)] backdrop-blur-xl safe-area-bottom">

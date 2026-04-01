@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { io, Socket } from 'socket.io-client'
-import type { ChatMessageSocketPayload, ChatTypingPayload, ChatReadPayload } from '@erp/types/chat'
+import type { ChatMessageSocketPayload, ChatTypingPayload, ChatReadPayload } from '@shared/types/socket-events'
 
 // ==================== 回调注册表 ====================
 // 多组件共享单例 socket，通过注册表分发事件

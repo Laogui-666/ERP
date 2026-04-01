@@ -44,30 +44,9 @@ export interface ChatRoomSummary {
   status: 'ACTIVE' | 'ARCHIVED' | 'MUTED'
 }
 
-// Socket 事件 payload
-export interface ChatMessageSocketPayload {
-  id: string
-  roomId: string
-  orderId: string
-  senderId: string
-  senderName: string
-  senderAvatar: string | null
-  type: 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
-  content: string
-  fileName?: string | null
-  fileSize?: number | null
-  createdAt: string
-}
-
-export interface ChatTypingPayload {
-  orderId: string
-  userId: string
-  realName: string
-}
-
-export interface ChatReadPayload {
-  orderId: string
-  userId: string
-  realName: string
-  lastReadMessageId: string
-}
+// Socket 事件 payload — 从 shared 层统一导出
+export type {
+  ChatMessageSocketPayload,
+  ChatTypingPayload,
+  ChatReadPayload,
+} from '@shared/types/socket-events'

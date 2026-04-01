@@ -1275,7 +1275,7 @@ import type { UserRole } from '@/types/user'
 # 1. ERP 功能零影响
 npx tsc --noEmit          # 0 errors
 npm run build              # 通过
-npx vitest run             # 93 tests pass
+npx vitest run             # 91 tests pass
 
 # 2. ERP 路由正常
 # 浏览器访问 /admin/dashboard → 正常

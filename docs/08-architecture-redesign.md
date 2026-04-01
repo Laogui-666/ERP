@@ -2,13 +2,13 @@
 
 # 架构升级方案 — 分层模块化 + 门户化改造
 
-> **文档版本**: V5.3
+> **文档版本**: V5.4
 > **创建日期**: 2026-03-31
-> **最后更新**: 2026-04-01 17:36
-> **基于**: 158 源文件实际依赖扫描 + 逐文件 import 追踪
+> **最后更新**: 2026-04-01 18:30
+> **基于**: 160 源文件实际依赖扫描 + 逐文件 import 追踪
 > **目标**: 将现有 ERP 系统重构为平台的一个业务模块，新建门户层和共享基础设施层，实现真正的模块化架构
 > **原则**: 源码级模块化、故障隔离、可扩展、门户首页精心设计
-> **当前状态**: Phase 0 目录重构 ✅ | Phase 1 入口改造 ✅ | Phase 2 门户首页 ✅ | Phase 3 ERP 入口 ✅ | Phase 4 工具骨架 ✅（tsc 0 错误 / build 通过 / 91 测试通过）
+> **当前状态**: Phase 0 ✅ | Phase 1 ✅ | Phase 2 ✅ | Phase 3 ✅ | Phase 4 ✅ | 架构合规修复 ✅（tsc 0 错误 / build 通过 / 91 测试通过）
 
 ---
 
@@ -1073,6 +1073,26 @@ model GeneratedDocument {
 
 > 6个工具页在 Phase 1 中创建，每个均为标准"即将上线"占位页，带 title metadata，UI 风格统一。
 
+### Phase 4.5：架构合规修复（2026-04-01）
+
+Phase 0-4 完成后深度审查发现 5 项架构违规/缺口，已全部修复：
+
+| # | 级别 | 问题 | 修复 | 文件 |
+|---|:---:|---|---|---|
+| 1 | 🔴 P0 | `shared/hooks/use-socket-client.ts` import `@erp/types/chat`，违反 shared→modules 边界 | 新建 `shared/types/socket-events.ts`，将 3 个 Socket payload 类型提升到 shared 层；`use-socket-client.ts` 改引 `@shared/types/socket-events`；`modules/erp/types/chat.ts` 改为 re-export | 3 文件 |
+| 2 | 🔴 P0 | ChatRoom/ChatMessage/ChatRead Schema 有但无 migration 文件，数据库不会创建表 | 新建 `prisma/migrations/20260329_add_m4_chat_tables/migration.sql`（含 3 张表 + 全部索引） | 1 文件 |
+| 3 | 🟡 P1 | 3 个 ERP 模块测试文件（transition/desensitize/chat-system）仍在 `shared/lib/__tests__/`，违反模块边界 | 移到 `modules/erp/lib/__tests__/` | 3 文件移动 |
+| 4 | 🟡 P1 | `/403` 页面硬编码"返回工作台"链接 `/admin/dashboard`，客户用户点击会再次被 middleware 拦截 | 改为 `'use client'` + `useAuth` 按角色分流：CUSTOMER → `/`，员工 → `/admin/dashboard` | 1 文件 |
+| 5 | 📝 | 文档多处测试数量写 "93 passed"，实际 91 | 08-architecture-redesign + 04-dev-standards 统一修正为 91 | 2 文件 |
+
+**验证**: `npx tsc --noEmit` = 0 错误 / `npm run build` = 通过 / `npx vitest run` = 91 pass
+
+**架构边界确认（修复后）**:
+- `shared/` → 无任何 `@erp/*` 引用 ✅
+- `modules/erp/` → 仅引用 `@shared/*` ✅
+- `src/app/` → 引用 `@shared/*` + `@erp/*` ✅（组装层允许）
+- `src/components/portal/` → 仅引用 `@shared/*` ✅
+
 ### Phase 5：工具模块内容开发（按需）
 
 每个模块按以下流程：
@@ -1088,7 +1108,7 @@ model GeneratedDocument {
 # 每个阶段完成后执行
 npx tsc --noEmit           # 0 errors
 npm run build              # 通过
-npx vitest run             # 93 passed
+npx vitest run             # 91 passed
 
 # ERP 功能零影响确认
 # /admin/dashboard → 正常
@@ -1338,7 +1358,7 @@ npm run build
 
 # 3. 单元测试
 npx vitest run
-# 期望: 93 passed
+# 期望: 91 passed
 
 # 4. ERP 功能零影响确认
 # 浏览器访问 /admin/dashboard → 正常

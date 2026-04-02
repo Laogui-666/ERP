@@ -69,7 +69,7 @@ export default function CustomerLayout({
       <header className="glass-topbar sticky top-0 z-50 px-4 py-3.5">
         <div className="mx-auto flex max-w-lg items-center justify-between">
           <h1 className="text-[15px] font-bold text-[var(--color-text-primary)] tracking-tight">
-            沐海旅行
+            华夏签证
           </h1>
           <div className="flex items-center gap-3">
             <span className="text-[12px] text-[var(--color-text-secondary)] font-medium">

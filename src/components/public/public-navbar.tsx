@@ -7,7 +7,7 @@ import { useAuthStore } from '@shared/stores/auth-store'
 import type { UserProfile } from '@shared/types/user'
 
 /**
- * 盼达旅行 - 公共导航栏
+ * 华夏签证 - 公共导航栏
  * 包含账号信息面板和ERP入口
  */
 export function PublicNavbar() {
@@ -88,7 +88,7 @@ export function PublicNavbar() {
               </svg>
             </div>
             <span className="text-[17px] font-bold tracking-tight text-[var(--color-text-primary)]">
-              盼达旅行
+              华夏签证
             </span>
           </Link>
 

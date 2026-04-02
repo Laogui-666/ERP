@@ -138,7 +138,7 @@ export default function RegisterPage() {
         </div>
 
         <p className="mt-8 text-center text-[11px] text-[var(--color-text-placeholder)] opacity-50 anim-initial animate-fade-in delay-250 tracking-wide">
-          Visa ERP v0.1.0 · 沐海旅行 © 2026
+          华夏签证 v0.1.0 · 华夏签证 © 2026
         </p>
       </div>
     </div>

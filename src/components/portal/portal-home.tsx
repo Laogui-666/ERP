@@ -46,7 +46,7 @@ export function PortalHomePage() {
       {/* 页脚 */}
       <footer className="border-t border-white/[0.04] px-4 py-6 text-center">
         <p className="text-[11px] text-[var(--color-text-placeholder)] opacity-50">
-          © 2026 沐海旅行 · 关于我们 · 联系方式 · 隐私政策
+          © 2026 华夏签证 · 关于我们 · 联系方式 · 隐私政策
         </p>
       </footer>
     </div>

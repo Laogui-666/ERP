@@ -5,8 +5,8 @@ import { ToastProvider } from '@shared/ui/toast'
 import { DynamicBackground } from '@shared/ui/dynamic-bg'
 
 export const metadata: Metadata = {
-  title: '沐海旅行 - 签证ERP系统',
-  description: '签证办理行业专属 SaaS 多租户 ERP 系统',
+  title: '华夏签证 - 一站式签证服务平台',
+  description: '专业签证办理 · 智能工具 · 一站式服务',
 }
 
 export default function RootLayout({

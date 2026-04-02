@@ -3,7 +3,7 @@ import { PublicHomePage } from '@/components/public/public-home-page'
 import { DynamicBackground } from '@shared/ui/dynamic-bg'
 
 /**
- * 根路径首页 — 盼达旅行品牌门户
+ * 根路径首页 — 华夏签证品牌门户
  * 
  * 统一入口设计：
  * - 未登录用户：显示品牌首页，可浏览服务、注册/登录

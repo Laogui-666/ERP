@@ -40,7 +40,7 @@ export function PortalTopbar() {
         <Link href="/" className="flex items-center gap-2">
           <span className="text-xl">🌊</span>
           <span className="text-[15px] font-semibold tracking-tight text-[var(--color-text-primary)]">
-            沐海旅行
+            华夏签证
           </span>
         </Link>
 

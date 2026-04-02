@@ -1,10 +1,10 @@
-﻿# 沐海旅行 - 签证行业ERP系统
+﻿# 华夏签证 - 签证行业ERP系统
 
 # 开发规范
 
-> **文档版本**: V17.0
+> **文档版本**: V18.0
 > **生成日期**: 2026-03-19
-$12026-04-01 19:00
+> **最后更新**: 2026-04-02
 > **适用范围**: 全团队所有开发人员
 
 ---
@@ -1221,11 +1221,11 @@ npm run build          # 完整构建验证
 
 ---
 
-## 15. 门户开发规范（M7 起生效）
+## 15. C 端平台开发规范（M8 起生效）
 
 ### 15.1 核心原则
 
-**ERP 零改动**：`admin/*`、`customer/*`、`api/*`、`lib/*`、`hooks/*`、`stores/*`、`types/*` 下的现有文件 **禁止修改**。门户和新模块是纯增量代码。
+**ERP 零改动**：`admin/*`、`customer/*`、`api/*`、`modules/erp/*`、`shared/lib/*`、`shared/ui/*`、`shared/stores/*`、`shared/hooks/*`、`shared/types/*` 下的现有文件 **禁止修改**。C 端页面和组件是纯增量或替换现有门户层文件。
 
 ### 15.2 目录规范
 
@@ -1233,7 +1233,7 @@ npm run build          # 完整构建验证
 |---|---|
 | 门户页面 | `src/app/portal/*` |
 | 门户通用组件 | `src/components/portal/*` |
-| 工具模块页面 | `src/app/portal/tools/{module}/page.tsx` |
+| 工具模块页面 | `src/app/portal/tools/{module}/page.tsx` (保留) |
 | 工具模块 API | `src/app/api/{module}/route.ts` |
 | 工具模块组件 | `src/components/portal/{module}/*.tsx`（或页面内联） |
 
@@ -1260,12 +1260,12 @@ import type { UserRole } from '@/types/user'
 - 新表必须包含 `companyId String?` 字段（如需多租户隔离）
 - 新表必须包含 `createdAt DateTime @default(now())`
 
-### 15.5 Portal 布局规范
+### 15.5 C 端布局规范
 
-- 门户使用独立 `layout.tsx`，不复用 admin/customer 布局
-- 底部 Tab 使用 `glass-topbar` 样式（与 customer layout 统一）
-- 门户页面默认 `max-w-lg mx-auto`（移动端优先）
-- 首页 `/` 是 Server Component（SEO），交互部分用 Client Component
+- C 端使用独立 `layout.tsx`（含底部 5 Tab），不复用 admin/customer 布局
+- 底部 5 Tab：首页/服务/工具/订单/我的
+- 首页不限宽（全屏 Hero），工具页/服务页 `max-w-lg mx-auto`（移动端优先）
+- 首页 `/` 是 Server Component 壳（SEO），交互部分用 Client Component
 
 ### 15.6 验证清单
 
@@ -1283,7 +1283,7 @@ npx vitest run             # 91 tests pass
 # 浏览器访问 /api/health → 正常
 
 # 3. 无违规修改
-git diff --name-only | grep -v "^src/app/portal/\|^src/components/portal/\|^src/app/page.tsx\|^src/app/(auth)/login/\|^src/middleware.ts"
+git diff --name-only | grep -v "^src/app/portal/|^src/components/portal/|^src/app/page.tsx|^src/app/services/|^src/app/tools/|^src/app/(auth)/|^src/middleware.ts"\|^src/components/portal/\|^src/app/page.tsx\|^src/app/(auth)/login/\|^src/middleware.ts"
 # 期望: 空（只改了允许的文件）
 ```
 

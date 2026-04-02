@@ -3,7 +3,7 @@
 import Link from 'next/link'
 
 /**
- * 盼达旅行 - 品牌首页
+ * 华夏签证 - 品牌首页
  * 公开浏览，所有用户可见
  */
 export function PublicHomePage() {
@@ -251,7 +251,7 @@ export function PublicHomePage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <span className="text-[15px] font-bold text-[var(--color-text-primary)]">盼达旅行</span>
+                <span className="text-[15px] font-bold text-[var(--color-text-primary)]">华夏签证</span>
               </div>
               <p className="mt-3 text-[13px] text-[var(--color-text-secondary)]">
                 四海无界，一站畅游
@@ -303,7 +303,7 @@ export function PublicHomePage() {
 
           <div className="mt-10 pt-8 border-t border-white/[0.04] text-center">
             <p className="text-[12px] text-[var(--color-text-placeholder)] opacity-50">
-              © 2024 盼达旅行. All rights reserved. | 战略合作伙伴：华夏国际旅行社
+              © 2024 华夏签证. All rights reserved. | 战略合作伙伴：华夏国际旅行社
             </p>
           </div>
         </div>

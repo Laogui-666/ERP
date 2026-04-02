@@ -3,7 +3,7 @@
 > **文档版本**: V4.1
 > **最后更新**: 2026-04-03
 > **用途**: 本文件是 C 端平台化改造的唯一开发手册（M8-M12）。任何开发者/AI 拿到本文件 + Git仓库即可完整执行开发，无需额外上下文。
-> **前置状态**: M1-M7 全部完成 ✅，M8 Phase 1 品牌统一 ✅，账户系统审查通过 ✅，168 源文件 / ~21,383 行 / 57 API 路由 / 91 测试用例
+> **前置状态**: M1-M7 全部完成 ✅，M8 Phase 1 品牌统一 ✅，M8 Phase 2 导航体系 ✅，账户系统审查通过 ✅，168 源文件 / ~21,400 行 / 57 API 路由 / 91 测试用例
 
 ---
 
@@ -721,13 +721,13 @@ npx vitest run           # 91 tests pass
 
 ```
 Phase 1 (0.5h) → 品牌统一（8文件改文字） ✅ 已完成 2026-04-03
-Phase 2 (1.0h) → 导航体系（底部Tab+middleware+重定向+新路由页面壳）
+Phase 2 (1.0h) → 导航体系（底部Tab+middleware+重定向+新路由页面壳） ✅ 已完成 2026-04-03
 Phase 3 (3.5h) → 首页重写（11个新组件+删除6个旧文件+page.tsx组装）
 Phase 4 (0.5h) → "我的"页面重写
 Phase 5 (1.0h) → 服务页+工具箱首页
 Phase 6 (0.5h) → 全量验收
 ─────────────────────────────────
-合计 7.0h（Phase 1 已完成，剩余 6.5h）
+合计 7.0h（Phase 1-2 已完成，剩余 5.5h）
 ```
 
 ---
@@ -767,7 +767,20 @@ grep -rn "沐海\|盼达" src/ --include="*.tsx" --include="*.ts"
 
 ---
 
-## 8. Phase 2: 导航体系改造
+## 8. Phase 2: 导航体系改造 ✅ 已完成
+
+> **完成日期**: 2026-04-03
+> **验证结果**: TypeScript 0 错误 / Build 通过 / 91 测试通过
+
+### Phase 2 实际变更
+
+| # | 文件 | 操作 | 状态 |
+|---|---|---|:---:|
+| 1 | `src/middleware.ts` | PUBLIC_ROUTES 加 `/services` `/tools`；加 `/orders` `/profile` 重定向 | ✅ |
+| 2 | `src/components/portal/app-bottom-tab.tsx` | 新建 5 Tab 底部导航（首页/服务/工具/订单/我的） | ✅ |
+| 3 | `src/app/portal/layout.tsx` | 重写：移除 PortalTopbar，使用 AppBottomTab，去掉 pt-14 | ✅ |
+| 4 | `src/app/orders/page.tsx` | 新建：重定向到 /portal/orders | ✅ |
+| 5 | `src/app/portal/notifications/page.tsx` | 改为 Server Component 重定向到 /portal/profile | ✅ |
 
 ### 7.1 修改 `src/middleware.ts`
 

@@ -16,6 +16,8 @@ const PUBLIC_ROUTES = [
   '/login',
   '/register',
   '/reset-password',
+  '/services',
+  '/tools',
 ]
 
 function isPublicRoute(pathname: string): boolean {
@@ -63,6 +65,16 @@ export async function middleware(request: NextRequest) {
   // 门户页面 → 所有登录用户可访问
   if (pathname.startsWith('/portal')) {
     return NextResponse.next()
+  }
+
+  // /orders → 重定向到门户订单页（已登录用户）
+  if (pathname === '/orders') {
+    return NextResponse.redirect(new URL('/portal/orders', request.url))
+  }
+
+  // /profile → 重定向到门户个人中心（已登录用户）
+  if (pathname === '/profile') {
+    return NextResponse.redirect(new URL('/portal/profile', request.url))
   }
 
   // 客户访问 /admin → 跳转门户首页

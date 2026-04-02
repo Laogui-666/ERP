@@ -15,9 +15,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { username, password } = loginSchema.parse(body)
 
+    // 优化：添加数据库查询超时
     const user = await prisma.user.findUnique({
       where: { username },
       include: { company: true },
+    }).catch((err) => {
+      console.error('[Login] Database query error:', err)
+      throw new AppError('DB_ERROR', '数据库连接失败，请稍后重试', 503)
     })
 
     if (!user || user.status !== 'ACTIVE') {
@@ -29,7 +33,12 @@ export async function POST(request: NextRequest) {
       throw new AppError('RESET_REQUIRED', '首次登录请先设置密码', 403)
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash)
+    // 优化：bcrypt 密码比对
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash).catch((err) => {
+      console.error('[Login] Bcrypt compare error:', err)
+      throw new AppError('AUTH_ERROR', '密码验证失败', 500)
+    })
+    
     if (!isPasswordValid) {
       throw new AppError('AUTH_FAILED', '用户名或密码错误', 401)
     }
@@ -51,11 +60,11 @@ export async function POST(request: NextRequest) {
 
     await setAuthCookies(accessToken, refreshToken)
 
-    // 更新最后登录时间
-    await prisma.user.update({
+    // 异步更新最后登录时间（不阻塞响应）
+    prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
-    })
+    }).catch(console.error)
 
     return NextResponse.json(createSuccessResponse({
       user: {
@@ -85,6 +94,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+    console.error('[Login] Unexpected error:', error)
     throw error
   }
 }

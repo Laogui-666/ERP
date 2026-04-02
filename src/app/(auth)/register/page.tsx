@@ -68,7 +68,7 @@ export default function RegisterPage() {
             公司入驻
           </h1>
           <p className="mt-2 text-[var(--color-text-secondary)] text-[13px]">
-            注册账号，开始使用签证 ERP 系统
+            注册账号，开启便捷签证之旅
           </p>
         </div>
 

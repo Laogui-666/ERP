@@ -50,7 +50,7 @@ export default function LoginPage() {
             华夏签证
           </h1>
           <p className="mt-2 text-[var(--color-text-secondary)] text-[13px] tracking-wide">
-            签证行业 ERP 管理系统
+            一站式签证服务平台
           </p>
         </div>
 

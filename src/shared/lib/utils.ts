@@ -60,7 +60,7 @@ export function formatMessageTime(date: Date | string | null): string {
  * 生成系统专属订单号
  * 格式: HX + YYYYMMDD + 6位随机码（hex）
  * 示例: HX20260320A3F2B1
- * HX = 沐海/公司标识，一眼可识别为本系统订单
+ * HX = 华夏签证/公司标识，一眼可识别为本系统订单
  *
  * 注意：使用 Math.random() 而非 crypto.randomBytes
  * 原因：utils.ts 被浏览器端代码打包，crypto 仅 Node.js 可用。

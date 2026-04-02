@@ -168,7 +168,7 @@ export function PublicNavbar() {
                             进入{getErpEntry(user).label}
                           </div>
                           <div className="text-[11px] text-[var(--color-primary)]">
-                            点击访问 ERP 系统
+                            点击进入后台管理
                           </div>
                         </div>
                         <svg className="w-4 h-4 ml-auto text-[var(--color-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">

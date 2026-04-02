@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useAuthStore } from '@shared/stores/auth-store'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuthStore()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -17,28 +19,18 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        if (data.error?.code === 'RESET_REQUIRED') {
-          router.push(`/reset-password?username=${encodeURIComponent(username)}`)
-          return
-        }
-        setError(data.error?.message || '登录失败')
-        return
-      }
-
-      // Phase 1: 所有角色登录后跳转门户首页
+      await login(username, password)
+      // Zustand 状态已更新，直接跳转
       router.push('/')
       router.refresh()
-    } catch {
-      setError('网络错误，请重试')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '登录失败'
+      // 客户首次登录 → 跳转重置密码
+      if (msg.includes('首次登录') || msg.includes('RESET_REQUIRED')) {
+        router.push(`/reset-password?username=${encodeURIComponent(username)}`)
+        return
+      }
+      setError(msg)
     } finally {
       setLoading(false)
     }

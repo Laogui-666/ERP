@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
       email: profile.email,
       role: profile.role,
       companyId: profile.companyId,
+      departmentId: profile.departmentId,
       company: profile.company,
       department: profile.department,
       avatar: profile.avatar,

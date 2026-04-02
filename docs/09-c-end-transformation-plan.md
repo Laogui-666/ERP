@@ -3,7 +3,7 @@
 > **文档版本**: V4.1
 > **最后更新**: 2026-04-03
 > **用途**: 本文件是 C 端平台化改造的唯一开发手册（M8-M12）。任何开发者/AI 拿到本文件 + Git仓库即可完整执行开发，无需额外上下文。
-> **前置状态**: M1-M7 全部完成 ✅，M8 Phase 1 品牌统一 ✅，M8 Phase 2 导航体系 ✅，账户系统审查通过 ✅，168 源文件 / ~21,400 行 / 57 API 路由 / 91 测试用例
+> **前置状态**: M1-M7 全部完成 ✅，M8 Phase 1-3 全部完成 ✅，账户系统审查通过 ✅，170 源文件 / ~22,500 行 / 57 API 路由 / 91 测试用例
 
 ---
 
@@ -722,12 +722,12 @@ npx vitest run           # 91 tests pass
 ```
 Phase 1 (0.5h) → 品牌统一（8文件改文字） ✅ 已完成 2026-04-03
 Phase 2 (1.0h) → 导航体系（底部Tab+middleware+重定向+新路由页面壳） ✅ 已完成 2026-04-03
-Phase 3 (3.5h) → 首页重写（11个新组件+删除6个旧文件+page.tsx组装）
+Phase 3 (3.5h) → 首页重写（11个新组件+删除6个旧文件+page.tsx组装） ✅ 已完成 2026-04-03
 Phase 4 (0.5h) → "我的"页面重写
 Phase 5 (1.0h) → 服务页+工具箱首页
 Phase 6 (0.5h) → 全量验收
 ─────────────────────────────────
-合计 7.0h（Phase 1-2 已完成，剩余 5.5h）
+合计 7.0h（Phase 1-3 已完成，剩余 2.0h）
 ```
 
 ---
@@ -903,7 +903,41 @@ npx tsc --noEmit
 
 ---
 
-## 9. Phase 3: 首页重写
+## 9. Phase 3: 首页重写 ✅ 已完成
+
+> **完成日期**: 2026-04-03
+> **验证结果**: TypeScript 0 错误 / Build 通过 / 91 测试通过 / 旧引用无残留 / as any 0
+
+### Phase 3 实际变更
+
+**删除 6 个旧文件**：
+| 文件 | 状态 |
+|---|:---:|
+| `components/public/public-navbar.tsx` | ✅ 已删除 |
+| `components/public/public-home-page.tsx` | ✅ 已删除 |
+| `components/portal/portal-topbar.tsx` | ✅ 已删除 |
+| `components/portal/hero-banner.tsx` | ✅ 已删除 |
+| `components/portal/portal-home.tsx` | ✅ 已删除 |
+| `components/portal/tool-grid.tsx` | ✅ 已删除 |
+
+**新建 10 个组件 + 重写 page.tsx**：
+| 文件 | 说明 | 创新点 |
+|---|---|---|
+| `app-navbar.tsx` | 顶部导航栏（滚动透明→毛玻璃+搜索+登录态判断） | — |
+| `hero-section.tsx` | Hero区域（渐变网格+逐词渐显+视差+搜索+标签+磁性CTA） | #1 #2 #4 #7 #8 #10 |
+| `destination-cards.tsx` | 热门目的地横向滚动（8国家卡片+3D倾斜+scroll-snap） | #3 #5 |
+| `tool-showcase.tsx` | 6大工具展示（2×3网格+stagger入场+hover sweep） | #9 #10 |
+| `value-props.tsx` | 价值主张（4格大数字锚点+scroll-driven入场） | #3 |
+| `how-it-works.tsx` | 四步流程（步骤连接线动画） | #3 |
+| `testimonials.tsx` | 用户评价（3条模拟数据+自动轮播+指示点） | — |
+| `stats-section.tsx` | 数据统计（数字滚动动画+stagger入场） | #3 #6 |
+| `cta-section.tsx` | CTA行动召唤（渐变背景+发光按钮） | — |
+| `app-footer.tsx` | 页脚（4列布局+品牌slogan） | — |
+| `page.tsx` | 组装首页（Server Component壳+DynamicBackground+AppBottomTab） | — |
+
+**CSS 新增**（globals.css）：7个关键帧（gradientDrift×3/shimmerSweep/springInUp/drawLine/slideUp/digitSlide）+ 4个工具类（shimmer-text/scroll-reveal/bottom-sheet）
+
+**Tailwind 新增**：8个动画注册
 
 ### 8.1 总览
 

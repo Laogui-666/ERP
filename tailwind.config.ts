@@ -42,6 +42,13 @@ const config: Config = {
         'shimmer': 'shimmer 1.8s ease-in-out infinite',
         'shake': 'shake 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         'float': 'float 6s ease-in-out infinite',
+        'gradient-drift-1': 'gradientDrift1 25s ease-in-out infinite',
+        'gradient-drift-2': 'gradientDrift2 30s ease-in-out infinite',
+        'gradient-drift-3': 'gradientDrift3 20s ease-in-out infinite',
+        'shimmer-sweep': 'shimmerSweep 4s ease-in-out infinite',
+        'spring-in-up': 'springInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+        'draw-line': 'drawLine 1s ease-out forwards',
+        'slide-up': 'slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
       },
       keyframes: {
         fadeInUp: {

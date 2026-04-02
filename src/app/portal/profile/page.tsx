@@ -1,17 +1,115 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@shared/hooks/use-auth'
 import { GlassCard } from '@shared/ui/glass-card'
 import { useToast } from '@shared/ui/toast'
 import { apiFetch } from '@shared/lib/api-client'
+import { cn } from '@shared/lib/utils'
+
+// ==================== 类型 ====================
+
+interface OrderStat {
+  label: string
+  status: string
+  count: number
+  color: string
+  bgColor: string
+}
+
+interface NotificationItem {
+  id: string
+  type: string
+  title: string
+  content: string
+  isRead: boolean
+  createdAt: string
+  orderId?: string | null
+}
+
+// ==================== 常量 ====================
+
+const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: '超级管理员',
+  COMPANY_OWNER: '公司负责人',
+  CS_ADMIN: '客服部管理员',
+  CUSTOMER_SERVICE: '客服',
+  VISA_ADMIN: '签证部管理员',
+  DOC_COLLECTOR: '资料员',
+  OPERATOR: '签证操作员',
+  OUTSOURCE: '外包业务员',
+  CUSTOMER: '普通用户',
+}
+
+const TOOL_SHORTCUTS = [
+  {
+    href: '/portal/tools/itinerary',
+    label: '行程规划',
+    icon: '🗺️',
+    desc: 'AI 智能规划',
+    gradient: 'from-green-400/20 to-emerald-400/10',
+  },
+  {
+    href: '/portal/tools/form-helper',
+    label: '申请表',
+    icon: '📝',
+    desc: '智能填写',
+    gradient: 'from-amber-400/20 to-orange-400/10',
+  },
+  {
+    href: '/portal/tools/translator',
+    label: '翻译',
+    icon: '🌐',
+    desc: '多语言翻译',
+    gradient: 'from-pink-400/20 to-rose-400/10',
+  },
+]
+
+const NOTIFICATION_ICONS: Record<string, { emoji: string; color: string }> = {
+  ORDER_NEW: { emoji: '📬', color: 'text-[var(--color-info)]' },
+  ORDER_CREATED: { emoji: '📋', color: 'text-[var(--color-info)]' },
+  STATUS_CHANGE: { emoji: '🔄', color: 'text-[var(--color-warning)]' },
+  DOC_REVIEWED: { emoji: '📄', color: 'text-[var(--color-primary)]' },
+  MATERIAL_UPLOADED: { emoji: '📎', color: 'text-[var(--color-success)]' },
+  MATERIAL_FEEDBACK: { emoji: '💬', color: 'text-[var(--color-accent)]' },
+  APPOINTMENT_REMIND: { emoji: '⏰', color: 'text-[var(--color-warning)]' },
+  DOCS_SUBMITTED: { emoji: '✅', color: 'text-[var(--color-success)]' },
+  CHAT_MESSAGE: { emoji: '💬', color: 'text-[var(--color-accent)]' },
+  SYSTEM: { emoji: '🔔', color: 'text-[var(--color-text-secondary)]' },
+}
+
+function formatRelativeTime(dateStr: string): string {
+  const now = Date.now()
+  const then = new Date(dateStr).getTime()
+  const diff = now - then
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+
+  if (minutes < 1) return '刚刚'
+  if (minutes < 60) return `${minutes}分钟前`
+  if (hours < 24) return `${hours}小时前`
+  if (days < 7) return `${days}天前`
+  return new Date(dateStr).toLocaleDateString('zh-CN')
+}
+
+// ==================== 主页面 ====================
 
 export default function PortalProfilePage() {
   const router = useRouter()
   const { user, logout } = useAuth()
   const { toast } = useToast()
+
+  // 订单统计
+  const [orderStats, setOrderStats] = useState<OrderStat[]>([])
+  const [statsLoading, setStatsLoading] = useState(true)
+
+  // 通知预览
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [notifsLoading, setNotifsLoading] = useState(true)
 
   // 修改密码
   const [showPwForm, setShowPwForm] = useState(false)
@@ -23,6 +121,78 @@ export default function PortalProfilePage() {
   const [showOld, setShowOld] = useState(false)
   const [showNew, setShowNew] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+
+  // ==================== 数据加载 ====================
+
+  const fetchOrderStats = useCallback(async () => {
+    if (!user) return
+    try {
+      // 客户看自己的订单，员工看分配给自己的订单
+      // 并行请求3个关键状态的计数
+      const statuses = user.role === 'CUSTOMER'
+        ? [
+            { label: '进行中', statuses: ['CONNECTED', 'COLLECTING_DOCS', 'PENDING_REVIEW', 'UNDER_REVIEW', 'MAKING_MATERIALS', 'PENDING_DELIVERY'], color: '#C4A97D', bgColor: 'rgba(196,169,125,0.12)' },
+            { label: '已交付', statuses: ['DELIVERED'], color: '#7FA87A', bgColor: 'rgba(127,168,122,0.12)' },
+            { label: '已完成', statuses: ['APPROVED', 'REJECTED', 'PARTIAL'], color: '#7C8DA6', bgColor: 'rgba(124,141,166,0.12)' },
+          ]
+        : [
+            { label: '待处理', statuses: ['PENDING_CONNECTION', 'PENDING_REVIEW'], color: '#C4A97D', bgColor: 'rgba(196,169,125,0.12)' },
+            { label: '进行中', statuses: ['CONNECTED', 'COLLECTING_DOCS', 'UNDER_REVIEW', 'MAKING_MATERIALS', 'PENDING_DELIVERY'], color: '#9B8EC4', bgColor: 'rgba(155,142,196,0.12)' },
+            { label: '已完成', statuses: ['DELIVERED', 'APPROVED', 'REJECTED', 'PARTIAL'], color: '#7FA87A', bgColor: 'rgba(127,168,122,0.12)' },
+          ]
+
+      const results = await Promise.all(
+        statuses.map(async (s) => {
+          // 每个状态组用 OR 查询
+          const statusParam = s.statuses.join(',')
+          try {
+            const res = await apiFetch(`/api/orders?pageSize=1&status=${statusParam}`)
+            const json = await res.json()
+            return {
+              label: s.label,
+              status: statusParam,
+              count: json.meta?.total ?? 0,
+              color: s.color,
+              bgColor: s.bgColor,
+            }
+          } catch {
+            return { label: s.label, status: statusParam, count: 0, color: s.color, bgColor: s.bgColor }
+          }
+        })
+      )
+
+      setOrderStats(results)
+    } catch {
+      // 静默失败，统计不是关键功能
+    } finally {
+      setStatsLoading(false)
+    }
+  }, [user])
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return
+    try {
+      const res = await apiFetch('/api/notifications?pageSize=3')
+      const json = await res.json()
+      if (json.success) {
+        setNotifications(json.data ?? [])
+        setUnreadCount(json.meta?.unreadCount ?? 0)
+      }
+    } catch {
+      // 静默失败
+    } finally {
+      setNotifsLoading(false)
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (user) {
+      fetchOrderStats()
+      fetchNotifications()
+    }
+  }, [user, fetchOrderStats, fetchNotifications])
+
+  // ==================== 修改密码 ====================
 
   const validateNewPassword = (pw: string): string | null => {
     if (pw.length < 8) return '至少8位'
@@ -99,54 +269,211 @@ export default function PortalProfilePage() {
     router.push('/login')
   }
 
+  // ==================== 渲染 ====================
+
   if (!user) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-[var(--color-text-secondary)]">加载中...</p>
+        <div className="skeleton h-20 w-20 rounded-full" />
       </div>
     )
   }
 
   const isEmployee = user.role !== 'CUSTOMER'
 
-  const ROLE_LABELS: Record<string, string> = {
-    SUPER_ADMIN: '超级管理员',
-    COMPANY_OWNER: '公司负责人',
-    CS_ADMIN: '客服部管理员',
-    CUSTOMER_SERVICE: '客服',
-    VISA_ADMIN: '签证部管理员',
-    DOC_COLLECTOR: '资料员',
-    OPERATOR: '签证操作员',
-    OUTSOURCE: '外包业务员',
-    CUSTOMER: '客户',
-  }
-
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
-      {/* 用户信息卡片 */}
-      <GlassCard intensity="medium" className="p-6">
+    <div className="mx-auto max-w-lg px-4 py-6 space-y-4">
+      {/* ====== 1. 用户信息卡片 ====== */}
+      <GlassCard intensity="medium" className="p-6 animate-fade-in-up">
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--color-primary)]/25 to-[var(--color-accent)]/15 border border-white/10">
             <span className="text-xl">{isEmployee ? '👤' : '🙋'}</span>
           </div>
-          <div>
-            <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)] truncate">
               {user.realName}
             </h2>
-            <p className="mt-0.5 text-[13px] text-[var(--color-text-secondary)]">
+            <p className="mt-0.5 text-[13px] text-[var(--color-text-secondary)] truncate">
               {ROLE_LABELS[user.role] || user.role}
               {user.company?.name && ` · ${user.company.name}`}
             </p>
           </div>
+          <Link
+            href="/portal/profile"
+            className="flex-shrink-0 rounded-xl bg-white/[0.06] px-3 py-1.5 text-[12px] text-[var(--color-text-secondary)] transition-colors hover:bg-white/[0.10] hover:text-[var(--color-text-primary)]"
+          >
+            编辑资料
+          </Link>
         </div>
       </GlassCard>
 
-      {/* 菜单列表 */}
-      <div className="mt-4 space-y-2">
+      {/* ====== 2. 订单快捷统计 ====== */}
+      <section className="animate-fade-in-up" style={{ animationDelay: '80ms' }}>
+        <div className="mb-2 flex items-center justify-between px-1">
+          <h3 className="text-[13px] font-medium text-[var(--color-text-secondary)]">我的订单</h3>
+          <Link
+            href="/portal/orders"
+            className="text-[12px] text-[var(--color-primary)] hover:text-[var(--color-primary-light)] transition-colors"
+          >
+            全部订单 →
+          </Link>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {statsLoading
+            ? [0, 1, 2].map((i) => (
+                <div key={i} className="glass-card-light rounded-xl p-3">
+                  <div className="skeleton mb-1 h-6 w-8 rounded" />
+                  <div className="skeleton h-3 w-12 rounded" />
+                </div>
+              ))
+            : orderStats.map((stat) => (
+                <Link key={stat.label} href="/portal/orders">
+                  <GlassCard
+                    intensity="light"
+                    hover
+                    className="rounded-xl p-3 text-center transition-all active:scale-[0.97]"
+                  >
+                    <p
+                      className="text-[22px] font-bold tabular-nums"
+                      style={{ color: stat.color }}
+                    >
+                      {stat.count}
+                    </p>
+                    <p className="mt-0.5 text-[12px] text-[var(--color-text-secondary)]">
+                      {stat.label}
+                    </p>
+                  </GlassCard>
+                </Link>
+              ))}
+        </div>
+      </section>
+
+      {/* ====== 3. 常用工具快捷入口 ====== */}
+      <section className="animate-fade-in-up" style={{ animationDelay: '160ms' }}>
+        <div className="mb-2 px-1">
+          <h3 className="text-[13px] font-medium text-[var(--color-text-secondary)]">常用工具</h3>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {TOOL_SHORTCUTS.map((tool) => (
+            <Link key={tool.href} href={tool.href}>
+              <GlassCard
+                intensity="light"
+                hover
+                className="rounded-xl p-3 text-center transition-all active:scale-[0.97]"
+              >
+                <div
+                  className={cn(
+                    'mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br',
+                    tool.gradient
+                  )}
+                >
+                  <span className="text-lg">{tool.icon}</span>
+                </div>
+                <p className="text-[13px] font-medium text-[var(--color-text-primary)]">
+                  {tool.label}
+                </p>
+                <p className="mt-0.5 text-[11px] text-[var(--color-text-placeholder)]">
+                  {tool.desc}
+                </p>
+              </GlassCard>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ====== 4. 通知中心预览 ====== */}
+      <section className="animate-fade-in-up" style={{ animationDelay: '240ms' }}>
+        <div className="mb-2 flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-[13px] font-medium text-[var(--color-text-secondary)]">通知中心</h3>
+            {unreadCount > 0 && (
+              <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--color-error)] px-1 text-[10px] font-medium text-white">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </div>
+          <Link
+            href="/portal/notifications"
+            className="text-[12px] text-[var(--color-primary)] hover:text-[var(--color-primary-light)] transition-colors"
+          >
+            查看全部 →
+          </Link>
+        </div>
+        <GlassCard intensity="light" className="overflow-hidden rounded-xl">
+          {notifsLoading ? (
+            <div className="space-y-3 p-4">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="skeleton h-8 w-8 rounded-lg" />
+                  <div className="flex-1">
+                    <div className="skeleton mb-1 h-3 w-3/4 rounded" />
+                    <div className="skeleton h-3 w-1/2 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-8">
+              <span className="text-2xl">🔔</span>
+              <p className="text-[13px] text-[var(--color-text-placeholder)]">暂无通知</p>
+            </div>
+          ) : (
+            <div>
+              {notifications.map((notif, index) => {
+                const iconInfo = NOTIFICATION_ICONS[notif.type] ?? NOTIFICATION_ICONS.SYSTEM
+                return (
+                  <Link
+                    key={notif.id}
+                    href={notif.orderId ? `/portal/orders` : '/portal/notifications'}
+                    className={cn(
+                      'flex items-start gap-3 px-4 py-3 transition-colors hover:bg-white/[0.03] active:bg-white/[0.05]',
+                      index < notifications.length - 1 && 'border-b border-white/[0.04]',
+                      !notif.isRead && 'bg-[var(--color-primary)]/[0.04]'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg',
+                        !notif.isRead ? 'bg-[var(--color-primary)]/15' : 'bg-white/[0.05]'
+                      )}
+                    >
+                      <span className={cn('text-sm', iconInfo.color)}>{iconInfo.emoji}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className={cn(
+                          'text-[13px] truncate',
+                          !notif.isRead
+                            ? 'font-medium text-[var(--color-text-primary)]'
+                            : 'text-[var(--color-text-secondary)]'
+                        )}
+                      >
+                        {notif.title}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-[var(--color-text-placeholder)] truncate">
+                        {notif.content}
+                      </p>
+                    </div>
+                    <span className="flex-shrink-0 text-[11px] text-[var(--color-text-placeholder)]">
+                      {formatRelativeTime(notif.createdAt)}
+                    </span>
+                    {!notif.isRead && (
+                      <div className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[var(--color-primary)]" />
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </GlassCard>
+      </section>
+
+      {/* ====== 5. 菜单列表 ====== */}
+      <section className="space-y-2 animate-fade-in-up" style={{ animationDelay: '320ms' }}>
         {/* ERP 管理入口（仅员工可见） */}
         {isEmployee && (
           <Link href="/admin/dashboard">
-            <GlassCard intensity="light" hover className="flex items-center gap-3 p-4">
+            <GlassCard intensity="light" hover className="flex items-center gap-3 p-4 rounded-xl">
               <span className="text-lg">🖥️</span>
               <span className="text-[14px] text-[var(--color-text-primary)]">进入 ERP 管理后台</span>
               <svg className="ml-auto h-4 w-4 text-[var(--color-text-placeholder)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -157,7 +484,7 @@ export default function PortalProfilePage() {
         )}
 
         <Link href="/portal/orders">
-          <GlassCard intensity="light" hover className="flex items-center gap-3 p-4">
+          <GlassCard intensity="light" hover className="flex items-center gap-3 p-4 rounded-xl">
             <span className="text-lg">📋</span>
             <span className="text-[14px] text-[var(--color-text-primary)]">我的订单</span>
             <svg className="ml-auto h-4 w-4 text-[var(--color-text-placeholder)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -167,9 +494,14 @@ export default function PortalProfilePage() {
         </Link>
 
         <Link href="/portal/notifications">
-          <GlassCard intensity="light" hover className="flex items-center gap-3 p-4">
+          <GlassCard intensity="light" hover className="flex items-center gap-3 p-4 rounded-xl">
             <span className="text-lg">💬</span>
             <span className="text-[14px] text-[var(--color-text-primary)]">消息中心</span>
+            {unreadCount > 0 && (
+              <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--color-error)] px-1 text-[10px] font-medium text-white">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
             <svg className="ml-auto h-4 w-4 text-[var(--color-text-placeholder)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
             </svg>
@@ -178,11 +510,14 @@ export default function PortalProfilePage() {
 
         {/* 修改密码 */}
         <button onClick={() => setShowPwForm(!showPwForm)} className="w-full">
-          <GlassCard intensity="light" hover className="flex items-center gap-3 p-4">
+          <GlassCard intensity="light" hover className="flex items-center gap-3 p-4 rounded-xl">
             <span className="text-lg">🔒</span>
             <span className="text-[14px] text-[var(--color-text-primary)]">修改密码</span>
             <svg
-              className={`ml-auto h-4 w-4 text-[var(--color-text-placeholder)] transition-transform ${showPwForm ? 'rotate-90' : ''}`}
+              className={cn(
+                'ml-auto h-4 w-4 text-[var(--color-text-placeholder)] transition-transform duration-200',
+                showPwForm && 'rotate-90'
+              )}
               fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -192,17 +527,17 @@ export default function PortalProfilePage() {
 
         {/* 退出登录 */}
         <button onClick={handleLogout} className="w-full">
-          <GlassCard intensity="light" hover className="flex items-center gap-3 p-4">
+          <GlassCard intensity="light" hover className="flex items-center gap-3 p-4 rounded-xl">
             <span className="text-lg">🚪</span>
             <span className="text-[14px] text-[var(--color-error)]">退出登录</span>
           </GlassCard>
         </button>
-      </div>
+      </section>
 
-      {/* 修改密码表单 */}
+      {/* ====== 6. 修改密码表单 ====== */}
       {showPwForm && (
-        <div className="mt-2 animate-fade-in-up">
-          <GlassCard intensity="medium" className="space-y-3 p-5">
+        <div className="animate-fade-in-up">
+          <GlassCard intensity="medium" className="space-y-3 p-5 rounded-xl">
             <PasswordInput
               label="当前密码"
               value={oldPassword}
@@ -243,6 +578,9 @@ export default function PortalProfilePage() {
           </GlassCard>
         </div>
       )}
+
+      {/* 底部安全留白 */}
+      <div className="h-4" />
     </div>
   )
 }
@@ -275,11 +613,12 @@ function PasswordInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full rounded-xl border bg-white/[0.05] px-4 py-2.5 pr-10 text-sm text-[var(--color-text-primary)] backdrop-blur-sm transition-all placeholder:text-[var(--color-text-placeholder)] focus:outline-none ${
+          className={cn(
+            'w-full rounded-xl border bg-white/[0.05] px-4 py-2.5 pr-10 text-sm text-[var(--color-text-primary)] backdrop-blur-sm transition-all placeholder:text-[var(--color-text-placeholder)] focus:outline-none',
             error
               ? 'border-[var(--color-error)]/50 focus:shadow-[0_0_0_3px_rgba(184,124,124,0.15)]'
               : 'border-white/[0.08] focus:border-[var(--color-primary)]/50 focus:shadow-[0_0_0_3px_rgba(124,141,166,0.15)]'
-          }`}
+          )}
         />
         <button
           type="button"

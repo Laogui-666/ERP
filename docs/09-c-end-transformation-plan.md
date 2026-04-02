@@ -1,6 +1,6 @@
 # 华夏签证 - C端平台化改造方案（M8 全知开发手册）
 
-> **文档版本**: V3.1
+> **文档版本**: V4.0
 > **最后更新**: 2026-04-03
 > **用途**: 本文件是 C 端平台化改造的唯一开发手册（M8-M12）。任何开发者/AI 拿到本文件 + Git仓库即可完整执行开发，无需额外上下文。
 > **前置状态**: M1-M7 全部完成 ✅，账户系统审查通过 ✅，168 源文件 / 21,383 行 / 57 API 路由 / 91 测试用例
@@ -11,6 +11,7 @@
 
 1. [项目现状速查](#1-项目现状速查)
 2. [改造目标与设计哲学](#2-改造目标与设计哲学)
+   - [2.4 视觉设计创新（10大设计模式）](#24-视觉设计创新顶尖网站深度研究)
 3. [手机端设计规范（全局强制执行）](#3-手机端设计规范全局强制执行)
 4. [ERP 保护红线](#4-erp-保护红线)
 5. [新路由架构](#5-新路由架构)
@@ -150,6 +151,224 @@ src/
 - **动态背景**：浮动渐变光球 + 微光网格 + 鼠标跟随光晕
 - **弹簧阻尼动效**：物理弹簧缓动，4种预设曲线
 - **响应式**：移动端优先（max-w-lg），桌面端自适应
+
+### 2.4 视觉设计创新（顶尖网站深度研究）
+
+> 以下设计模式提炼自 Stripe / Airbnb / Linear / Apple / Notion / Framer 的核心设计语言，
+> 针对签证服务场景做了适配，每条都给出具体落地方案。
+
+#### 创新 1：渐变网格背景（参考 Stripe）
+
+Stripe 首页的标志性设计：大面积渐变色块在背景中缓慢流动，营造"高端科技感"。
+
+**落地**：
+```tsx
+// HeroSection 背景层
+<div className="absolute inset-0 overflow-hidden">
+  {/* 渐变网格：3个大色块缓慢漂移 */}
+  <div className="absolute -top-1/4 -left-1/4 w-[600px] h-[600px] rounded-full
+    bg-gradient-to-br from-[#7C8DA6]/15 to-transparent
+    animate-[gradientDrift1_25s_ease-in-out_infinite]" />
+  <div className="absolute top-1/3 -right-1/4 w-[500px] h-[500px] rounded-full
+    bg-gradient-to-bl from-[#9B8EC4]/12 to-transparent
+    animate-[gradientDrift2_30s_ease-in-out_infinite]" />
+  <div className="absolute -bottom-1/4 left-1/3 w-[400px] h-[400px] rounded-full
+    bg-gradient-to-tr from-[#8FA3A6]/10 to-transparent
+    animate-[gradientDrift3_20s_ease-in-out_infinite]" />
+  {/* 微光噪点纹理（增加质感） */}
+  <div className="absolute inset-0 opacity-[0.03]"
+    style={{ backgroundImage: 'url("data:image/svg+xml,...noise...")' }} />
+</div>
+```
+
+**效果**：背景不是静态渐变，而是3个莫兰迪色球体在缓慢漂移，叠加噪点纹理产生高级的纸张质感。
+
+#### 创新 2：视差滚动分层（参考 Apple）
+
+Apple 产品页的灵魂：不同层次的内容以不同速度滚动，产生深度感。
+
+**落地**：
+- Hero 标题固定在背景上，底部内容滑过时标题产生 `translateY` 视差偏移
+- 目的地卡片区：左侧标题固定，右侧卡片横向滚动
+- 统计数字：进入视口时从模糊 `blur(8px)` 渐变到清晰
+
+```tsx
+// 视差标题
+const [scrollY, setScrollY] = useState(0)
+<h1 style={{ transform: `translateY(${scrollY * 0.3}px)` }}>
+  {/* 标题内容 */}
+</h1>
+```
+
+**效果**：页面滚动时产生空间纵深感，不再是"平铺直叙"。
+
+#### 创新 3：Scroll-Driven 渐显（参考 Linear / Framer）
+
+Linear 的标志性交互：内容不是一次性展示，而是随着滚动逐块"生长"出来。
+
+**落地**：
+- 每个 Section 使用 `IntersectionObserver` + CSS `animation-timeline: view()`
+- 进入视口时：`opacity: 0→1` + `translateY(40px→0)` + `blur(4px→0)`
+- 不同子元素 stagger 延迟 80-120ms
+
+```tsx
+// 所有 Section 的入场动画
+<section className="animate-on-scroll opacity-0 translate-y-10 blur-[4px]
+  transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]
+  data-[visible=true]:opacity-100 data-[visible=true]:translate-y-0 data-[visible=true]:blur-0">
+```
+
+**效果**：用户向下滚动时，内容如"生长"般逐段出现，比传统的 fadeInUp 更有生命力。
+
+#### 创新 4：磁性按钮（参考 Stripe / Linear）
+
+鼠标靠近按钮一定范围时，按钮"被吸引"向鼠标方向微移，产生物理吸附感。
+
+**落地**（仅桌面端）：
+```tsx
+const handleMouseMove = (e: React.MouseEvent) => {
+  const rect = buttonRef.current.getBoundingClientRect()
+  const centerX = rect.left + rect.width / 2
+  const centerY = rect.top + rect.height / 2
+  const deltaX = (e.clientX - centerX) * 0.15  // 15% 吸附强度
+  const deltaY = (e.clientY - centerY) * 0.15
+  buttonRef.current.style.transform = `translate(${deltaX}px, ${deltaY}px)`
+}
+```
+
+**效果**：CTA按钮有"活着"的感觉，吸引用户点击。
+
+#### 创新 5：卡片 3D 倾斜（参考 Stripe 产品卡）
+
+鼠标在卡片上移动时，卡片跟随鼠标位置做微小的 3D 旋转，产生深度感。
+
+**落地**（仅桌面端）：
+```tsx
+const handleMouseMove = (e: React.MouseEvent, card: HTMLDivElement) => {
+  const rect = card.getBoundingClientRect()
+  const x = (e.clientX - rect.left) / rect.width - 0.5   // -0.5 ~ 0.5
+  const y = (e.clientY - rect.top) / rect.height - 0.5
+  card.style.transform = `perspective(1000px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateZ(10px)`
+}
+const handleMouseLeave = (card: HTMLDivElement) => {
+  card.style.transform = 'perspective(1000px) rotateY(0) rotateX(0) translateZ(0)'
+}
+```
+
+**应用**：目的地卡片、工具卡片、价值主张卡片。
+
+**效果**：卡片不再是平面的，鼠标移动时有真实的"翻转"质感。
+
+#### 创新 6：数字滚动 + 位数分离（参考 Stripe 数据展示）
+
+Stripe 的统计数据不只是数字变大，而是每位数字独立翻转，像老式计数器。
+
+**落地**：
+```tsx
+// 每位数字独立滚动
+function AnimatedCounter({ value, suffix }) {
+  const digits = value.toString().split('')
+  return (
+    <span className="flex items-center">
+      {digits.map((d, i) => (
+        <span key={i} className="overflow-hidden inline-block h-[1.2em]">
+          <span className="block animate-[digitSlide_1.5s_ease-out_forwards]"
+            style={{ animationDelay: `${i * 100}ms` }}>
+            {[0,1,2,3,4,5,6,7,8,9].map(n => (
+              <span key={n} className="block h-[1.2em] leading-[1.2em]">{n}</span>
+            ))}
+          </span>
+        </span>
+      ))}
+      {suffix && <span>{suffix}</span>}
+    </span>
+  )
+}
+```
+
+**效果**：数字不是"跳变"，而是每位数像老虎机一样滚动到位，极具仪式感。
+
+#### 创新 7：光标跟随聚光灯（参考 Linear）
+
+桌面端鼠标位置产生一个柔和的聚光灯光晕，照亮经过的内容。
+
+**落地**：
+```tsx
+// 全局鼠标追踪
+<div className="fixed inset-0 pointer-events-none z-50"
+  style={{
+    background: `radial-gradient(600px circle at ${mouseX}px ${mouseY}px, rgba(124,141,166,0.06), transparent 40%)`
+  }}
+/>
+```
+
+**效果**：鼠标移动时，经过的区域微微提亮，像手电筒照在页面上。
+
+#### 创新 8：文字渐变扫光（参考 Apple / Notion）
+
+标题文字不是静态颜色，而是有一个光泽从左到右周期性扫过。
+
+**落地**：
+```css
+.shimmer-text {
+  background: linear-gradient(
+    120deg,
+    var(--color-text-primary) 0%,
+    var(--color-text-primary) 40%,
+    var(--color-primary-light) 50%,
+    var(--color-text-primary) 60%,
+    var(--color-text-primary) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmerSweep 4s ease-in-out infinite;
+}
+@keyframes shimmerSweep {
+  0%, 100% { background-position: 200% center; }
+  50% { background-position: 0% center; }
+}
+```
+
+**应用**：Hero 大标题、CTA 区域标题。
+
+**效果**：标题每隔几秒有光泽扫过，像金属反光，极具质感。
+
+#### 创新 9：玻璃态深度层级（参考 iOS / Notion）
+
+不是所有卡片都一样的透明度，而是建立 3 层深度系统：
+
+| 层级 | 背景 | blur | 用途 | 感受 |
+|---|---|---|---|---|
+| L0 - 地面 | `rgba(255,255,255,0.03)` | 8px | 背景卡片、列表项 | 贴地 |
+| L1 - 悬浮 | `rgba(255,255,255,0.06)` | 16px | 内容卡片、工具卡片 | 浮起 |
+| L2 - 玻璃 | `rgba(255,255,255,0.10)` | 24px | 弹窗、下拉菜单、顶栏 | 悬空 |
+
+**配合阴影层级**：
+- L0：`shadow-none`
+- L1：`shadow-[0_4px_24px_rgba(0,0,0,0.08)]`
+- L2：`shadow-[0_8px_40px_rgba(0,0,0,0.16)]`
+
+**效果**：用户直觉感受到"哪些元素在前面，哪些在后面"，空间感极强。
+
+#### 创新 10：入场编排（参考 Framer / Apple）
+
+不是每个元素同时出现，而是像舞台剧一样，有角色、有顺序、有节奏。
+
+**编排方案**：
+
+| 顺序 | 元素 | 动画 | 延迟 |
+|---|---|---|---|
+| 1 | 顶栏 | fadeDown | 0ms |
+| 2 | Hero 标题（逐词） | 每词 80ms 间隔 | 200ms |
+| 3 | 底部光带 | glowPulse | 标题完成后 |
+| 4 | 副标题 | fadeIn | +200ms |
+| 5 | 搜索框 | fadeIn + scaleIn | +300ms |
+| 6 | 快捷标签（逐个） | 每个 50ms stagger | +400ms |
+| 7 | CTA 按钮 | springIn | +600ms |
+| 8+ | 后续 Section | scroll-driven | 滚动触发 |
+
+**效果**：首屏打开像一场精心编排的表演，每个元素有"角色感"。
 
 ---
 
@@ -784,250 +1003,265 @@ export default function HomePage() {
 
 **类型**：`'use client'`
 
-**功能**：全屏沉浸式Hero区域
+**参考**：Stripe（渐变网格背景） + Apple（视差滚动） + Linear（入场编排）
 
-**结构**：
+**完整结构（从底到顶，7层）**：
 ```
-┌─────────────────────────────────────────────────┐
-│ 动态背景层                                        │
-│  - 4个浮动渐变光球（复用DynamicBackground风格）     │
-│  - 鼠标跟随光晕（400px径向渐变，0.8s damping追踪）  │
-│                                                   │
-│ 标题："想去哪，华夏签证帮你搞定"                      │
-│  - 逐词渐显动画（复用hero-banner.tsx的实现）         │
-│  - text-[32px] sm:text-[40px] font-bold           │
-│  - 渐变文字：from-text-primary via-primary-light   │
-│    to-accent bg-clip-text text-transparent        │
-│                                                   │
-│ 底部光带（2px 渐变线，glowPulse动画）               │
-│                                                   │
-│ 副标题："一站式签证办理 + 智能旅行工具"              │
-│  - 延迟200ms淡入                                   │
-│                                                   │
-│ 搜索框（核心CTA）                                   │
-│  - 毛玻璃大输入框                                   │
-│  - placeholder="输入国家或签证类型..."              │
-│  - 右侧搜索按钮                                     │
-│                                                   │
-│ 快捷标签行                                          │
-│  - [日本] [韩国] [申根] [美国] [泰国] [更多→]       │
-│  - 毛玻璃小标签，hover变亮                          │
-│  - 点击跳转 /services?country=xxx                   │
-│                                                   │
-│ CTA按钮                                            │
-│  - "开始探索 →" (glass-btn-primary)                │
-│  - "了解更多" (glass-btn-secondary)                │
-└─────────────────────────────────────────────────┘
+Layer 0: 深色背景渐变（#1A1F2E → #1F2536 → #252B3B）
+Layer 1: 渐变网格（3个莫兰迪色球体缓慢漂移 + 噪点纹理）   ← 创新1: Stripe渐变网格
+Layer 2: 微光网格线（60px间距半透明网格，中心渐隐）
+Layer 3: 鼠标跟随聚光灯（600px径向渐变，仅桌面端）         ← 创新7: Linear聚光灯
+Layer 4: 内容层（标题+副标题+搜索框+标签+CTA）
+Layer 5: 底部渐隐遮罩（过渡到下一个Section）
 ```
 
-**关键实现**：
-- 鼠标跟随光晕：`onMouseMove` → 更新CSS变量 `--mouse-x` / `--mouse-y` → 背景 `radial-gradient(circle at var(--mouse-x) var(--mouse-y), ...)`
-- 逐词动画：复用现有 `hero-banner.tsx` 的 `TITLE_WORDS` 数组 + `visibleWords` state + `setInterval`
-- 最小高度 `min-h-[85vh]`
+**标题动画（编排入场 ← 创新10）**：
+```
+时序：
+  0ms   → 顶栏 fadeDown
+  200ms → "想" 字渐显
+  280ms → "去" 字渐显（每词间隔80ms）
+  ...   → 逐词直到标题完整
+  +100ms → 底部光带 glowPulse 开始
+  +200ms → 副标题 fadeIn
+  +300ms → 搜索框 scaleIn(0.95→1) + fadeIn
+  +50ms×N → 快捷标签逐个 slideIn（N=标签序号）
+  +600ms → CTA 按钮 springIn
+```
+
+**标题文字特效 ← 创新8：文字渐变扫光**：
+```tsx
+<h1 className="shimmer-text text-[28px] sm:text-[40px] font-bold tracking-tight">
+  想去哪，华夏签证帮你搞定
+</h1>
+// shimmer-text: 文字每隔4秒有金属光泽从左到右扫过
+```
+
+**视差滚动 ← 创新2**：
+```tsx
+// Hero 标题层产生视差偏移，内容区滑过时标题减速
+style={{ transform: `translateY(${scrollY * 0.25}px)` }}
+```
+
+**搜索框设计**：
+- 大尺寸毛玻璃输入框（h-14, rounded-2xl）
+- 左侧搜索图标 + placeholder="输入国家或签证类型..."
+- 聚焦时：边框 primary/40 + 外发光 `shadow-[0_0_0_4px_rgba(124,141,166,0.15)]`
+- 回车搜索 → 跳转 `/services?search=xxx`
+
+**快捷标签**：
+- 6个毛玻璃小胶囊：`rounded-full bg-white/[0.06] backdrop-blur-sm border border-white/[0.08]`
+- 内容：🇯🇵日本 🇰🇷韩国 🇪🇺申根 🇺🇸美国 🇹🇭泰国 🌍更多
+- hover：背景提亮 + 边框 primary/30
+- active：缩放 0.95
+- 点击：跳转 `/services?country=xxx`
+
+**CTA 按钮 ← 创新4：磁性按钮（仅桌面端）**：
+- "开始探索 →"（glass-btn-primary，px-8 py-4，text-[15px] font-semibold）
+- 桌面端：鼠标靠近时按钮微移吸附（0.15强度）
+- 移动端：纯 `active:scale-[0.97]` 反馈
+
+**最低高度**：`min-h-[92vh]`（几乎全屏）
+
+**移动端降级**：
+- 渐变网格：球体缩小50%，opacity 降至 0.3
+- 鼠标聚光灯：`display:none`
+- 视差效果：禁用（`transform: none`）
+- 磁性按钮：禁用
+- 标题：28px（桌面40px）
+- 搜索栏：默认收起为圆角搜索图标，点击展开为完整输入框
 
 #### 8.4.3 `destination-cards.tsx` — 热门目的地
 
 **类型**：`'use client'`
 
-**功能**：横向滚动的目的地卡片
+**参考**：Airbnb（图片驱动卡片） + Stripe（3D倾斜）
 
-**数据**（10个国家）：
-```typescript
-const DESTINATIONS = [
-  { flag: '🇯🇵', country: '日本', type: '单次旅游', time: '5-7工作日', price: '¥599', color: 'from-pink-500/15 to-rose-400/10' },
-  { flag: '🇰🇷', country: '韩国', type: '单次旅游', time: '3-5工作日', price: '¥399', color: 'from-blue-500/15 to-indigo-400/10' },
-  { flag: '🇪🇺', country: '申根国家', type: '旅游签证', time: '7-15工作日', price: '¥358', color: 'from-cyan-500/15 to-blue-400/10' },
-  { flag: '🇺🇸', country: '美国', type: 'B1/B2', time: '面签后3-5日', price: '¥1599', color: 'from-blue-600/15 to-red-400/10' },
-  { flag: '🇹🇭', country: '泰国', type: '落地签/旅游', time: '1-3工作日', price: '¥299', color: 'from-purple-500/15 to-pink-400/10' },
-  { flag: '🇬🇧', country: '英国', type: '标准访客', time: '15-20工作日', price: '¥1299', color: 'from-red-500/15 to-blue-400/10' },
-  { flag: '🇦🇺', country: '澳大利亚', type: '旅游签证', time: '15-20工作日', price: '¥1399', color: 'from-green-500/15 to-teal-400/10' },
-  { flag: '🇨🇦', country: '加拿大', type: '旅游签证', time: '15-20工作日', price: '¥1099', color: 'from-red-600/15 to-rose-400/10' },
-  { flag: '🇻🇳', country: '越南', type: '电子签证', time: '3-5工作日', price: '¥299', color: 'from-yellow-500/15 to-red-400/10' },
-  { flag: '🇲🇾', country: '马来西亚', type: '电子签证', time: '2-3工作日', price: '¥280', color: 'from-teal-500/15 to-blue-400/10' },
-]
+**卡片设计 ← 创新5：3D倾斜（仅桌面端）**：
+- 桌面端鼠标在卡片上移动 → 卡片产生微小 3D 旋转（±8deg）
+- `perspective(1000px) rotateY(${x}deg) rotateX(${-y}deg) translateZ(10px)`
+- 鼠标离开 → 弹簧回弹 `transition: transform 0.5s var(--ease-spring)`
+- 移动端：无 3D 效果，仅 `active:scale-[0.97]`
+
+**卡片视觉（每张不同渐变背景）**：
+```tsx
+// 每个国家独有的渐变配色（非随机，经过设计）
+const GRADIENTS = {
+  '日本': 'from-pink-500/20 via-rose-400/10 to-transparent',
+  '韩国': 'from-blue-500/20 via-sky-400/10 to-transparent',
+  '申根': 'from-indigo-500/20 via-blue-400/10 to-transparent',
+  '美国': 'from-red-500/15 via-blue-500/10 to-transparent',
+  '泰国': 'from-purple-500/20 via-amber-400/10 to-transparent',
+  // ... 每个国家
+}
 ```
 
-**卡片设计**：
-- 固定宽度 `w-[180px]`，`flex-shrink-0`
-- `scroll-snap-align: start`
-- 渐变背景 `bg-gradient-to-br ${dest.color}`
-- 国旗emoji大号显示（text-4xl）
-- 国家名（font-semibold text-[15px]）
-- 签证类型（text-[12px] secondary）
-- 出签时间（text-[11px] placeholder）
-- 价格（font-bold text-[16px] primary）
-- 悬停浮起 `hover:-translate-y-1 hover:shadow-lg`
-- GlassCard light 包裹
+**卡片结构**：
+```
+┌──────────────────────────┐
+│ bg-gradient-to-br         │  ← 国家专属渐变
+│                          │
+│          🇯🇵              │  ← 国旗 emoji (text-5xl)
+│                          │
+│ ──────────────────────── │  ← 分隔线（border-white/[0.06]）
+│                          │
+│ 日本 单次旅游             │  ← 国家 + 签证类型
+│ 5-7工作日出签             │  ← 出签时间（带时钟小图标）
+│ ¥599 起                  │  ← 价格（font-bold text-[18px] primary色）
+│                          │
+│ [立即办理 →]             │  ← 微型CTA（仅hover时显现）
+└──────────────────────────┘
+```
 
-**滚动交互**：
-- 拖拽滚动（复用现有 `destination-carousel.tsx` 的鼠标拖拽逻辑）
-- `scroll-snap-type: x mandatory`
-- `scrollbar-hide`（隐藏滚动条）
-- IntersectionObserver 触发入场动画
+**尺寸**：`w-[200px] h-[260px] flex-shrink-0`
 
-**标题**："热门目的地"（text-[20px] font-bold, px-4）
+**入场 ← 创新3：Scroll-Driven**：
+- IntersectionObserver 检测可见性
+- 每张卡片 stagger 100ms 入场
+- `opacity: 0→1` + `translateX(40px→0)` + `blur(3px→0)`
+
+**悬停效果（桌面端）**：
+- 3D倾斜 ← 创新5
+- 底部"立即办理"从 `opacity-0 translate-y-2` → `opacity-100 translate-y-0`
+- 整体阴影加深
 
 #### 8.4.4 `tool-showcase.tsx` — 6大工具展示
 
 **类型**：`'use client'`
 
-**功能**：2×3网格展示6大工具
+**参考**：Linear（极简卡片） + Framer（stagger编排）
 
-**数据**：
-```typescript
-const TOOLS = [
-  { icon: '📰', label: '签证资讯', desc: '各国签证政策实时更新，出行无忧', href: '/tools/news' },
-  { icon: '🗺️', label: '行程助手', desc: 'AI智能规划你的旅行路线', href: '/tools/itinerary' },
-  { icon: '📝', label: '申请表', desc: '各国签证申请表智能填写', href: '/tools/form-helper' },
-  { icon: '🔍', label: '签证评估', desc: 'AI评估通过率，拒签风险分析', href: '/tools/assessment' },
-  { icon: '🌐', label: '翻译助手', desc: '多语言即时翻译，证件翻译', href: '/tools/translator' },
-  { icon: '📄', label: '证明文件', desc: '在职证明等文件快速生成', href: '/tools/translator' },
-]
+**卡片设计 ← 创新9：玻璃态深度层级**：
+- 使用 L1 层级（`rgba(255,255,255,0.06)` + blur 16px）
+- 每个工具独特颜色的图标背景渐变（非统一灰色）
+
+```tsx
+const TOOL_COLORS = {
+  '签证资讯': 'from-blue-400/20 to-cyan-400/10',
+  '行程助手': 'from-green-400/20 to-emerald-400/10',
+  '申请表': 'from-amber-400/20 to-orange-400/10',
+  '签证评估': 'from-purple-400/20 to-violet-400/10',
+  '翻译助手': 'from-pink-400/20 to-rose-400/10',
+  '证明文件': 'from-indigo-400/20 to-blue-400/10',
+}
 ```
 
-**卡片设计**：
-- GlassCard light 包裹
-- 大emoji图标（text-3xl）+ hover scale(1.1)
-- 标题（text-[16px] font-semibold）
-- 描述（text-[13px] secondary）
-- hover sweep光效（从左到右的渐变扫过）
-- `hover:-translate-y-1 active:scale-[0.98]`
-- 整个卡片可点击 → Link to `href`
+**卡片内图标**：不再用 emoji，改用 SVG 图标 + 对应工具色渐变背景圆
 
-**入场动画**：
+**入场 ← 创新10：编排入场**：
 - IntersectionObserver 触发
-- Stagger 逐个入场（每张延迟 80ms）
-- `animate-fade-in-up` + `anim-initial`
+- 每张卡片 stagger 120ms
+- 动画：`opacity + translateY(30px→0) + scale(0.95→1)`
+- 缓动：`--ease-spring`（弹性出场）
 
-**标题**："智能工具箱" + 副标题 "华夏签证为你准备的旅行助手"
+**hover（桌面端）**：
+- 卡片浮起 `translateY(-4px)` + 阴影加深
+- 图标微放大 `scale(1.1)`
+- 背景色渐变微微提亮
+- 底部箭头从右侧滑入 `translateX(0)`
 
-**未登录处理**：点击时检查 `useAuth().user`，未登录弹出登录引导 Modal（复用现有 tool-grid.tsx 的 Modal 逻辑）
+**移动端**：2列网格不变，`active:scale-[0.97]`
 
 #### 8.4.5 `value-props.tsx` — 价值主张
 
-**类型**：Server Component（纯展示，无交互）
+**类型**：`'use client'`（需要滚动触发动画）
 
-**功能**：4格价值主张
+**参考**：Stripe（数据+图标精准排版）
 
-**数据**：
-```typescript
-const PROPS = [
-  { icon: '⚡', title: '极速出签', desc: '最快1个工作日出签，不让等待耽误行程' },
-  { icon: '🔒', title: '安全可靠', desc: '资料加密存储，隐私保护，可信赖' },
-  { icon: '💰', title: '价格透明', desc: '费用公开，无隐藏收费，明明白白消费' },
-  { icon: '🤖', title: '智能服务', desc: 'AI签证评估，智能填表，让办理更轻松' },
-]
+**每格设计**：
+```
+┌─────────────────────┐
+│                     │
+│  ┌───────────────┐  │
+│  │   ⚡ (icon)    │  │  ← 图标在渐变圆内（w-14 h-14 rounded-2xl bg-gradient-to-br）
+│  └───────────────┘  │
+│                     │
+│  极速出签            │  ← 标题 (text-[18px] font-bold)
+│                     │
+│  最快1个工作日       │  ← 数字/关键信息 (text-[28px] font-bold primary色)
+│  出签，不让等待      │  ← 描述 (text-[13px] secondary)
+│  耽误行程            │
+│                     │
+└─────────────────────┘
 ```
 
-**布局**：`grid grid-cols-2 md:grid-cols-4 gap-4`
+**核心差异**：每个价值主张有一个**大数字**作为视觉锚点（如"1天""99.2%""0隐藏""AI"），不是纯文字堆砌。
 
-**卡片**：GlassCard light + 居中文字 + 图标 + 标题 + 描述
+**入场**：scroll-driven，4格 stagger 150ms
 
 #### 8.4.6 `how-it-works.tsx` — 办理流程
 
-**类型**：Server Component
+**参考**：Linear（步骤连接线动画）
 
-**功能**：4步办理流程展示
+**设计**：水平步骤条，桌面4列，移动端2×2网格
 
-**数据**：
-```typescript
-const STEPS = [
-  { num: '01', title: '选择国家', desc: '搜索或浏览目标国家签证服务' },
-  { num: '02', title: '提交资料', desc: '按清单准备并上传所需材料' },
-  { num: '03', title: '专业办理', desc: '专员审核制作，进度实时可查' },
-  { num: '04', title: '拿到签证', desc: '签证到手，安心出发' },
-]
+**连接线动画**：
+- 步骤之间有虚线连接
+- 进入视口时，连接线从左到右"绘制"出来（`stroke-dashoffset` 动画）
+
+```tsx
+// SVG 连接线
+<line x1="0" y1="50%" x2="100%" y2="50%"
+  strokeDasharray="6 4"
+  className="animate-[drawLine_1s_ease-out_forwards]"
+  style={{ strokeDashoffset: '100 → 0' }} />
 ```
-
-**布局**：4列横排（桌面），2×2网格（移动端）
-
-**设计**：步骤编号大字 + 标题 + 描述 + 步骤间连接线/箭头
 
 #### 8.4.7 `testimonials.tsx` — 用户评价
 
-**类型**：Server Component（静态展示）
+**参考**：Airbnb（评价卡片） + Notion（简洁排版）
 
-**功能**：3条用户评价卡片
+**卡片设计**：
+- GlassCard L1 层级
+- 头像渐变圆（非emoji，用首字母 + 莫兰迪色背景）
+- 星级用渐变填充星星（`text-amber-400`）
+- 评价内容：`text-[14px] leading-relaxed`
+- 评价涉及国家：小标签 badge
 
-**数据**：
-```typescript
-const TESTIMONIALS = [
-  { name: '张先生', avatar: '👨', rating: 5, text: '3天就出签了，比之前找旅行社快多了！资料上传也很方便。', country: '日本' },
-  { name: '李女士', avatar: '👩', rating: 5, text: '行程规划功能太好用了，帮我节省了大量做攻略的时间。', country: '申根' },
-  { name: '王先生', avatar: '👨', rating: 5, text: '价格透明，没有任何隐藏收费，专业团队值得信赖！', country: '美国' },
-]
-```
-
-**卡片设计**：GlassCard + 头像 + 姓名 + 星级（⭐×5）+ 评价内容 + 国家标签
-
-**布局**：`grid grid-cols-1 md:grid-cols-3 gap-4`
+**自动轮播（桌面端可选）**：
+- 3秒间隔自动切换
+- 底部指示点（3个小圆点，active 加大+变色）
 
 #### 8.4.8 `stats-section.tsx` — 数据统计
 
-**类型**：`'use client'`（需要 IntersectionObserver + 数字滚动动画）
+**参考**：Stripe（数字展示） + Apple（入场效果）
 
-**功能**：4个核心数据数字滚动
+**数字动画 ← 创新6：位数分离翻转**：
+- 每位数字独立从0翻转到位
+- 像老式机械计数器，每位延迟100ms
+- 非简单数字递增，而是0-9轮播后停在目标数字
 
-**数据**：
-```typescript
-const STATS = [
-  { value: 50000, suffix: '+', label: '服务用户' },
-  { value: 50, suffix: '+', label: '覆盖国家' },
-  { value: 99.2, suffix: '%', label: '出签率' },
-  { value: 24, suffix: 'h', label: '在线服务' },
-]
-```
+**布局**：
+- `grid grid-cols-2 md:grid-cols-4`
+- 每格：数字（text-[36px] font-bold） + 后缀（text-[20px]） + 标签（text-[13px] secondary）
+- 数字和后缀同一行，标签在下方
 
-**实现**：
-- IntersectionObserver 检测可见性
-- 数字从0滚动到目标值（2秒60帧，复用现有 `stats-counter.tsx` 的 AnimatedNumber 逻辑）
-- GlassCard accent 包裹
-- `grid grid-cols-2 md:grid-cols-4 gap-4`
+**入场**：scroll-driven + 数字触发
 
 #### 8.4.9 `cta-section.tsx` — 行动召唤
 
-**类型**：Server Component
+**参考**：Stripe（渐变背景+发光按钮） + Apple（大字标题）
 
-**功能**：CTA区域
+**背景**：
+- 全宽渐变（from-primary/8 via-accent/5 to-primary/8）
+- 顶部渐隐遮罩（与上一个Section衔接）
 
-```
-"准备好了吗？让签证办理变得简单从容"
-[免费注册，立即体验 →]
-```
-
-**设计**：
-- 区域背景渐变（from-primary/5 to-accent/5）
-- 标题 text-[24px] font-bold
-- 副标题 text-[15px] secondary
-- 按钮：渐变背景 `from-primary to-accent` + 发光阴影 + hover光泽扫过
-- Link to `/register`
+**按钮 ← 创新4：磁性按钮（桌面端）**：
+- 大号渐变按钮（px-10 py-5, text-[16px] font-bold）
+- 背景：`bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)]`
+- 发光阴影：`shadow-[0_0_40px_rgba(124,141,166,0.3)]`
+- hover：阴影扩大 + 光泽扫过 `::before`
+- 桌面端：磁性吸附效果
 
 #### 8.4.10 `app-footer.tsx` — 页脚
 
-**类型**：Server Component
+**参考**：Notion（清晰分组） + Stripe（底部品牌感）
 
-**功能**：完整4列页脚
-
-```
-┌──────────┬──────────┬──────────┬──────────┐
-│ 🌍 华夏签证 │ 产品服务   │ 热门国家   │ 关于支持   │
-│ 专业签证   │ 签证办理   │ 日本      │ 关于我们   │
-│ 一站搞定   │ 行程规划   │ 韩国      │ 联系我们   │
-│           │ 智能翻译   │ 申根      │ 隐私政策   │
-│           │ 签证评估   │ 美国      │ 服务条款   │
-│           │ 证明文件   │ 泰国      │ 帮助中心   │
-│           │ 签证资讯   │ 更多→     │           │
-├──────────┴──────────┴──────────┴──────────┤
-│ © 2026 华夏签证 · 专业签证，一站搞定          │
-└─────────────────────────────────────────────┘
-```
-
-**设计**：
-- `border-t border-white/[0.06]`
-- `grid grid-cols-2 md:grid-cols-4 gap-8`
-- Logo区域：地球图标 + "华夏签证" + slogan
-- 链接：text-[13px] secondary → hover primary-light
-- 底部版权：border-top + 居中文字
+**4列布局保持，但视觉升级**：
+- Logo区域增加品牌slogan + 社交图标（微信/微博占位）
+- 每列标题 `text-[12px] uppercase tracking-widest`（宽松大写标签风格）
+- 链接 hover 时：颜色变 primary-light + 左移 2px（微交互）
+- 底部版权：居中 + 分隔线渐变
 
 ### 8.5 `app-navbar.tsx` 在首页 vs portal layout 的关系
 
@@ -1042,6 +1276,120 @@ const STATS = [
 - `page.tsx`（首页）不在 portal layout 内，它是独立的根路由
 - `/services`、`/tools`、`/portal/*` 都在 portal layout 内
 - 首页 AppNavbar 和 portal 子页面的顶栏是独立的，不共享组件（portal子页面保持现有各自的顶栏逻辑）
+
+### 8.5 CSS 动效与 Tailwind 扩展
+
+> 以下 CSS 和 Tailwind 配置需新增到项目中，用于支撑 10 大设计创新。
+
+#### 8.5.1 新增 CSS 关键帧（globals.css）
+
+```css
+/* 创新1: 渐变网格漂移 */
+@keyframes gradientDrift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(60px, -40px) scale(1.1); }
+  66% { transform: translate(-30px, 30px) scale(0.95); }
+}
+@keyframes gradientDrift2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-50px, 50px) scale(1.05); }
+  66% { transform: translate(40px, -20px) scale(0.9); }
+}
+@keyframes gradientDrift3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, -60px) scale(1.15); }
+}
+
+/* 创新6: 数字位翻转 */
+@keyframes digitSlide {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-90%); }
+}
+
+/* 创新8: 文字扫光 */
+@keyframes shimmerSweep {
+  0%, 100% { background-position: 200% center; }
+  50% { background-position: 0% center; }
+}
+
+/* 创新10: 入场编排 */
+@keyframes springInUp {
+  0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+  60% { opacity: 1; transform: translateY(-5px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes drawLine {
+  0% { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes slideUp {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
+```
+
+#### 8.5.2 新增 CSS 类
+
+```css
+/* 文字扫光效果 */
+.shimmer-text {
+  background: linear-gradient(120deg,
+    var(--color-text-primary) 0%, var(--color-text-primary) 40%,
+    var(--color-primary-light) 50%,
+    var(--color-text-primary) 60%, var(--color-text-primary) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmerSweep 4s ease-in-out infinite;
+}
+
+/* Scroll-driven 入场 */
+.scroll-reveal {
+  opacity: 0; transform: translateY(30px); filter: blur(4px);
+  transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.scroll-reveal[data-visible="true"] {
+  opacity: 1; transform: translateY(0); filter: blur(0);
+}
+
+/* 隐藏滚动条 */
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* 底部弹出面板 */
+.bottom-sheet {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  max-height: 85vh;
+  background: rgba(32, 38, 54, 0.96);
+  backdrop-filter: blur(40px);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.bottom-sheet::before {
+  content: ''; display: block;
+  width: 36px; height: 4px; border-radius: 2px;
+  background: rgba(255,255,255,0.2); margin: 12px auto;
+}
+```
+
+#### 8.5.3 Tailwind 配置扩展（tailwind.config.ts）
+
+```typescript
+animation: {
+  'gradient-drift-1': 'gradientDrift1 25s ease-in-out infinite',
+  'gradient-drift-2': 'gradientDrift2 30s ease-in-out infinite',
+  'gradient-drift-3': 'gradientDrift3 20s ease-in-out infinite',
+  'digit-slide': 'digitSlide 1.5s ease-out forwards',
+  'shimmer-sweep': 'shimmerSweep 4s ease-in-out infinite',
+  'spring-in-up': 'springInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+  'draw-line': 'drawLine 1s ease-out forwards',
+  'slide-up': 'slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+}
+```
 
 ---
 
@@ -1807,4 +2155,4 @@ import { AppNavbar } from '@/components/portal/app-navbar'
 
 ---
 
-*文档结束 — C端平台化改造全知手册 V3.1（M8-M12 + 手机端设计规范）*
+*文档结束 — C端平台化改造全知手册 V4.0（M8-M12 + 10大设计创新 + 手机端规范）*

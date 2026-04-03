@@ -5,6 +5,7 @@ import { GlassCard } from '@shared/ui/glass-card'
 import { Button } from '@shared/ui/button'
 import { useToast } from '@shared/ui/toast'
 import { apiFetch } from '@shared/lib/api-client'
+import { ToolPageHeader } from '@/components/portal/tool-page-header'
 
 interface Question { key: string; label: string; options: { value: string; label: string }[] }
 
@@ -44,8 +45,11 @@ export default function AssessmentPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
-      <h1 className="mb-2 text-[22px] font-bold text-[var(--color-text-primary)]">🔍 签证评估</h1>
-      <p className="mb-6 text-[13px] text-[var(--color-text-secondary)]">快速评估您的签证通过概率</p>
+      <ToolPageHeader
+        icon="🔍"
+        title="签证评估"
+        description="快速评估您的签证通过概率"
+      />
 
       {step === 0 && (
         <div className="space-y-3">

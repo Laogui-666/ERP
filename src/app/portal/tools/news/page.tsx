@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { GlassCard } from '@shared/ui/glass-card'
 import { apiFetch } from '@shared/lib/api-client'
+import { ToolPageHeader } from '@/components/portal/tool-page-header'
+import { ToolSkeleton } from '@/components/portal/tool-skeleton'
+import { ToolEmptyState } from '@/components/portal/tool-empty-state'
 
 interface Article {
   id: string
@@ -39,8 +42,11 @@ export default function NewsPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
-      <h1 className="mb-4 text-[22px] font-bold text-[var(--color-text-primary)]">📰 签证资讯</h1>
-      <p className="mb-6 text-[13px] text-[var(--color-text-secondary)]">各国签证政策、攻略、动态实时更新</p>
+      <ToolPageHeader
+        icon="📰"
+        title="签证资讯"
+        description="各国签证政策、攻略、动态实时更新"
+      />
 
       <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
         {categories.map(c => (
@@ -59,20 +65,13 @@ export default function NewsPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-4">
-          {[1,2,3].map(i => (
-            <GlassCard key={i} intensity="light" className="p-4 animate-pulse">
-              <div className="h-4 w-3/4 rounded bg-white/10 mb-2" />
-              <div className="h-3 w-1/2 rounded bg-white/5" />
-            </GlassCard>
-          ))}
-        </div>
+        <ToolSkeleton count={3} />
       ) : articles.length === 0 ? (
-        <GlassCard intensity="medium" className="flex flex-col items-center gap-3 p-10">
-          <span className="text-4xl">📭</span>
-          <p className="text-[14px] font-semibold text-[var(--color-text-primary)]">暂无资讯</p>
-          <p className="text-[13px] text-[var(--color-text-secondary)]">管理员发布后将在此显示</p>
-        </GlassCard>
+        <ToolEmptyState
+          icon="📭"
+          title="暂无资讯"
+          description="管理员发布后将在此显示"
+        />
       ) : (
         <div className="space-y-3">
           {articles.map((article, i) => (

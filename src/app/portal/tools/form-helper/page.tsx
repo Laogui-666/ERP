@@ -5,6 +5,9 @@ import { GlassCard } from '@shared/ui/glass-card'
 import { Button } from '@shared/ui/button'
 import { useToast } from '@shared/ui/toast'
 import { apiFetch } from '@shared/lib/api-client'
+import { ToolPageHeader } from '@/components/portal/tool-page-header'
+import { ToolSkeleton } from '@/components/portal/tool-skeleton'
+import { ToolEmptyState } from '@/components/portal/tool-empty-state'
 
 interface FormTemplate {
   id: string
@@ -57,8 +60,11 @@ export default function FormHelperPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
-      <h1 className="mb-2 text-[22px] font-bold text-[var(--color-text-primary)]">📝 申请表助手</h1>
-      <p className="mb-6 text-[13px] text-[var(--color-text-secondary)]">签证申请表填写指导，逐步引导</p>
+      <ToolPageHeader
+        icon="📝"
+        title="申请表助手"
+        description="签证申请表填写指导，逐步引导"
+      />
 
       {selected ? (
         <div>
@@ -86,13 +92,13 @@ export default function FormHelperPage() {
           </GlassCard>
         </div>
       ) : loading ? (
-        <div className="space-y-4">{[1,2,3].map(i => <GlassCard key={i} intensity="light" className="p-4 animate-pulse"><div className="h-4 w-2/3 rounded bg-white/10" /></GlassCard>)}</div>
+        <ToolSkeleton count={3} />
       ) : templates.length === 0 ? (
-        <GlassCard intensity="medium" className="flex flex-col items-center gap-3 p-10">
-          <span className="text-4xl">📝</span>
-          <p className="text-[14px] font-semibold text-[var(--color-text-primary)]">暂无模板</p>
-          <p className="text-[13px] text-[var(--color-text-secondary)]">管理员发布后将在此显示</p>
-        </GlassCard>
+        <ToolEmptyState
+          icon="📝"
+          title="暂无模板"
+          description="管理员发布后将在此显示"
+        />
       ) : (
         <div className="space-y-4">
           {Object.entries(grouped).map(([country, temps]) => (

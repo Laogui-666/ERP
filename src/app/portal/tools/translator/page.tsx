@@ -6,6 +6,9 @@ import { Button } from '@shared/ui/button'
 import { useToast } from '@shared/ui/toast'
 import { apiFetch } from '@shared/lib/api-client'
 import { useAuth } from '@shared/hooks/use-auth'
+import { ToolPageHeader } from '@/components/portal/tool-page-header'
+import { ToolSkeleton } from '@/components/portal/tool-skeleton'
+import { ToolEmptyState } from '@/components/portal/tool-empty-state'
 
 interface Translation { id: string; sourceLang: string; targetLang: string; docType: string; resultText: string | null; status: string; createdAt: string }
 
@@ -42,8 +45,11 @@ export default function TranslatorPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
-      <h1 className="mb-2 text-[22px] font-bold text-[var(--color-text-primary)]">🌐 翻译助手</h1>
-      <p className="mb-6 text-[13px] text-[var(--color-text-secondary)]">证件、文件多语言翻译</p>
+      <ToolPageHeader
+        icon="🌐"
+        title="翻译助手"
+        description="证件、文件多语言翻译"
+      />
 
       <GlassCard intensity="medium" className="mb-6 p-5">
         <div className="mb-4 flex items-center gap-3">
@@ -57,21 +63,33 @@ export default function TranslatorPage() {
       </GlassCard>
 
       <h2 className="mb-3 text-[16px] font-semibold text-[var(--color-text-primary)]">翻译记录</h2>
-      {!user ? <p className="text-center text-[13px] text-[var(--color-text-placeholder)]">登录后可查看翻译记录</p>
-        : loading ? <div className="space-y-3">{[1,2].map(i => <GlassCard key={i} intensity="light" className="p-4 animate-pulse"><div className="h-3 w-2/3 rounded bg-white/10" /></GlassCard>)}</div>
-        : records.length === 0 ? <GlassCard intensity="light" className="p-6 text-center"><p className="text-[13px] text-[var(--color-text-placeholder)]">暂无翻译记录</p></GlassCard>
-        : <div className="space-y-3">
-            {records.map((r, i) => (
-              <GlassCard key={r.id} intensity="light" className="p-4 animate-fade-in-up" style={{ animationDelay: `${i * 50}ms` } as React.CSSProperties}>
-                <div className="mb-1 flex items-center gap-2 text-[11px] text-[var(--color-text-placeholder)]">
-                  <span>{LANGS.find(l => l.code === r.sourceLang)?.label} → {LANGS.find(l => l.code === r.targetLang)?.label}</span><span>·</span><span>{r.docType}</span>
-                  <span className={`ml-auto rounded-full px-2 py-0.5 ${r.status === 'completed' ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]' : 'bg-[var(--color-warning)]/15 text-[var(--color-warning)]'}`}>{r.status === 'completed' ? '已完成' : '处理中'}</span>
-                </div>
-                {r.resultText && <p className="text-[13px] text-[var(--color-text-primary)]">{r.resultText}</p>}
-              </GlassCard>
-            ))}
-          </div>
-      }
+      {!user ? (
+        <ToolEmptyState
+          icon="🔒"
+          title="请先登录"
+          description="登录后可查看翻译记录"
+        />
+      ) : loading ? (
+        <ToolSkeleton count={2} />
+      ) : records.length === 0 ? (
+        <ToolEmptyState
+          icon="🌐"
+          title="暂无翻译记录"
+          description="开始翻译，记录将在此显示"
+        />
+      ) : (
+        <div className="space-y-3">
+          {records.map((r, i) => (
+            <GlassCard key={r.id} intensity="light" className="p-4 animate-fade-in-up" style={{ animationDelay: `${i * 50}ms` } as React.CSSProperties}>
+              <div className="mb-1 flex items-center gap-2 text-[11px] text-[var(--color-text-placeholder)]">
+                <span>{LANGS.find(l => l.code === r.sourceLang)?.label} → {LANGS.find(l => l.code === r.targetLang)?.label}</span><span>·</span><span>{r.docType}</span>
+                <span className={`ml-auto rounded-full px-2 py-0.5 ${r.status === 'completed' ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]' : 'bg-[var(--color-warning)]/15 text-[var(--color-warning)]'}`}>{r.status === 'completed' ? '已完成' : '处理中'}</span>
+              </div>
+              {r.resultText && <p className="text-[13px] text-[var(--color-text-primary)]">{r.resultText}</p>}
+            </GlassCard>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

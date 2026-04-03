@@ -7,6 +7,9 @@ import { Input } from '@shared/ui/input'
 import { useToast } from '@shared/ui/toast'
 import { apiFetch } from '@shared/lib/api-client'
 import { useAuth } from '@shared/hooks/use-auth'
+import { ToolPageHeader } from '@/components/portal/tool-page-header'
+import { ToolSkeleton } from '@/components/portal/tool-skeleton'
+import { ToolEmptyState } from '@/components/portal/tool-empty-state'
 
 interface DocTemplate { id: string; name: string; type: string; language: string; fields: { label: string; key: string; type: string; required: boolean }[]; isSystem: boolean }
 
@@ -41,14 +44,18 @@ export default function DocumentsPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
-      <h1 className="mb-2 text-[22px] font-bold text-[var(--color-text-primary)]">📄 证明文件</h1>
-      <p className="mb-6 text-[13px] text-[var(--color-text-secondary)]">在职/收入证明等常用模板一键生成</p>
+      <ToolPageHeader
+        icon="📄"
+        title="证明文件"
+        description="在职/收入证明等常用模板一键生成"
+      />
 
       {!user ? (
-        <GlassCard intensity="medium" className="flex flex-col items-center gap-3 p-10">
-          <span className="text-4xl">🔒</span><p className="text-[14px] font-semibold text-[var(--color-text-primary)]">请先登录</p>
-          <p className="text-[13px] text-[var(--color-text-secondary)]">登录后可使用证明文件生成服务</p>
-        </GlassCard>
+        <ToolEmptyState
+          icon="🔒"
+          title="请先登录"
+          description="登录后可使用证明文件生成服务"
+        />
       ) : result ? (
         <div>
           <button onClick={() => { setResult(null); setSelected(null) }} className="mb-4 text-[13px] text-[var(--color-primary)] hover:underline">← 返回</button>
@@ -76,12 +83,13 @@ export default function DocumentsPage() {
           </GlassCard>
         </div>
       ) : loading ? (
-        <div className="space-y-3">{[1,2,3].map(i => <GlassCard key={i} intensity="light" className="p-4 animate-pulse"><div className="h-4 w-1/2 rounded bg-white/10" /></GlassCard>)}</div>
+        <ToolSkeleton count={3} />
       ) : templates.length === 0 ? (
-        <GlassCard intensity="medium" className="flex flex-col items-center gap-3 p-10">
-          <span className="text-4xl">📄</span><p className="text-[14px] font-semibold text-[var(--color-text-primary)]">暂无模板</p>
-          <p className="text-[13px] text-[var(--color-text-secondary)]">管理员发布后将在此显示</p>
-        </GlassCard>
+        <ToolEmptyState
+          icon="📄"
+          title="暂无模板"
+          description="管理员发布后将在此显示"
+        />
       ) : (
         <div className="space-y-4">
           {Object.entries(grouped).map(([type, temps]) => (

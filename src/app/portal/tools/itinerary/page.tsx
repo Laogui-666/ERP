@@ -8,6 +8,9 @@ import { Modal } from '@shared/ui/modal'
 import { useToast } from '@shared/ui/toast'
 import { apiFetch } from '@shared/lib/api-client'
 import { useAuth } from '@shared/hooks/use-auth'
+import { ToolPageHeader } from '@/components/portal/tool-page-header'
+import { ToolSkeleton } from '@/components/portal/tool-skeleton'
+import { ToolEmptyState } from '@/components/portal/tool-empty-state'
 
 interface Itinerary {
   id: string
@@ -62,24 +65,23 @@ export default function ItineraryPage() {
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-[22px] font-bold text-[var(--color-text-primary)]">🗺️ 行程助手</h1>
-          <p className="mt-1 text-[13px] text-[var(--color-text-secondary)]">智能规划您的旅行行程</p>
-        </div>
+        <ToolPageHeader
+          icon="🗺️"
+          title="行程助手"
+          description="智能规划您的旅行行程"
+        />
         {user && <Button variant="primary" size="sm" onClick={() => setShowCreate(true)}>+ 新建</Button>}
       </div>
 
       {loading ? (
-        <div className="space-y-4">
-          {[1,2].map(i => <GlassCard key={i} intensity="light" className="p-4 animate-pulse"><div className="h-4 w-2/3 rounded bg-white/10 mb-2" /><div className="h-3 w-1/3 rounded bg-white/5" /></GlassCard>)}
-        </div>
+        <ToolSkeleton count={2} />
       ) : itineraries.length === 0 ? (
-        <GlassCard intensity="medium" className="flex flex-col items-center gap-3 p-10">
-          <span className="text-4xl">🗺️</span>
-          <p className="text-[14px] font-semibold text-[var(--color-text-primary)]">开始规划您的行程</p>
-          <p className="text-[13px] text-[var(--color-text-secondary)] text-center">创建行程，智能规划每日活动安排</p>
-          {user && <Button variant="primary" onClick={() => setShowCreate(true)}>创建第一个行程</Button>}
-        </GlassCard>
+        <ToolEmptyState
+          icon="🗺️"
+          title="开始规划您的行程"
+          description="创建行程，智能规划每日活动安排"
+          action={user && <Button variant="primary" onClick={() => setShowCreate(true)}>创建第一个行程</Button>}
+        />
       ) : (
         <div className="space-y-3">
           {itineraries.map((item, i) => (

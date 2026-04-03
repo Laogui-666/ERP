@@ -9,7 +9,6 @@ export default function ForbiddenPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="bg-decoration" />
       <div className="text-center animate-fade-in-up">
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--color-error)]/20 to-[var(--color-error)]/5 border border-[var(--color-error)]/20">
           <svg className="w-10 h-10 text-[var(--color-error)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">

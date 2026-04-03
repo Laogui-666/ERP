@@ -7,7 +7,7 @@ import { cn } from '@shared/lib/utils'
 const TABS = [
   { href: '/', label: '首页', icon: HomeIcon },
   { href: '/services', label: '服务', icon: ServiceIcon },
-  { href: '/portal/tools', label: '工具', icon: ToolIcon },
+  { href: '/tools', label: '工具', icon: ToolIcon },
   { href: '/portal/orders', label: '订单', icon: OrderIcon },
   { href: '/portal/profile', label: '我的', icon: UserIcon },
 ]

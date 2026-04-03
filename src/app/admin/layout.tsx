@@ -50,7 +50,7 @@ export default function AdminLayout({
       </div>
 
       {/* 主内容区 */}
-      <main className="pt-[56px] md:pt-0 md:ml-64 md:pt-16 min-h-screen">
+      <main className="pt-[56px] md:ml-64 md:pt-16 min-h-screen">
         <div className="p-4 md:p-6">
           {children}
         </div>

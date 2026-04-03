@@ -11,7 +11,7 @@ import type { Prisma } from '@prisma/client'
 const querySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
-  status: z.enum(['PENDING_CONNECTION','CONNECTED','COLLECTING_DOCS','PENDING_REVIEW','UNDER_REVIEW','MAKING_MATERIALS','PENDING_DELIVERY','DELIVERED','APPROVED','REJECTED','PARTIAL']).optional(),
+  status: z.string().optional(), // 支持逗号分隔多状态: "CONNECTED,COLLECTING_DOCS"
   search: z.string().max(100).optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
@@ -68,7 +68,12 @@ export async function GET(request: NextRequest) {
 
     const where: Prisma.OrderWhereInput = {
       ...scopeFilter,
-      ...(params.status && { status: params.status as Prisma.EnumOrderStatusFilter }),
+      ...(params.status && (() => {
+        const statuses = params.status.split(',').map(s => s.trim())
+        return statuses.length === 1
+          ? { status: statuses[0] as unknown as Prisma.EnumOrderStatusFilter }
+          : { status: { in: statuses } as unknown as Prisma.EnumOrderStatusFilter }
+      })()),
       ...(params.search && {
         OR: [
           { orderNo: { contains: params.search } },

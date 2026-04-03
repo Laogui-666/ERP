@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getCurrentUser } from '@shared/lib/auth'
 import { canAccessRoute } from '@shared/lib/rbac'
+import rateLimit from '@shared/lib/rate-limit'
 
 // 公开路由
 const PUBLIC_ROUTES = [
@@ -24,7 +25,16 @@ function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((route) => pathname.startsWith(route))
 }
 
+// 应用速率限制
+const rateLimitMiddleware = rateLimit()
+
 export async function middleware(request: NextRequest) {
+  // 先应用速率限制
+  const rateLimitResponse = await rateLimitMiddleware(request)
+  if (rateLimitResponse.status !== 200) {
+    return rateLimitResponse
+  }
+
   const { pathname } = request.nextUrl
 
   // 公开路由直接放行

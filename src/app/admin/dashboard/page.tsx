@@ -3,7 +3,6 @@ import { apiFetch } from '@shared/lib/api-client'
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { GlassCard } from '@shared/ui/glass-card'
 import { StatCard } from '@erp/components/analytics/stat-card'
 
 interface OverviewData {
@@ -44,13 +43,13 @@ export default function DashboardPage() {
   const approvalRate = data ? data.approvalRate : '--'
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* 欢迎 */}
       <div className="anim-initial animate-fade-in-up">
-        <h1 className="text-[22px] font-bold text-[var(--color-text-primary)] tracking-tight">
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">
           经营驾驶舱
         </h1>
-        <p className="mt-1 text-[13px] text-[var(--color-text-secondary)]">
+        <p className="mt-1 text-sm text-muted-foreground">
           {data ? `${data.month} 实时数据` : '实时掌握业务运营状况'}
         </p>
       </div>
@@ -111,42 +110,44 @@ export default function DashboardPage() {
       </div>
 
       {/* 快捷操作 */}
-      <GlassCard className="p-5 anim-initial animate-fade-in-up delay-250" glow>
-        <h2 className="text-[15px] font-semibold text-[var(--color-text-primary)] mb-4 tracking-wide">快捷操作</h2>
+      <div className="bg-card rounded-xl border border-border p-5 anim-initial animate-fade-in-up delay-250">
+        <h2 className="text-sm font-semibold text-foreground mb-4 tracking-wide">快捷操作</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <QuickAction href="/admin/orders" label="订单管理" icon="📋" delay={0} />
           <QuickAction href="/admin/pool" label="公共池" icon="🏊" delay={50} />
           <QuickAction href="/admin/team" label="团队管理" icon="👥" delay={100} />
           <QuickAction href="/admin/analytics" label="数据统计" icon="📊" delay={150} />
         </div>
-      </GlassCard>
+      </div>
 
       {/* 工作流说明 */}
-      <GlassCard className="p-5 anim-initial animate-fade-in-up delay-300">
-        <h2 className="text-[15px] font-semibold text-[var(--color-text-primary)] mb-4 tracking-wide">核心工作流</h2>
-        <div className="flex flex-wrap items-center gap-2 text-[13px]">
-          {[
-            { label: '客服录单', color: 'bg-[var(--color-info)]/15 text-[var(--color-info)]' },
-            { label: '资料员接单', color: 'bg-[var(--color-primary)]/15 text-[var(--color-primary-light)]' },
-            { label: '资料收集', color: 'bg-[var(--color-warning)]/15 text-[var(--color-warning)]' },
-            { label: '操作员审核', color: 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]' },
-            { label: '材料制作', color: 'bg-[var(--color-secondary)]/15 text-[var(--color-secondary)]' },
-            { label: '交付客户', color: 'bg-[var(--color-success)]/15 text-[var(--color-success)]' },
-            { label: '出签/拒签', color: 'bg-[var(--color-success)]/15 text-[var(--color-success)]' },
-          ].map((step, i, arr) => (
-            <div key={step.label} className="flex items-center gap-2">
-              <span className={`px-3 py-1.5 rounded-lg text-[12px] font-medium ${step.color} transition-transform duration-200 hover:scale-105`}>
-                {step.label}
-              </span>
-              {i < arr.length - 1 && (
-                <svg className="w-3.5 h-3.5 text-[var(--color-text-placeholder)] opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              )}
-            </div>
-          ))}
+      <div className="bg-card rounded-xl border border-border p-5 anim-initial animate-fade-in-up delay-300">
+        <h2 className="text-sm font-semibold text-foreground mb-4 tracking-wide">核心工作流</h2>
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          {
+            [
+              { label: '客服录单', color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' },
+              { label: '资料员接单', color: 'bg-primary/10 text-primary' },
+              { label: '资料收集', color: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400' },
+              { label: '操作员审核', color: 'bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400' },
+              { label: '材料制作', color: 'bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400' },
+              { label: '交付客户', color: 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400' },
+              { label: '出签/拒签', color: 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400' },
+            ].map((step, i, arr) => (
+              <div key={step.label} className="flex items-center gap-2">
+                <span className={`px-3 py-1.5 rounded-lg text-xs font-medium ${step.color} transition-transform duration-200 hover:scale-105`}>
+                  {step.label}
+                </span>
+                {i < arr.length - 1 && (
+                  <svg className="w-3.5 h-3.5 text-muted-foreground opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                )}
+              </div>
+            ))
+          }
         </div>
-      </GlassCard>
+      </div>
     </div>
   )
 }
@@ -155,11 +156,11 @@ function QuickAction({ href, label, icon, delay = 0 }: { href: string; label: st
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-white/[0.02] border border-white/[0.04] transition-all duration-300 group active:scale-[0.97] hover:bg-white/[0.05] hover:border-white/[0.08] hover:shadow-lg hover:shadow-black/5"
+      className="flex items-center gap-3 px-4 py-3.5 rounded-lg bg-card border border-border transition-all duration-300 group active:scale-95 hover:bg-accent hover:border-border hover:shadow-sm"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <span className="text-[18px] transition-transform duration-300 group-hover:scale-110 group-active:scale-95">{icon}</span>
-      <span className="text-[13px] font-medium text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">{label}</span>
+      <span className="text-lg transition-transform duration-300 group-hover:scale-110 group-active:scale-95">{icon}</span>
+      <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
     </Link>
   )
 }

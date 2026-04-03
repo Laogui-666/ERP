@@ -649,10 +649,267 @@ async function main() {
 
 ## 7. UI/样式开发规范
 
-> **设计系统**：液态玻璃 (Liquid Glass) + 莫兰迪冷色系
-> **样式文件**：`globals.css`（变量/动效/背景） + `glassmorphism.css`（组件） + `tailwind.config.ts`（色板/动画）
+> **设计系统**：现代简约设计系统（移动优先）
+> **样式文件**：`globals.css`（变量/动效/背景） + `tailwind.config.ts`（色板/动画）
 
-### 7.1 Tailwind 使用规范
+### 7.1 移动优先设计原则
+
+**核心原则**：Mobile-First，桌面端渐进增强。手机端优化不得破坏桌面端体验。
+
+**设计参考**：Airbnb App / Apple.com / Linear / Notion / Stripe / 微信
+
+**适用范围**：所有 `portal/`、`components/portal/`、根路径页面下的新增代码，以及 ERP 系统的 UI 改造。
+
+#### 7.1.1 视口与安全区
+
+```tsx
+// 每个页面必须在 layout.tsx 中包含 viewport meta（已有则不重复）
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+```
+
+**安全区适配**（刘海屏/底部横条）：
+
+| 位置 | CSS | 说明 |
+|---|---|---|
+| 顶栏 | `padding-top: env(safe-area-inset-top)` | 刘海区域 |
+| 底部Tab | `padding-bottom: env(safe-area-inset-bottom)` | 底部横条 |
+| 左右 | 自动适配 | 一般不需要额外处理 |
+
+**Tailwind 实现**：
+```tsx
+// 底部Tab
+<nav className="fixed bottom-0 pb-[env(safe-area-inset-bottom)] ...">
+
+// 内容区底部留白（避开Tab）
+<main className="pb-[calc(68px+env(safe-area-inset-bottom))] ...">
+```
+
+#### 7.1.2 触控区域标准
+
+**Apple HIG 标准：所有可点击元素最小 44×44px。**
+
+| 元素 | 最小尺寸 | Tailwind |
+|---|---|---|
+| 按钮 | 44×44px | `min-h-[44px]` |
+| 图标按钮 | 44×44px | `min-h-[44px] min-w-[44px]` |
+| 列表项 | 高度≥56px | `min-h-[56px]` |
+| 输入框 | 高度≥48px | `py-3.5` |
+| Tab项 | 高度≥48px | `py-2` (56px total) |
+| 卡片间距 | 12px | `gap-3` |
+
+**点击反馈**（手机无 hover，必须有 `:active`）：
+```tsx
+// ✅ 正确：active 反馈
+className="active:scale-[0.97] active:bg-gray-100 transition-transform duration-100"
+
+// ❌ 错误：只有 hover 无 active
+className="hover:bg-gray-100"  // 手机上永远不触发
+```
+
+#### 7.1.3 布局规范
+
+| 规则 | 值 | 说明 |
+|---|---|---|
+| 内容最大宽度 | `max-w-lg`（448px） | 超宽居中留白 |
+| 左右边距 | `px-4`（16px） | 基础间距 |
+| 底部留白 | `pb-[68px]` | 避开底部Tab |
+| 顶部留白 | `pt-14`（56px） | 避开固定顶栏 |
+| Section间距 | `py-12` ~ `py-16` | 区域间呼吸感 |
+
+#### 7.1.4 横向滚动规范
+
+所有横向滚动容器（目的地卡片、Tab筛选栏等）**必须遵守**：
+
+```tsx
+<div
+  className="
+    flex gap-3 overflow-x-auto
+    snap-x snap-mandatory          /* scroll-snap */
+    -webkit-overflow-scrolling:touch /* iOS 惯性滚动 */
+    scrollbar-none                  /* 隐藏滚动条 */
+    pb-2                            /* 底部留白 */
+  "
+>
+  {items.map(item => (
+    <div key={item.id} className="flex-shrink-0 snap-start ...">
+      {/* 卡片内容 */}
+    </div>
+  ))}
+</div>
+```
+
+```css
+/* tailwind.config.ts 中添加 scrollbar-none */
+scrollbar: {
+  none: { '&::-webkit-scrollbar': { display: 'none' }, '-ms-overflow-style': 'none', 'scrollbar-width': 'none' }
+}
+```
+
+#### 7.1.5 动画性能（手机端专项）
+
+| 规则 | 说明 |
+|---|---|
+| **只动画 GPU 属性** | `transform` 和 `opacity` 以外的属性禁止动画 |
+| **will-change** | 滚动容器 `will-change: scroll-position`，动画元素 `will-change: transform` |
+| **帧率** | 所有动画 60fps，复杂计算用 `requestAnimationFrame` |
+| **禁用桌面特效** | 移动端自动禁用：鼠标光晕、hover浮起、液态光泽层 |
+| **降低模糊** | 移动端 `backdrop-blur` 降至 `blur(12px)`（桌面 20px） |
+| **减少粒子** | 动态背景光球从4个减至2个，尺寸缩小 |
+| **懒加载** | 非首屏图片 `loading="lazy"` + `srcSet` 响应式图片 |
+| **骨架屏** | 数据加载必须有骨架屏，禁止白屏 |
+
+**`prefers-reduced-motion` 尊重**：
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+#### 7.1.6 桌面端 vs 移动端差异化
+
+**通过 `@media (hover: hover)` 区分，CSS 层面处理，JS 无需判断。**
+
+| 特性 | 桌面端 | 移动端 |
+|---|---|---|
+| 卡片hover | 浮起+阴影+光泽层 | 无，仅 `:active` 缩放 |
+| 按钮hover | 光泽扫过+背景提亮 | 无，仅 `:active` 变暗 |
+| 鼠标光晕 | 400px径向渐变追踪 | `display:none` |
+| 浮动光球 | 2个 orb + blur(60px) | 2个静态渐变圆 |
+| 顶栏初始态 | 透明→滚动变毛玻璃 | 初始半透明(0.85) |
+| 搜索栏 | 始终展开 | 收起为🔍图标 |
+| 滚动条 | 自定义细滚动条 | 隐藏 |
+
+```tsx
+// DynamicBackground 组件中的实现示例
+<div className="hidden md:block">  {/* 2个浮动光球 - 仅桌面 */}</div>
+<div className="md:hidden">        {/* 2个静态渐变 - 仅移动 */}</div>
+
+// CSS 实现
+@media (hover: hover) {
+  .card:hover { transform: translateY(-2px); }
+  .card:hover::before { opacity: 1; }  /* 光泽层 */
+}
+@media (hover: none) {
+  .card:active { transform: scale(0.97); }
+  .card::before { display: none; }     /* 禁用光泽层 */
+}
+```
+
+#### 7.1.7 手机端专属 UI 模式
+
+| 模式 | 场景 | CSS/组件 | 参考 |
+|---|---|---|---|
+| **底部弹出面板** | 筛选/排序/操作菜单 | `fixed bottom-0 rounded-t-2xl` + slideUp动画 | Airbnb/美团 |
+| **全屏模态** | 创建订单/表单 | `fixed inset-0` + slideUp | Linear/Notion |
+| **Toast底部居中** | 操作反馈 | `fixed bottom-20 left-1/2 -translate-x-1/2` | iOS风格 |
+| **横向滚动Tab** | 状态筛选 | `overflow-x-auto snap-x` + 底部指示条 | 微信/淘宝 |
+| **骨架屏列表** | 加载态 | `skeleton` CSS 类 | 所有主流App |
+| **空状态插画** | 无数据 | 图标+标题+描述+CTA按钮 | Notion/Slack |
+| **下拉刷新** | 列表刷新 | Touch事件检测（M9+可选） | 微信 |
+
+**底部弹出面板（Bottom Sheet）CSS**：
+```css
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 85vh;
+  background: var(--color-bg-primary);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--color-border);
+  animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* 顶部拖拽条 */
+}
+.bottom-sheet::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-border-dark);
+  margin: 12px auto;
+}
+```
+
+#### 7.1.8 文字排版（手机端）
+
+| 层级 | 手机端 | 桌面端 | 用途 |
+|---|---|---|---|
+| Hero标题 | 28px / 700 | 32-40px / 700 | 首屏大标题 |
+| 页面标题 | 20px / 700 | 24px / 700 | Section标题 |
+| 卡片标题 | 16px / 600 | 18px / 600 | 工具/服务卡片 |
+| 正文 | 14px / 400 | 14px / 400 | 描述文字 |
+| 辅助文字 | 12px / 400 | 12-13px / 400 | 标签/时间 |
+| 极小文字 | 11px / 500 | 11px / 500 | 角标/版权 |
+
+**行高**：`leading-relaxed`（1.625）用于正文，`leading-tight`（1.25）用于标题
+
+#### 7.1.9 图片响应式
+
+```tsx
+// ✅ 正确：响应式图片
+<Image
+  src="/destinations/japan.jpg"
+  alt="日本签证"
+  width={360}
+  height={480}
+  sizes="(max-width: 768px) 50vw, 25vw"
+  loading="lazy"           // 非首屏图片
+  className="object-cover rounded-2xl"
+/>
+
+// ✅ 首屏图片优先加载
+<Image
+  src="/hero-bg.jpg"
+  alt=""
+  priority                  // 首屏
+  fill
+  className="object-cover"
+/>
+```
+
+#### 7.1.10 手机端验证清单
+
+**每次提交前，Chrome DevTools 手机模式逐项验证**：
+
+```
+视口与布局
+□ 375px（iPhone SE）无水平滚动条
+□ 390px（iPhone 14）布局正常
+□ 414px（iPhone 14 Pro Max）布局正常
+□ 底部Tab不遮挡内容
+□ 顶栏不遮挡内容
+□ 刘海屏 safe-area 正常
+
+触控
+□ 所有按钮 ≥44px 可点击
+□ 列表项 ≥56px 高度
+□ 输入框 ≥48px 高度
+□ 无误触（间距≥12px）
+
+交互
+□ 横向滚动流畅+scroll-snap
+□ 无桌面端hover特效（光泽/浮起/光晕）
+□ active 反馈正常
+□ 骨架屏加载正常
+
+性能
+□ 首屏加载 < 3s（3G模拟）
+□ 动画 60fps（Performance面板）
+□ 图片懒加载生效
+□ 无 layout shift（CLS < 0.1）
+
+桌面端不受影响
+□ 桌面端 hover 特效正常
+□ 桌面端搜索栏展开显示
+□ 桌面端2个光球动画正常
+```
+
+### 7.2 Tailwind 使用规范
 
 ```tsx
 // ✅ 正确：使用 Tailwind 原子类

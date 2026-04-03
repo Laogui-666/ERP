@@ -1,7 +1,6 @@
 'use client'
 import { apiFetch } from '@shared/lib/api-client'
 import { useEffect, useState, useCallback } from 'react'
-import { GlassCard } from '@shared/ui/glass-card'
 import { PageHeader } from '@shared/components/layout/page-header'
 import { useToast } from '@shared/ui/toast'
 import { useAuth } from '@shared/hooks/use-auth'
@@ -151,36 +150,36 @@ export default function TeamPage() {
 
       {/* 创建表单 */}
       {showForm && (
-        <GlassCard className="p-6 animate-fade-in-up space-y-4">
-          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">添加员工</h3>
+        <div className="bg-card rounded-xl border border-border p-6 animate-fade-in-up space-y-4">
+          <h3 className="text-lg font-semibold text-foreground">添加员工</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">用户名</label>
-              <input value={formUsername} onChange={(e) => setFormUsername(e.target.value)} placeholder="登录用户名" className="w-full glass-input text-sm" />
+              <label className="text-xs text-muted-foreground mb-1 block">用户名</label>
+              <input value={formUsername} onChange={(e) => setFormUsername(e.target.value)} placeholder="登录用户名" className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
             </div>
             <div>
-              <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">姓名</label>
-              <input value={formRealName} onChange={(e) => setFormRealName(e.target.value)} placeholder="真实姓名" className="w-full glass-input text-sm" />
+              <label className="text-xs text-muted-foreground mb-1 block">姓名</label>
+              <input value={formRealName} onChange={(e) => setFormRealName(e.target.value)} placeholder="真实姓名" className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
             </div>
             <div>
-              <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">手机号</label>
-              <input value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder="手机号" className="w-full glass-input text-sm" />
+              <label className="text-xs text-muted-foreground mb-1 block">手机号</label>
+              <input value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder="手机号" className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
             </div>
             <div>
-              <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">密码</label>
-              <input type="password" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} placeholder="至少8位，含大小写+数字" className="w-full glass-input text-sm" />
+              <label className="text-xs text-muted-foreground mb-1 block">密码</label>
+              <input type="password" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} placeholder="至少8位，含大小写+数字" className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
             </div>
             <div>
-              <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">角色</label>
-              <select value={formRole} onChange={(e) => setFormRole(e.target.value)} className="w-full glass-input text-sm">
+              <label className="text-xs text-muted-foreground mb-1 block">角色</label>
+              <select value={formRole} onChange={(e) => setFormRole(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
                 {Object.entries(ROLE_LABELS).map(([val, label]) => (
                   <option key={val} value={val}>{label}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">部门</label>
-              <select value={formDepartmentId} onChange={(e) => setFormDepartmentId(e.target.value)} className="w-full glass-input text-sm">
+              <label className="text-xs text-muted-foreground mb-1 block">部门</label>
+              <select value={formDepartmentId} onChange={(e) => setFormDepartmentId(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
                 <option value="">不指定</option>
                 {departments.map((d) => (
                   <option key={d.id} value={d.id}>{d.name}</option>
@@ -189,47 +188,47 @@ export default function TeamPage() {
             </div>
           </div>
           <div className="flex gap-3 justify-end">
-            <button onClick={resetForm} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">取消</button>
-            <button onClick={handleCreate} disabled={isSaving} className="glass-btn-primary px-6 py-2 text-sm font-medium disabled:opacity-50">
+            <button onClick={resetForm} className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground">取消</button>
+            <button onClick={handleCreate} disabled={isSaving} className="px-6 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50">
               {isSaving ? '创建中...' : '创建'}
             </button>
           </div>
-        </GlassCard>
+        </div>
       )}
 
       {/* 员工列表 */}
       {isLoading ? (
         <div className="text-center py-12">
-          <div className="inline-block w-6 h-6 border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin" />
+          <div className="inline-block w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
         </div>
       ) : employees.length === 0 ? (
-        <GlassCard className="p-12 text-center">
-          <p className="text-[var(--color-text-secondary)]">暂无员工</p>
-        </GlassCard>
+        <div className="bg-card rounded-xl border border-border p-12 text-center">
+          <p className="text-muted-foreground">暂无员工</p>
+        </div>
       ) : (
         Object.entries(grouped).map(([group, members]) => (
           <div key={group} className="space-y-3">
-            <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">{group}（{members.length} 人）</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground">{group}（{members.length} 人）</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {members.map((emp) => (
-                <GlassCard key={emp.id} className="p-4 animate-fade-in-up">
+                <div key={emp.id} className="bg-card rounded-xl border border-border p-4 animate-fade-in-up">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[var(--color-primary)]/15 flex items-center justify-center text-sm font-medium text-[var(--color-primary-light)]">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
                       {emp.realName[0]}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-[var(--color-text-primary)] truncate">{emp.realName}</span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${emp.status === 'ACTIVE' ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]' : 'bg-[var(--color-error)]/15 text-[var(--color-error)]'}`}>
+                        <span className="text-sm font-medium text-foreground truncate">{emp.realName}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${emp.status === 'ACTIVE' ? 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400' : 'bg-destructive/10 text-destructive'}`}>
                           {emp.status === 'ACTIVE' ? '在职' : '停用'}
                         </span>
                       </div>
-                      <div className="text-xs text-[var(--color-text-placeholder)]">
+                      <div className="text-xs text-muted-foreground">
                         {ROLE_LABELS[emp.role] ?? emp.role} · {emp.phone}
                       </div>
                     </div>
                   </div>
-                </GlassCard>
+                </div>
               ))}
             </div>
           </div>

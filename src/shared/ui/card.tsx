@@ -5,10 +5,11 @@ import { cn } from '@shared/lib/utils'
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   padding?: 'none' | 'sm' | 'md' | 'lg'
+  shadow?: 'none' | 'sm' | 'md' | 'lg'
 }
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, padding = 'md', children, ...props }, ref) => {
+  ({ className, padding = 'md', shadow = 'sm', children, ...props }, ref) => {
     const paddings = {
       none: '',
       sm: 'p-3.5',
@@ -16,10 +17,23 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       lg: 'p-6',
     }
 
+    const shadows = {
+      none: 'shadow-none',
+      sm: 'shadow-sm',
+      md: 'shadow-md',
+      lg: 'shadow-lg',
+    }
+
     return (
       <div
         ref={ref}
-        className={cn('glass-card', paddings[padding], className)}
+        className={cn(
+          'bg-white rounded-lg border border-gray-200 transition-all duration-200',
+          'hover:shadow-md',
+          paddings[padding],
+          shadows[shadow],
+          className
+        )}
         {...props}
       >
         {children}
@@ -39,7 +53,7 @@ CardHeader.displayName = 'CardHeader'
 
 const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn('text-[15px] font-semibold text-[var(--color-text-primary)] tracking-wide', className)} {...props} />
+    <h3 ref={ref} className={cn('text-lg font-semibold text-gray-900', className)} {...props} />
   ),
 )
 CardTitle.displayName = 'CardTitle'

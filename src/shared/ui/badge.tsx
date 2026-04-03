@@ -9,12 +9,12 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantStyles = {
-  default: 'bg-[var(--color-text-placeholder)]/15 text-[var(--color-text-secondary)] border-[var(--color-text-placeholder)]/10',
-  success: 'bg-[var(--color-success)]/12 text-[var(--color-success)] border-[var(--color-success)]/15',
-  warning: 'bg-[var(--color-warning)]/12 text-[var(--color-warning)] border-[var(--color-warning)]/15',
-  danger: 'bg-[var(--color-error)]/12 text-[var(--color-error)] border-[var(--color-error)]/15',
-  info: 'bg-[var(--color-info)]/12 text-[var(--color-info)] border-[var(--color-info)]/15',
-  purple: 'bg-[var(--color-accent)]/12 text-[var(--color-accent)] border-[var(--color-accent)]/15',
+  default: 'bg-muted/50 text-muted-foreground border-muted',
+  success: 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-800',
+  warning: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800',
+  danger: 'bg-destructive/10 text-destructive border-destructive/20',
+  info: 'bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 border-blue-200 dark:border-blue-800',
+  purple: 'bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 border-purple-200 dark:border-purple-800',
 }
 
 const sizeStyles = {

@@ -4,7 +4,6 @@ import { apiFetch } from '@shared/lib/api-client'
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@shared/hooks/use-auth'
 import { PageHeader } from '@shared/components/layout/page-header'
-import { GlassCard } from '@shared/ui/glass-card'
 import { StatCard } from '@erp/components/analytics/stat-card'
 import { TrendChart } from '@erp/components/analytics/trend-chart'
 import { RankingTable } from '@erp/components/analytics/ranking-table'
@@ -86,8 +85,8 @@ export default function AnalyticsPage() {
   if (isLoading) {
     return (
       <div className="p-12 text-center">
-        <div className="inline-block w-6 h-6 border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin" />
-        <p className="mt-3 text-sm text-[var(--color-text-secondary)]">加载中...</p>
+        <div className="inline-block w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <p className="mt-3 text-sm text-muted-foreground">加载中...</p>
       </div>
     )
   }
@@ -105,12 +104,12 @@ export default function AnalyticsPage() {
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="glass-input text-sm"
+              className="border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
             {canExport && (
               <button
                 onClick={handleExport}
-                className="glass-btn-primary flex items-center gap-2 px-4 py-2.5 text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -178,10 +177,10 @@ export default function AnalyticsPage() {
       {/* 国家分布 + 支付方式 */}
       {overview && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <GlassCard className="p-5 animate-fade-in-up">
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">国家分布 TOP 10</h3>
+          <div className="bg-card rounded-xl border border-border p-5 animate-fade-in-up">
+            <h3 className="text-sm font-semibold text-foreground mb-4">国家分布 TOP 10</h3>
             {overview.byCountry.length === 0 ? (
-              <p className="text-xs text-[var(--color-text-placeholder)] text-center py-4">暂无数据</p>
+              <p className="text-xs text-muted-foreground text-center py-4">暂无数据</p>
             ) : (
               <div className="space-y-2">
                 {overview.byCountry.map(([country, count]) => {
@@ -189,38 +188,38 @@ export default function AnalyticsPage() {
                   const pct = maxCount > 0 ? (count / maxCount) * 100 : 0
                   return (
                     <div key={country} className="flex items-center gap-3">
-                      <span className="text-xs text-[var(--color-text-secondary)] w-16 truncate">{country}</span>
-                      <div className="flex-1 h-5 bg-white/[0.03] rounded-full overflow-hidden">
+                      <span className="text-xs text-muted-foreground w-16 truncate">{country}</span>
+                      <div className="flex-1 h-5 bg-muted rounded-full overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-[var(--color-primary)]/40 to-[var(--color-accent)]/30 transition-all duration-500"
+                          className="h-full rounded-full bg-gradient-to-r from-primary/40 to-purple-500/30 transition-all duration-500"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <span className="text-xs text-[var(--color-text-primary)] font-medium w-8 text-right">{count}</span>
+                      <span className="text-xs text-foreground font-medium w-8 text-right">{count}</span>
                     </div>
                   )
                 })}
               </div>
             )}
-          </GlassCard>
+          </div>
 
-          <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '50ms' }}>
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">支付方式分布</h3>
+          <div className="bg-card rounded-xl border border-border p-5 animate-fade-in-up" style={{ animationDelay: '50ms' }}>
+            <h3 className="text-sm font-semibold text-foreground mb-4">支付方式分布</h3>
             {overview.byPayment.length === 0 ? (
-              <p className="text-xs text-[var(--color-text-placeholder)] text-center py-4">暂无数据</p>
+              <p className="text-xs text-muted-foreground text-center py-4">暂无数据</p>
             ) : (
               <div className="space-y-3">
                 {overview.byPayment.map(([method, count]) => (
                   <div key={method} className="flex items-center justify-between">
-                    <span className="text-sm text-[var(--color-text-primary)]">{method}</span>
+                    <span className="text-sm text-foreground">{method}</span>
                     <div className="flex items-center gap-2">
-                      <div className="w-24 h-2 bg-white/[0.03] rounded-full overflow-hidden">
+                      <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-[var(--color-info)]/40 transition-all duration-500"
+                          className="h-full rounded-full bg-blue-500/40 transition-all duration-500"
                           style={{ width: `${(count / overview.totalOrders) * 100}%` }}
                         />
                       </div>
-                      <span className="text-xs text-[var(--color-text-secondary)] w-12 text-right">
+                      <span className="text-xs text-muted-foreground w-12 text-right">
                         {count} ({((count / overview.totalOrders) * 100).toFixed(0)}%)
                       </span>
                     </div>
@@ -228,7 +227,7 @@ export default function AnalyticsPage() {
                 ))}
               </div>
             )}
-          </GlassCard>
+          </div>
         </div>
       )}
 

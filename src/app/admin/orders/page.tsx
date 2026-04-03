@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { useOrderStore } from '@erp/stores/order-store'
 import { useAuth } from '@shared/hooks/use-auth'
 import { StatusBadge } from '@erp/components/orders/status-badge'
-import { GlassCard } from '@shared/ui/glass-card'
 import { PageHeader } from '@shared/components/layout/page-header'
 import { Modal } from '@shared/ui/modal'
 import { useToast } from '@shared/ui/toast'
@@ -163,16 +162,16 @@ export default function OrdersPage() {
       />
 
       {/* 筛选栏 */}
-      <GlassCard className="p-4 animate-fade-in-up" style={{ animationDelay: '50ms' }}>
+      <div className="bg-card rounded-xl border border-border p-4 animate-fade-in-up" style={{ animationDelay: '50ms' }}>
         <div className="flex flex-wrap items-center gap-3">
           {/* 状态筛选 */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as OrderStatus | '')}
-            className="glass-input text-sm min-w-[140px]"
+            className="border border-border rounded-lg px-3 py-2 text-sm min-w-[140px] bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           >
             {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-[#252B3B]">
+              <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
             ))}
@@ -186,58 +185,58 @@ export default function OrdersPage() {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleFilter()}
-              className="glass-input w-full text-sm"
+              className="border border-border rounded-lg px-3 py-2 w-full text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
 
           <button
             onClick={handleFilter}
-            className="glass-btn-primary px-4 py-2.5 text-sm font-medium"
+            className="px-4 py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             查询
           </button>
 
           {/* 统计 */}
           {meta && (
-            <span className="text-sm text-[var(--color-text-secondary)] ml-auto">
+            <span className="text-sm text-muted-foreground ml-auto">
               共 {meta.total} 条
             </span>
           )}
         </div>
-      </GlassCard>
+      </div>
 
       {/* 批量操作栏 */}
       {selectedIds.size > 0 && (
-        <GlassCard className="p-3 animate-fade-in-up flex items-center gap-3 flex-wrap">
-          <span className="text-sm text-[var(--color-text-secondary)]">已选 {selectedIds.size} 单</span>
+        <div className="bg-card rounded-xl border border-border p-3 animate-fade-in-up flex items-center gap-3 flex-wrap">
+          <span className="text-sm text-muted-foreground">已选 {selectedIds.size} 单</span>
           <div className="relative">
             <button
               onClick={() => { setShowBatchMenu(!showBatchMenu); if (!showBatchMenu) loadTemplates() }}
-              className="glass-btn-primary px-3 py-1.5 text-xs font-medium"
+              className="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               批量操作 ▾
             </button>
             {showBatchMenu && (
-              <div className="absolute top-full mt-1 left-0 z-30 glass-card-static rounded-xl p-2 min-w-[180px] space-y-1 shadow-xl">
+              <div className="absolute top-full mt-1 left-0 z-30 bg-card border border-border rounded-xl p-2 min-w-[180px] space-y-1 shadow-xl">
                 {['apply_template', 'cancel'].map(a => (
                   <button key={a} onClick={() => { setBatchAction(a); setShowBatchMenu(false) }}
-                    className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-white/10 text-[var(--color-text-primary)]">
+                    className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-accent text-foreground">
                     {a === 'apply_template' ? '📄 应用模板' : '❌ 批量取消'}
                   </button>
                 ))}
               </div>
             )}
           </div>
-          <button onClick={clearSelection} className="text-xs text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]">取消选择</button>
+          <button onClick={clearSelection} className="text-xs text-muted-foreground hover:text-foreground">取消选择</button>
 
           {/* 应用模板面板 */}
           {batchAction === 'apply_template' && (
             <div className="w-full flex items-center gap-2 mt-1">
-              <select value={batchTemplateId} onChange={(e) => setBatchTemplateId(e.target.value)} className="glass-input text-xs flex-1">
+              <select value={batchTemplateId} onChange={(e) => setBatchTemplateId(e.target.value)} className="border border-border rounded-lg px-3 py-2 text-xs flex-1 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
                 <option value="">选择模板...</option>
-                {templates.map(t => <option key={t.id} value={t.id} className="bg-[#252B3B]">{t.name}</option>)}
+                {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
-              <button onClick={handleBatch} disabled={isBatchRunning} className="glass-btn-primary px-3 py-1.5 text-xs disabled:opacity-50">
+              <button onClick={handleBatch} disabled={isBatchRunning} className="px-3 py-2 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50">
                 {isBatchRunning ? '执行中...' : '执行'}
               </button>
             </div>
@@ -246,85 +245,85 @@ export default function OrdersPage() {
           {/* 取消订单面板 */}
           {batchAction === 'cancel' && (
             <div className="w-full flex items-center gap-2 mt-1">
-              <input value={batchCancelReason} onChange={(e) => setBatchCancelReason(e.target.value)} placeholder="取消原因" className="glass-input text-xs flex-1" />
-              <button onClick={handleBatch} disabled={isBatchRunning} className="glass-btn-primary px-3 py-1.5 text-xs disabled:opacity-50" style={{background:'linear-gradient(135deg, rgba(184,124,124,0.4), rgba(184,124,124,0.2))'}}>
+              <input value={batchCancelReason} onChange={(e) => setBatchCancelReason(e.target.value)} placeholder="取消原因" className="border border-border rounded-lg px-3 py-2 text-xs flex-1 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+              <button onClick={handleBatch} disabled={isBatchRunning} className="px-3 py-2 text-xs font-medium bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors disabled:opacity-50">
                 {isBatchRunning ? '执行中...' : '确认取消'}
               </button>
             </div>
           )}
-        </GlassCard>
+        </div>
       )}
 
       {/* 订单列表 */}
-      <GlassCard className="overflow-hidden animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+      <div className="bg-card rounded-xl border border-border overflow-hidden animate-fade-in-up" style={{ animationDelay: '100ms' }}>
         {isLoading ? (
           <div className="p-12 text-center">
-            <div className="inline-block w-6 h-6 border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin" />
-            <p className="mt-3 text-sm text-[var(--color-text-secondary)]">加载中...</p>
+            <div className="inline-block w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+            <p className="mt-3 text-sm text-muted-foreground">加载中...</p>
           </div>
         ) : orders.length === 0 ? (
           <div className="p-12 text-center">
-            <svg className="w-12 h-12 mx-auto text-[var(--color-text-placeholder)] mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-12 h-12 mx-auto text-muted-foreground mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            <p className="text-[var(--color-text-secondary)]">暂无订单</p>
+            <p className="text-muted-foreground">暂无订单</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/5">
+                <tr className="border-b border-border">
                   <th className="px-2 py-3 w-8">
                     <input type="checkbox" checked={orders.length > 0 && selectedIds.size === orders.length}
-                      onChange={toggleSelectAll} className="rounded" />
+                      onChange={toggleSelectAll} className="rounded border-border text-primary focus:ring-primary/50" />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-placeholder)] uppercase tracking-wider">订单号</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-placeholder)] uppercase tracking-wider">客户</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-placeholder)] uppercase tracking-wider">国家/类型</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-placeholder)] uppercase tracking-wider">状态</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-placeholder)] uppercase tracking-wider">金额</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-placeholder)] uppercase tracking-wider">创建时间</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-placeholder)] uppercase tracking-wider">操作</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">订单号</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">客户</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">国家/类型</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">状态</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">金额</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">创建时间</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">操作</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.map((order, i) => (
                   <tr
                     key={order.id}
-                    className="border-b border-white/5 hover:bg-white/[0.02] transition-colors animate-fade-in-up"
+                    className="border-b border-border hover:bg-accent transition-colors animate-fade-in-up"
                     style={{ animationDelay: `${i * 30}ms` }}
                   >
                     <td className="px-2 py-3">
-                      <input type="checkbox" checked={selectedIds.has(order.id)} onChange={() => toggleSelect(order.id)} className="rounded" />
+                      <input type="checkbox" checked={selectedIds.has(order.id)} onChange={() => toggleSelect(order.id)} className="rounded border-border text-primary focus:ring-primary/50" />
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm font-mono text-[var(--color-primary-light)]">{order.orderNo}</span>
+                      <span className="text-sm font-mono text-primary">{order.orderNo}</span>
                     </td>
                     <td className="px-4 py-3">
                       <div>
-                        <div className="text-sm font-medium text-[var(--color-text-primary)]">{order.customerName}</div>
-                        <div className="text-xs text-[var(--color-text-placeholder)]">{order.customerPhone}</div>
+                        <div className="text-sm font-medium text-foreground">{order.customerName}</div>
+                        <div className="text-xs text-muted-foreground">{order.customerPhone}</div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div>
-                        <div className="text-sm text-[var(--color-text-primary)]">{order.targetCountry}</div>
-                        <div className="text-xs text-[var(--color-text-placeholder)]">{order.visaType}</div>
+                        <div className="text-sm text-foreground">{order.targetCountry}</div>
+                        <div className="text-xs text-muted-foreground">{order.visaType}</div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={order.status} />
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm text-[var(--color-text-primary)]">¥{Number(order.amount).toLocaleString()}</span>
+                      <span className="text-sm text-foreground">¥{Number(order.amount).toLocaleString()}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs text-[var(--color-text-secondary)]">{formatDate(order.createdAt)}</span>
+                      <span className="text-xs text-muted-foreground">{formatDate(order.createdAt)}</span>
                     </td>
                     <td className="px-4 py-3">
                       <Link
                         href={`/admin/orders/${order.id}`}
-                        className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors"
+                        className="text-xs text-blue-500 hover:text-blue-400 transition-colors"
                       >
                         查看详情
                       </Link>
@@ -338,29 +337,29 @@ export default function OrdersPage() {
 
         {/* 分页 */}
         {meta && meta.totalPages && meta.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-white/5">
-            <span className="text-xs text-[var(--color-text-secondary)]">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+            <span className="text-xs text-muted-foreground">
               第 {meta.page} / {meta.totalPages} 页
             </span>
             <div className="flex gap-2">
               <button
                 disabled={page <= 1}
                 onClick={() => handlePageChange(page - 1)}
-                className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="px-3 py-1.5 text-xs rounded-lg bg-accent text-foreground hover:bg-accent/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
                 上一页
               </button>
               <button
                 disabled={page >= (meta.totalPages ?? 1)}
                 onClick={() => handlePageChange(page + 1)}
-                className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="px-3 py-1.5 text-xs rounded-lg bg-accent text-foreground hover:bg-accent/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
                 下一页
               </button>
             </div>
           </div>
         )}
-      </GlassCard>
+      </div>
 
       {/* 新建订单弹窗 */}
       {showCreateModal && (

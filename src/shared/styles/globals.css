@@ -3,46 +3,48 @@
 @tailwind utilities;
 
 /* ============================================================
-   华夏签证 ERP - 莫兰迪冷色系液态玻璃主题
+   华夏签证 ERP - 现代简约设计系统（移动优先）
    ============================================================ */
 
 :root {
-  /* 莫兰迪冷色系 - 优雅克制 */
-  --color-primary: #7C8DA6;
-  --color-primary-dark: #5A6B82;
-  --color-primary-light: #A8B5C7;
-  --color-primary-glow: rgba(124, 141, 166, 0.25);
-  --color-secondary: #8FA3A6;
-  --color-accent: #9B8EC4;
-  --color-accent-glow: rgba(155, 142, 196, 0.2);
+  /* 主色调 - 现代简约 */
+  --color-primary: #3B82F6;
+  --color-primary-dark: #2563EB;
+  --color-primary-light: #60A5FA;
+  --color-primary-glow: rgba(59, 130, 246, 0.15);
+  --color-secondary: #10B981;
+  --color-accent: #8B5CF6;
+  --color-accent-glow: rgba(139, 92, 246, 0.15);
 
-  /* 状态色 - 莫兰迪调和 */
-  --color-success: #7FA87A;
-  --color-warning: #C4A97D;
-  --color-error: #B87C7C;
-  --color-info: #7CA8B8;
+  /* 状态色 - 清晰明确 */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
 
-  /* 背景 - 深蓝灰渐变 */
-  --color-bg-from: #1A1F2E;
-  --color-bg-to: #252B3B;
-  --color-bg-mid: #1F2536;
+  /* 背景 - 干净清爽 */
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #F9FAFB;
+  --color-bg-tertiary: #F3F4F6;
+  --color-bg-overlay: rgba(0, 0, 0, 0.5);
 
   /* 文字层级 */
-  --color-text-primary: #E8ECF1;
-  --color-text-secondary: #8E99A8;
-  --color-text-placeholder: #5A6478;
+  --color-text-primary: #111827;
+  --color-text-secondary: #4B5563;
+  --color-text-tertiary: #9CA3AF;
+  --color-text-placeholder: #D1D5DB;
+  --color-text-inverse: #FFFFFF;
 
-  /* 液态玻璃 */
-  --glass-bg: rgba(255, 255, 255, 0.06);
-  --glass-bg-hover: rgba(255, 255, 255, 0.10);
-  --glass-bg-active: rgba(255, 255, 255, 0.04);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-hover: rgba(255, 255, 255, 0.14);
-  --glass-blur: 20px;
-  --glass-blur-heavy: 30px;
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --glass-shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.2);
-  --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  /* 边框 */
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+  --color-border-dark: #D1D5DB;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
   /* 弹簧阻尼 */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -50,23 +52,104 @@
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-  /* 间距 */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  /* 间距系统 - 8pt grid */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* 圆角 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
   --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* 字体大小 */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 36px;
+
+  /* 行高 */
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+
+  /* 字重 */
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+}
+
+/* 深色模式 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* 背景 - 深色模式 */
+    --color-bg-primary: #111827;
+    --color-bg-secondary: #1F2937;
+    --color-bg-tertiary: #374151;
+    --color-bg-overlay: rgba(0, 0, 0, 0.8);
+
+    /* 文字层级 - 深色模式 */
+    --color-text-primary: #F9FAFB;
+    --color-text-secondary: #E5E7EB;
+    --color-text-tertiary: #9CA3AF;
+    --color-text-placeholder: #6B7280;
+
+    /* 边框 - 深色模式 */
+    --color-border: #374151;
+    --color-border-light: #4B5563;
+    --color-border-dark: #6B7280;
+
+    /* 阴影 - 深色模式 */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  }
 }
 
 /* ==================== 全局基础 ==================== */
 
 body {
-  background: linear-gradient(135deg, var(--color-bg-from) 0%, var(--color-bg-mid) 50%, var(--color-bg-to) 100%);
+  background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-family: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: var(--leading-normal);
+}
+
+/* 移动优先：默认移动端样式 */
+@media (max-width: 768px) {
+  body {
+    font-size: var(--text-base);
+  }
+}
+
+/* 桌面端增强 */
+@media (min-width: 769px) {
+  body {
+    font-size: var(--text-base);
+  }
 }
 
 /* ==================== 动态背景（桌面端） ==================== */
@@ -83,94 +166,42 @@ body {
 .dynamic-bg .orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.5;
+  filter: blur(60px);
+  opacity: 0.4;
   will-change: transform;
 }
 
 .dynamic-bg .orb-1 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(124, 141, 166, 0.15) 0%, transparent 70%);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, var(--color-primary-glow) 0%, transparent 70%);
   top: -10%;
   right: -5%;
   animation: orbFloat1 20s ease-in-out infinite;
 }
 
 .dynamic-bg .orb-2 {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(155, 142, 196, 0.12) 0%, transparent 70%);
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--color-accent-glow) 0%, transparent 70%);
   bottom: -15%;
   left: -8%;
   animation: orbFloat2 25s ease-in-out infinite;
 }
 
-.dynamic-bg .orb-3 {
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(143, 163, 166, 0.1) 0%, transparent 70%);
-  top: 40%;
-  left: 30%;
-  animation: orbFloat3 18s ease-in-out infinite;
-}
-
-.dynamic-bg .orb-4 {
-  width: 250px;
-  height: 250px;
-  background: radial-gradient(circle, rgba(124, 168, 184, 0.08) 0%, transparent 70%);
-  top: 20%;
-  right: 25%;
-  animation: orbFloat4 22s ease-in-out infinite;
-}
-
-/* 微光网格线 */
-.dynamic-bg .grid-lines {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-  background-size: 60px 60px;
-  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 80%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 80%);
-}
-
-/* 光标跟随光晕（仅 JS 驱动） */
-.dynamic-bg .cursor-glow {
-  position: absolute;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(124, 141, 166, 0.08) 0%, transparent 70%);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: left 0.8s var(--ease-damping), top 0.8s var(--ease-damping);
-  pointer-events: none;
-}
-
 @keyframes orbFloat1 {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(-40px, 30px) scale(1.05); }
-  66% { transform: translate(20px, -20px) scale(0.95); }
+  33% { transform: translate(-30px, 20px) scale(1.05); }
+  66% { transform: translate(15px, -15px) scale(0.95); }
 }
 
 @keyframes orbFloat2 {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(50px, -25px) scale(1.08); }
-  66% { transform: translate(-30px, 15px) scale(0.92); }
+  33% { transform: translate(40px, -20px) scale(1.08); }
+  66% { transform: translate(-25px, 10px) scale(0.92); }
 }
 
-@keyframes orbFloat3 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-60px, -40px) scale(1.1); }
-}
-
-@keyframes orbFloat4 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(35px, 50px) scale(1.06); }
-}
-
-/* 移动端：隐藏动态背景 */
+/* 移动端：简化背景 */
 @media (max-width: 768px) {
   .dynamic-bg {
     display: none;
@@ -191,9 +222,9 @@ body {
   position: absolute;
   top: -20%;
   right: -10%;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(124, 141, 166, 0.06) 0%, transparent 70%);
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--color-primary-glow) 0%, transparent 70%);
   border-radius: 50%;
 }
 
@@ -202,9 +233,9 @@ body {
   position: absolute;
   bottom: -10%;
   left: -5%;
-  width: 350px;
-  height: 350px;
-  background: radial-gradient(circle, rgba(155, 142, 196, 0.04) 0%, transparent 70%);
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, var(--color-accent-glow) 0%, transparent 70%);
   border-radius: 50%;
 }
 
@@ -217,28 +248,48 @@ body {
 /* ==================== 滚动条 ==================== */
 
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  transition: background 0.2s;
+  background: var(--color-border-dark);
+  border-radius: var(--radius-full);
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--color-text-tertiary);
 }
 
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  scrollbar-color: var(--color-border-dark) var(--color-bg-tertiary);
+}
+
+/* 深色模式滚动条 */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background: var(--color-bg-tertiary);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border-dark);
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-tertiary);
+  }
+  
+  * {
+    scrollbar-color: var(--color-border-dark) var(--color-bg-tertiary);
+  }
 }
 
 /* ==================== 入场动效 ==================== */

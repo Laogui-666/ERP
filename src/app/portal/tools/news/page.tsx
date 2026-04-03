@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { GlassCard } from '@shared/ui/glass-card'
+import { Card } from '@shared/ui/card'
 import { apiFetch } from '@shared/lib/api-client'
 import { ToolPageHeader } from '@/components/portal/tool-page-header'
 import { ToolSkeleton } from '@/components/portal/tool-skeleton'
@@ -41,22 +41,22 @@ export default function NewsPage() {
   useEffect(() => { fetchArticles() }, [fetchArticles])
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
+    <div className="mx-auto max-w-lg px-4 py-6 bg-white min-h-screen">
       <ToolPageHeader
         icon="📰"
         title="签证资讯"
         description="各国签证政策、攻略、动态实时更新"
       />
 
-      <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
         {categories.map(c => (
           <button
             key={c}
             onClick={() => setCategory(c === '全部' ? '' : c)}
-            className={`whitespace-nowrap rounded-full px-4 py-1.5 text-[12px] font-medium transition-all ${
+            className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
               (c === '全部' && !category) || category === c
-                ? 'bg-[var(--color-primary)]/20 text-[var(--color-primary)] border border-[var(--color-primary)]/30'
-                : 'bg-white/5 text-[var(--color-text-secondary)] border border-white/5 hover:bg-white/10'
+                ? 'bg-primary/10 text-primary border border-primary/20 shadow-sm'
+                : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
             }`}
           >
             {c}
@@ -73,23 +73,23 @@ export default function NewsPage() {
           description="管理员发布后将在此显示"
         />
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {articles.map((article, i) => (
-            <GlassCard key={article.id} intensity="light" hover className="p-4 animate-fade-in-up" style={{ animationDelay: `${i * 50}ms` } as React.CSSProperties}>
+            <Card key={article.id} padding="md" shadow="sm" className="animate-fade-in-up" style={{ animationDelay: `${i * 50}ms` } as React.CSSProperties}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   {article.isPinned && (
-                    <span className="mb-1 inline-block rounded-full bg-[var(--color-accent)]/15 px-2 py-0.5 text-[10px] text-[var(--color-accent)]">📌 置顶</span>
+                    <span className="mb-1 inline-block rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700">📌 置顶</span>
                   )}
-                  <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)] line-clamp-2">{article.title}</h3>
-                  <div className="mt-2 flex items-center gap-3 text-[11px] text-[var(--color-text-placeholder)]">
-                    <span className="rounded bg-white/5 px-2 py-0.5">{article.category}</span>
+                  <h3 className="text-base font-semibold text-gray-900 line-clamp-2">{article.title}</h3>
+                  <div className="mt-2 flex items-center gap-3 text-xs text-gray-500">
+                    <span className="rounded bg-gray-100 px-2 py-0.5">{article.category}</span>
                     <span>👁 {article.viewCount}</span>
                     <span>{article.publishedAt ? new Date(article.publishedAt).toLocaleDateString('zh-CN') : ''}</span>
                   </div>
                 </div>
               </div>
-            </GlassCard>
+            </Card>
           ))}
         </div>
       )}

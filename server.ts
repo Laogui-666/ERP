@@ -2,6 +2,13 @@
 import { config } from 'dotenv'
 config({ path: '.env.local' })
 
+// 修复 Next.js 15 + tsx 的 AsyncLocalStorage 兼容性问题
+// tsx 的 CJS 模式下 Next.js 内部 AsyncLocalStorage 不可用，需要在 import next 之前修补
+if (typeof globalThis.AsyncLocalStorage === 'undefined') {
+  const { AsyncLocalStorage } = require('async_hooks')
+  ;(globalThis as any).AsyncLocalStorage = AsyncLocalStorage
+}
+
 import { createServer } from 'http'
 import { parse } from 'url'
 import next from 'next'

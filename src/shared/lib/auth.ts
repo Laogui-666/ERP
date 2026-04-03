@@ -3,25 +3,42 @@ import { cookies } from 'next/headers'
 import type { NextRequest } from 'next/server'
 import type { UserRole } from '@shared/types/user'
 
-const ACCESS_TOKEN_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? (() => {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('JWT_SECRET environment variable is required in production')
-    }
-    process.stderr.write('[SECURITY] Using default JWT_SECRET — NOT SECURE. Set JWT_SECRET in .env.local\n')
-    return 'default-access-secret-dev-only'
-  })(),
-)
+// 惰性加载：模块加载时不检查环境变量，首次调用时才解析
+// 兼容 tsx 的 CJS/ESM 加载顺序（dotenv 可能在模块评估之后才执行）
+let _accessSecret: Uint8Array | null = null
+let _refreshSecret: Uint8Array | null = null
 
-const REFRESH_TOKEN_SECRET = new TextEncoder().encode(
-  process.env.JWT_REFRESH_SECRET ?? (() => {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('JWT_REFRESH_SECRET environment variable is required in production')
+function getAccessSecret(): Uint8Array {
+  if (!_accessSecret) {
+    const secret = process.env.JWT_SECRET
+    if (!secret) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_SECRET environment variable is required in production')
+      }
+      process.stderr.write('[SECURITY] Using default JWT_SECRET — NOT SECURE. Set JWT_SECRET in .env.local\n')
+      _accessSecret = new TextEncoder().encode('default-access-secret-dev-only')
+    } else {
+      _accessSecret = new TextEncoder().encode(secret)
     }
-    process.stderr.write('[SECURITY] Using default JWT_REFRESH_SECRET — NOT SECURE. Set JWT_REFRESH_SECRET in .env.local\n')
-    return 'default-refresh-secret-dev-only'
-  })(),
-)
+  }
+  return _accessSecret
+}
+
+function getRefreshSecret(): Uint8Array {
+  if (!_refreshSecret) {
+    const secret = process.env.JWT_REFRESH_SECRET
+    if (!secret) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_REFRESH_SECRET environment variable is required in production')
+      }
+      process.stderr.write('[SECURITY] Using default JWT_REFRESH_SECRET — NOT SECURE. Set JWT_REFRESH_SECRET in .env.local\n')
+      _refreshSecret = new TextEncoder().encode('default-refresh-secret-dev-only')
+    } else {
+      _refreshSecret = new TextEncoder().encode(secret)
+    }
+  }
+  return _refreshSecret
+}
 
 const ACCESS_TOKEN_EXPIRES = '15m'
 const REFRESH_TOKEN_EXPIRES = '7d'
@@ -41,7 +58,7 @@ export async function signAccessToken(payload: JwtPayload): Promise<string> {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(ACCESS_TOKEN_EXPIRES)
-    .sign(ACCESS_TOKEN_SECRET)
+    .sign(getAccessSecret())
 }
 
 export async function signRefreshToken(payload: JwtPayload): Promise<string> {
@@ -49,16 +66,16 @@ export async function signRefreshToken(payload: JwtPayload): Promise<string> {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(REFRESH_TOKEN_EXPIRES)
-    .sign(REFRESH_TOKEN_SECRET)
+    .sign(getRefreshSecret())
 }
 
 export async function verifyAccessToken(token: string): Promise<JwtPayload> {
-  const { payload } = await jwtVerify(token, ACCESS_TOKEN_SECRET)
+  const { payload } = await jwtVerify(token, getAccessSecret())
   return payload as unknown as JwtPayload
 }
 
 export async function verifyRefreshToken(token: string): Promise<JwtPayload> {
-  const { payload } = await jwtVerify(token, REFRESH_TOKEN_SECRET)
+  const { payload } = await jwtVerify(token, getRefreshSecret())
   return payload as unknown as JwtPayload
 }
 

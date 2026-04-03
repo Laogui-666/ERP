@@ -83,14 +83,14 @@ export async function setAuthCookies(accessToken: string, refreshToken: string) 
   const cookieStore = await cookies()
   cookieStore.set('access_token', accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.COOKIE_SECURE === 'true',
     sameSite: 'lax',
     path: '/',
     maxAge: 15 * 60, // 15 minutes
   })
   cookieStore.set('refresh_token', refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.COOKIE_SECURE === 'true',
     sameSite: 'lax',
     path: '/',
     maxAge: 7 * 24 * 60 * 60, // 7 days

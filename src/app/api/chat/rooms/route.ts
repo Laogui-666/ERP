@@ -14,9 +14,17 @@ export async function GET(request: NextRequest) {
     const isSuperAdmin = user.role === 'SUPER_ADMIN'
     const isManager = ['COMPANY_OWNER', 'CS_ADMIN', 'VISA_ADMIN'].includes(user.role)
 
-    // 原生 SQL — MySQL 兼容（不用 NULLS LAST）
-    // 未读数 = ChatMessage.id > ChatRead.lastReadMessageId（cuid 可按字典序比较）
-    const rooms = await prisma.$queryRaw<ChatRoomSummary[]>`
+    // 构建角色过滤条件
+    let roleFilter = ''
+    if (!isSuperAdmin && !isManager) {
+      roleFilter = `AND (o.customer_id = '${user.userId}'
+                OR o.collector_id = '${user.userId}'
+                OR o.operator_id = '${user.userId}'
+                OR o.created_by = '${user.userId}')`
+    }
+
+    // 原生 SQL — MySQL 兼容
+    const rooms = await prisma.$queryRawUnsafe<ChatRoomSummary[]>(`
       SELECT
         cr.order_id as orderId,
         o.order_no as orderNo,
@@ -34,27 +42,18 @@ export async function GET(request: NextRequest) {
           COUNT(*) as cnt
         FROM erp_chat_messages cm
         LEFT JOIN erp_chat_reads crd
-          ON crd.room_id = cm.room_id AND crd.user_id = ${user.userId}
+          ON crd.room_id = cm.room_id AND crd.user_id = ?
         WHERE cm.id > COALESCE(crd.last_read_message_id, '')
-          AND cm.sender_id != ${user.userId}
-          AND cm.room_id IN (SELECT id FROM erp_chat_rooms WHERE company_id = ${user.companyId})
+          AND cm.sender_id != ?
+          AND cm.room_id IN (SELECT id FROM erp_chat_rooms WHERE company_id = ?)
         GROUP BY cm.room_id
       ) unread ON unread.room_id = cr.id
-      WHERE cr.company_id = ${user.companyId}
+      WHERE cr.company_id = ?
         AND cr.status != 'ARCHIVED'
-        ${
-          isSuperAdmin
-            ? prisma.$queryRaw``
-            : isManager
-              ? prisma.$queryRaw``
-              : prisma.$queryRaw`AND (o.customer_id = ${user.userId}
-                OR o.collector_id = ${user.userId}
-                OR o.operator_id = ${user.userId}
-                OR o.created_by = ${user.userId})`
-        }
+        ${roleFilter}
       ORDER BY cr.last_message_at IS NULL, cr.last_message_at DESC
       LIMIT 50
-    `
+    `, user.userId, user.userId, user.companyId, user.companyId)
 
     // BigInt → number 转换（MySQL COUNT 返回 bigint）
     const data = rooms.map((r) => ({

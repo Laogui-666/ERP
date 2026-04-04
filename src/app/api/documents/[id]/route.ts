@@ -7,10 +7,13 @@ import { emitToUser } from '@shared/lib/socket'
 import { z } from 'zod'
 import type { DocReqStatus } from '@erp/types/order'
 
-// PATCH /api/documents/[id] - 更新资料需求状态（审核）
+// PATCH /api/documents/[id] - 更新资料需求状态（审核）或内容（编辑）
 const updateSchema = z.object({
-  status: z.enum(['APPROVED', 'REJECTED', 'SUPPLEMENT']),
+  status: z.enum(['APPROVED', 'REJECTED', 'SUPPLEMENT']).optional(),
   rejectReason: z.string().optional(),
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().optional(),
+  isRequired: z.boolean().optional(),
 })
 
 export async function PATCH(
@@ -33,6 +36,38 @@ export async function PATCH(
       include: { order: { select: { id: true, orderNo: true } } },
     })
     if (!requirement) throw new AppError('NOT_FOUND', '资料需求不存在', 404)
+
+    // 内容编辑（名称/说明/必填）
+    const hasContentUpdate = data.name !== undefined || data.description !== undefined || data.isRequired !== undefined
+    if (hasContentUpdate) {
+      const updated = await prisma.documentRequirement.update({
+        where: { id: id },
+        data: {
+          ...(data.name !== undefined && { name: data.name }),
+          ...(data.description !== undefined && { description: data.description || null }),
+          ...(data.isRequired !== undefined && { isRequired: data.isRequired }),
+        },
+      })
+
+      await prisma.orderLog.create({
+        data: {
+          orderId: requirement.orderId,
+          companyId: user.companyId,
+          userId: user.userId,
+          action: `编辑资料: ${requirement.name}`,
+          detail: data.name && data.name !== requirement.name
+            ? `名称从"${requirement.name}"改为"${data.name}"`
+            : `更新了资料"${requirement.name}"的信息`,
+        },
+      })
+
+      return NextResponse.json(createSuccessResponse(updated))
+    }
+
+    // 状态变更（审核）
+    if (!data.status) {
+      throw new AppError('VALIDATION_ERROR', '缺少操作参数', 400)
+    }
 
     // 更新状态
     const updated = await prisma.documentRequirement.update({

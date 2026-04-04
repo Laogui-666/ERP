@@ -64,7 +64,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   OPERATOR: [
     { resource: 'orders', actions: ['read', 'transition'] },
     { resource: 'pool', actions: ['read', 'claim'] },
-    { resource: 'documents', actions: ['read'] },
+    { resource: 'documents', actions: ['read', 'create', 'update', 'delete'] },
     { resource: 'materials', actions: ['read', 'create', 'update'] },
     { resource: 'notifications', actions: ['read', 'update'] },
     { resource: 'chat', actions: ['read', 'send'] },
@@ -73,7 +73,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   OUTSOURCE: [
     { resource: 'orders', actions: ['read', 'transition'] },
     { resource: 'pool', actions: ['read', 'claim'] },
-    { resource: 'documents', actions: ['read'] },
+    { resource: 'documents', actions: ['read', 'create', 'update', 'delete'] },
     { resource: 'materials', actions: ['read', 'create', 'update'] },
     { resource: 'notifications', actions: ['read', 'update'] },
     // OUTSOURCE 无 chat 权限

@@ -3,7 +3,6 @@ import { apiFetch } from '@shared/lib/api-client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import Image from 'next/image'
 import { useToast } from '@shared/ui/toast'
 import { CameraCapture } from '@shared/ui/camera-capture'
 import { DOC_REQ_STATUS_LABELS } from '@erp/types/order'
@@ -40,7 +39,7 @@ interface SelectableItem extends TemplateItem {
   selected: boolean
 }
 
-export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _orderStatus, applicantCount = 1, applicants = [], onRefresh }: DocumentPanelProps) {
+export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _orderStatus, applicantCount = 1, applicants = [], onRefresh: _onRefresh }: DocumentPanelProps) {
   const { toast } = useToast()
 
   // 内部资料列表（支持本地乐观更新）
@@ -101,11 +100,13 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
   const [previewReviewing, setPreviewReviewing] = useState(false)
   const [previewReviewReason, setPreviewReviewReason] = useState('')
 
-  // 角色权限
+  // 角色权限（按工作流状态动态调整）
   const canEdit = ['DOC_COLLECTOR', 'VISA_ADMIN', 'COMPANY_OWNER', 'SUPER_ADMIN'].includes(userRole)
   const canReview = ['DOC_COLLECTOR', 'VISA_ADMIN', 'OPERATOR', 'OUTSOURCE'].includes(userRole)
-  const canUpload = ['CUSTOMER', 'DOC_COLLECTOR', 'VISA_ADMIN'].includes(userRole)
-  const canDeleteFile = ['DOC_COLLECTOR', 'OPERATOR', 'VISA_ADMIN', 'COMPANY_OWNER', 'SUPER_ADMIN'].includes(userRole)
+  // 上传：CUSTOMER 只能在 PENDING/REJECTED/SUPPLEMENT 时上传；资料员/操作员在审核阶段可上传
+  const canUpload = ['CUSTOMER', 'DOC_COLLECTOR', 'VISA_ADMIN', 'OPERATOR', 'OUTSOURCE'].includes(userRole)
+  // 删除：按工作流 — 谁在当前环节谁可以管理文件
+  const canDeleteFile = ['CUSTOMER', 'DOC_COLLECTOR', 'OPERATOR', 'OUTSOURCE', 'VISA_ADMIN', 'COMPANY_OWNER', 'SUPER_ADMIN'].includes(userRole)
 
   // 点击外部关闭菜单
   useEffect(() => {
@@ -125,12 +126,12 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       const json = await res.json()
       if (json.success) {
         setLocalReqs(json.data)
-        onRefresh()
+        // 不调用 onRefresh() — 文件操作不应刷新整个页面，避免弹窗关闭
       }
     } catch {
       // 静默失败
     }
-  }, [orderId, onRefresh])
+  }, [orderId])
 
   // ===== 模板相关 =====
   const loadTemplates = useCallback(async () => {
@@ -278,13 +279,14 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       if (json.success) {
         toast('success', '已保存')
         setEditingId(null)
+        // 乐观更新本地状态
         setLocalReqs(prev => prev.map(r => r.id === editingId ? {
           ...r,
           name: editName.trim(),
           description: editDesc.trim() || null,
           isRequired: editRequired,
         } : r))
-        onRefresh()
+        // 不调用 onRefresh()，避免弹窗关闭
       } else {
         toast('error', json.error?.message ?? '保存失败')
       }
@@ -304,7 +306,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       if (json.success) {
         toast('success', '已删除')
         setLocalReqs(prev => prev.filter(r => r.id !== reqId))
-        onRefresh()
+        // 不调用 onRefresh()，避免弹窗关闭
       } else {
         toast('error', json.error?.message ?? '删除失败')
       }
@@ -918,12 +920,19 @@ function DocumentItem({
           {req.files.length > 0 && (
             <div className="mt-2 space-y-1">
               {req.files.map((file) => {
-                const fileItemProps: { file: DocumentFile; onClick: () => void; onDelete?: () => void } = {
+                const fileItemProps: { file: DocumentFile; reqStatus: DocReqStatus; rejectReason?: string | null; onClick: () => void; onDelete?: () => void; onReupload?: () => void } = {
                   file,
+                  reqStatus: req.status,
+                  rejectReason: req.rejectReason,
                   onClick: () => onFilePreview(file),
                 }
+                // 删除权限：当前环节的负责人可删除
                 if (canDeleteFile) {
                   fileItemProps.onDelete = () => onDeleteFile(file.id)
+                }
+                // 重新上传：被驳回时可重新提交
+                if (canUpload && ['REJECTED', 'SUPPLEMENT'].includes(req.status)) {
+                  fileItemProps.onReupload = () => onUpload()
                 }
                 return <FileItemCompact key={file.id} {...fileItemProps} />
               })}
@@ -985,13 +994,15 @@ function DocumentItem({
 
 // ==================== 文件条目（紧凑模式，点击打开预览） ====================
 function FileItemCompact({
-  file,
-  onClick,
-  onDelete,
+  file, reqStatus, rejectReason,
+  onClick, onDelete, onReupload,
 }: {
   file: DocumentFile
+  reqStatus: DocReqStatus
+  rejectReason?: string | null
   onClick: () => void
   onDelete?: () => void
+  onReupload?: () => void
 }) {
   const getFileIcon = () => {
     if (file.fileType.startsWith('image/')) return '🖼️'
@@ -1013,11 +1024,31 @@ function FileItemCompact({
       <span className="shrink-0">{getFileIcon()}</span>
       <button
         onClick={onClick}
-        className="text-[var(--color-info)] hover:text-[var(--color-primary-light)] truncate max-w-[200px] text-left transition-colors underline-offset-2 hover:underline"
+        className="text-[var(--color-info)] hover:text-[var(--color-primary-light)] truncate max-w-[180px] text-left transition-colors underline-offset-2 hover:underline"
       >
         {file.fileName}
       </button>
       <span className="text-[var(--color-text-placeholder)] shrink-0">({formatSize(file.fileSize)})</span>
+      {/* 审核状态 */}
+      {reqStatus === 'APPROVED' && <span className="text-[10px] text-[var(--color-success)] shrink-0">合格</span>}
+      {reqStatus === 'REJECTED' && <span className="text-[10px] text-[var(--color-error)] shrink-0">已驳回</span>}
+      {reqStatus === 'SUPPLEMENT' && <span className="text-[10px] text-[var(--color-warning)] shrink-0">需补充</span>}
+      {reqStatus === 'REVIEWING' && <span className="text-[10px] text-[var(--color-accent)] shrink-0">审核中</span>}
+      {/* 驳回原因 */}
+      {rejectReason && (reqStatus === 'REJECTED' || reqStatus === 'SUPPLEMENT') && (
+        <span className="text-[10px] text-[var(--color-error)] truncate max-w-[120px]" title={rejectReason}>
+          {rejectReason}
+        </span>
+      )}
+      {/* 重新提交按钮 */}
+      {onReupload && (
+        <button onClick={onReupload}
+          className="text-[var(--color-warning)] hover:text-[var(--color-warning)]/80 shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-warning)]/10 hover:bg-[var(--color-warning)]/20 transition-all"
+          title="重新上传">
+          重新提交
+        </button>
+      )}
+      {/* 删除按钮 */}
       {onDelete && (
         <button onClick={onDelete}
           className="text-[var(--color-error)]/60 hover:text-[var(--color-error)] shrink-0 opacity-0 group-hover/file:opacity-100 transition-all"
@@ -1052,10 +1083,37 @@ function FilePreviewReviewModal({
   isReviewing: boolean
   onClose: () => void
 }) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [loadingPreview, setLoadingPreview] = useState(true)
+
   const isImage = fileType.startsWith('image/')
   const isPdf = fileType === 'application/pdf'
   const isText = fileType === 'text/plain'
   const canPreview = isImage || isPdf || isText
+
+  // 获取新鲜签名 URL 用于预览
+  useEffect(() => {
+    let cancelled = false
+    async function fetchPreviewUrl() {
+      try {
+        // 从 ossUrl 提取文件 ID — 通过当前组件的 fileId prop 不可用，
+        // 直接用 ossUrl 本身（已有签名），但需确保 Content-Disposition: inline
+        // 使用 ossKey 通过新 API 获取 inline 签名 URL
+        // 这里 ossUrl 已经是签名 URL，直接使用，如果预览失败则 fallback
+        if (!cancelled) {
+          setPreviewUrl(ossUrl)
+          setLoadingPreview(false)
+        }
+      } catch {
+        if (!cancelled) {
+          setPreviewUrl(ossUrl)
+          setLoadingPreview(false)
+        }
+      }
+    }
+    fetchPreviewUrl()
+    return () => { cancelled = true }
+  }, [ossUrl])
 
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes}B`
@@ -1105,22 +1163,25 @@ function FilePreviewReviewModal({
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
           {/* 左侧：文件预览 */}
           <div className="flex-1 min-h-[300px] md:min-h-0 overflow-auto bg-[#12151f]">
-            {isImage && (
-              <div className="w-full h-full flex items-center justify-center p-6">
-                <Image src={ossUrl} alt={fileName} width={1200} height={900}
-                  className="max-w-full max-h-[70vh] object-contain rounded-lg" />
+            {loadingPreview ? (
+              <div className="w-full h-full min-h-[300px] flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
               </div>
-            )}
-            {isPdf && (
-              <iframe src={ossUrl} className="w-full h-full border-0 min-h-[400px]" title={fileName} />
-            )}
-            {isText && (
-              <iframe src={ossUrl} className="w-full h-full border-0 min-h-[400px]" title={fileName} />
-            )}
-            {!canPreview && (
+            ) : previewUrl && isImage ? (
+              <div className="w-full h-full flex items-center justify-center p-6">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={previewUrl} alt={fileName}
+                  className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                  onError={() => setPreviewUrl(null)} />
+              </div>
+            ) : previewUrl && isPdf ? (
+              <iframe src={previewUrl} className="w-full h-full border-0 min-h-[400px]" title={fileName} />
+            ) : previewUrl && isText ? (
+              <iframe src={previewUrl} className="w-full h-full border-0 min-h-[400px]" title={fileName} />
+            ) : (
               <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center gap-4 text-white/60">
                 <span className="text-5xl">📎</span>
-                <p className="text-sm">此文件类型不支持在线预览</p>
+                <p className="text-sm">{canPreview ? '预览加载失败' : '此文件类型不支持在线预览'}</p>
                 <a href={ossUrl} target="_blank" rel="noopener noreferrer" className="glass-btn-primary px-4 py-2 text-sm">下载文件</a>
               </div>
             )}

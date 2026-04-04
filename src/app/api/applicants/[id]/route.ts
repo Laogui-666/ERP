@@ -17,14 +17,11 @@ const updateSchema = z.object({
 
 /**
  * PATCH /api/applicants/[id]
- * 更新申请人结果/资料状态
+ * 更新申请人信息/结果/资料状态
  *
- * 权限：VISA_ADMIN / DOC_COLLECTOR / OPERATOR
- *
- * 更新 visaResult 后自动调用 autoResolveOrderStatus 判断订单终态：
- * - 全部出签 → APPROVED
- * - 全部拒签 → REJECTED
- * - 混合结果 → PARTIAL
+ * 基础信息编辑：需要 orders.update（客服/资料员/管理员均可）
+ * 出签结果标记：需要 orders.transition（仅操作员/资料员/管理员）
+ * 资料状态标记：需要 orders.transition（仅资料员/管理员）
  */
 export async function PATCH(
   request: NextRequest,
@@ -35,10 +32,23 @@ export async function PATCH(
     const user = await getCurrentUser(request)
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
 
-    requirePermission(user, 'orders', 'transition')
-
     const body = await request.json()
     const data = updateSchema.parse(body)
+
+    // 区分操作类型：基础信息编辑 vs 出签/资料操作
+    const isBasicInfoEdit = data.name !== undefined || data.phone !== undefined || data.passportNo !== undefined
+    const isResultOrDocsEdit = data.visaResult !== undefined || data.documentsComplete !== undefined
+
+    if (isResultOrDocsEdit) {
+      // 出签结果和资料状态需要 orders.transition 权限
+      requirePermission(user, 'orders', 'transition')
+    } else if (isBasicInfoEdit) {
+      // 基础信息编辑只需 orders.update 权限
+      requirePermission(user, 'orders', 'update')
+    } else {
+      // 仅更新备注等，也用 orders.update
+      requirePermission(user, 'orders', 'update')
+    }
 
     // 查找申请人（校验 companyId）
     const applicant = await prisma.applicant.findFirst({

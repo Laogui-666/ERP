@@ -19,6 +19,14 @@ const PUBLIC_ROUTES = [
   '/reset-password',
   '/services',
   '/tools',
+  '/portal',
+  '/portal/tools',
+  '/portal/news',
+  '/portal/itinerary',
+  '/portal/form-helper',
+  '/portal/assessment',
+  '/portal/translator',
+  '/portal/documents',
 ]
 
 function isPublicRoute(pathname: string): boolean {
@@ -52,27 +60,71 @@ export async function middleware(request: NextRequest) {
 
   // API 路由鉴权
   if (pathname.startsWith('/api/')) {
-    if (!user) {
+    // 公开的 API 路由
+    const publicApiRoutes = [
+      '/api/auth/login',
+      '/api/auth/register',
+      '/api/auth/refresh',
+      '/api/auth/reset-password',
+      '/api/health',
+      '/api/cron/',
+      '/api/shop/',
+      '/api/sms/',
+      '/api/news',
+      '/api/visa-assessments',
+      '/api/translations',
+      '/api/doc-helper',
+      '/api/itineraries',
+    ]
+    
+    const isPublicApi = publicApiRoutes.some(route => pathname.startsWith(route))
+    
+    if (!isPublicApi && !user) {
       return NextResponse.json(
         { success: false, error: { code: 'UNAUTHORIZED', message: '未登录或Token已过期' } },
         { status: 401 }
       )
     }
-    // 注入用户信息到请求头
-    const response = NextResponse.next()
-    response.headers.set('x-user-id', user.userId)
-    response.headers.set('x-company-id', user.companyId)
-    response.headers.set('x-role', user.role)
-    response.headers.set('x-department-id', user.departmentId ?? '')
-    return response
+    
+    // 注入用户信息到请求头（如果已登录）
+    if (user) {
+      const response = NextResponse.next()
+      response.headers.set('x-user-id', user.userId)
+      response.headers.set('x-company-id', user.companyId)
+      response.headers.set('x-role', user.role)
+      response.headers.set('x-department-id', user.departmentId ?? '')
+      return response
+    }
+    
+    return NextResponse.next()
   }
 
   // 页面路由鉴权
   if (!user) {
+    // 公开页面不需要登录
+    const publicPages = [
+      '/',
+      '/services',
+      '/tools',
+      '/portal',
+      '/portal/tools',
+      '/portal/news',
+      '/portal/itinerary',
+      '/portal/form-helper',
+      '/portal/assessment',
+      '/portal/translator',
+      '/portal/documents',
+    ]
+    
+    const isPublicPage = publicPages.some(route => pathname.startsWith(route))
+    if (isPublicPage) {
+      return NextResponse.next()
+    }
+    
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // 门户页面 → 所有登录用户可访问
+  // 门户页面 → 所有用户可访问（无论是否登录）
   if (pathname.startsWith('/portal')) {
     return NextResponse.next()
   }

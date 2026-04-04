@@ -959,6 +959,10 @@ function FileItemCompact({
         {file.fileName}
       </button>
       <span className="text-[var(--color-text-placeholder)] shrink-0">({formatSize(file.fileSize)})</span>
+      {/* 文件级审核状态 */}
+      {file.reviewStatus === 'APPROVED' && <span className="text-[10px] text-[var(--color-success)] shrink-0">✓ 合格</span>}
+      {file.reviewStatus === 'REJECTED' && <span className="text-[10px] text-[var(--color-error)] shrink-0">✗ 驳回</span>}
+      {file.reviewStatus === 'SUPPLEMENT' && <span className="text-[10px] text-[var(--color-warning)] shrink-0">补充</span>}
       {/* 审核状态 - 优先显示文件级审核状态 */}
       {(file as Record<string, unknown>).reviewStatus === 'APPROVED' && <span className="text-[10px] text-[var(--color-success)] shrink-0">✓ 合格</span>}
       {(file as Record<string, unknown>).reviewStatus === 'REJECTED' && <span className="text-[10px] text-[var(--color-error)] shrink-0">✗ 已驳回</span>}

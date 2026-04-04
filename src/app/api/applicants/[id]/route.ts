@@ -7,6 +7,9 @@ import { autoResolveOrderStatus } from '@erp/lib/transition'
 import { z } from 'zod'
 
 const updateSchema = z.object({
+  name: z.string().min(1).max(50).optional(),
+  phone: z.string().max(20).optional(),
+  passportNo: z.string().max(20).optional(),
   visaResult: z.enum(['APPROVED', 'REJECTED']).optional(),
   visaResultNote: z.string().optional(),
   documentsComplete: z.boolean().optional(),
@@ -69,6 +72,15 @@ export async function PATCH(
       }
       if (data.documentsComplete !== undefined) {
         updateData.documentsComplete = data.documentsComplete
+      }
+      if (data.name !== undefined) {
+        updateData.name = data.name
+      }
+      if (data.phone !== undefined) {
+        updateData.phone = data.phone || null
+      }
+      if (data.passportNo !== undefined) {
+        updateData.passportNo = data.passportNo || null
       }
 
       // 更新申请人

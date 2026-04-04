@@ -63,16 +63,17 @@ const updateSchema = z.object({
   // 基础字段
   customerName: z.string().min(1).max(50).optional(),
   customerPhone: z.string().regex(/^1[3-9]\d{9}$/).optional(),
-  customerEmail: z.string().email().optional(),
+  customerEmail: z.string().optional(),
   passportNo: z.string().max(20).optional(),
   targetCountry: z.string().min(1).max(50).optional(),
   visaType: z.string().min(1).max(50).optional(),
   visaCategory: z.string().max(50).optional(),
   travelDate: z.string().optional(),
-  amount: z.number().positive().max(999999.99).optional(),
+  amount: z.union([z.number(), z.string()]).transform(v => Number(v)).pipe(z.number().positive().max(999999.99)).optional(),
   paymentMethod: z.string().max(30).optional(),
   sourceChannel: z.string().max(50).optional(),
   remark: z.string().optional(),
+  externalOrderNo: z.string().optional(),
   // M5：多申请人 & 流程
   contactName: z.string().max(50).optional(),
   targetCity: z.string().max(50).optional(),
@@ -118,6 +119,7 @@ export async function PATCH(
     if (data.paymentMethod !== undefined) updateData.paymentMethod = data.paymentMethod ?? null
     if (data.sourceChannel !== undefined) updateData.sourceChannel = data.sourceChannel ?? null
     if (data.remark !== undefined) updateData.remark = data.remark ?? null
+    if (data.externalOrderNo !== undefined) updateData.externalOrderNo = data.externalOrderNo ?? null
     // M5：多申请人 & 流程
     if (data.contactName !== undefined) updateData.contactName = data.contactName ?? null
     if (data.targetCity !== undefined) updateData.targetCity = data.targetCity ?? null

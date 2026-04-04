@@ -10,10 +10,18 @@ interface ApplicantCardProps {
   applicant: Applicant
   canMarkResult: boolean
   canMarkDocs: boolean
+  canEdit?: boolean
+  isEditing?: boolean
+  editValues?: { name: string; phone: string; passportNo: string }
+  onEdit?: () => void
+  onEditChange?: (vals: { name: string; phone: string; passportNo: string }) => void
+  onSaveEdit?: () => void
+  onCancelEdit?: () => void
+  isSaving?: boolean
   onRefresh: () => void
 }
 
-export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, onRefresh }: ApplicantCardProps) {
+export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, canEdit, isEditing, editValues, onEdit, onEditChange, onSaveEdit, onCancelEdit, isSaving, onRefresh }: ApplicantCardProps) {
   const { toast } = useToast()
   const [isUpdating, setIsUpdating] = useState(false)
   const [showRejectNote, setShowRejectNote] = useState(false)
@@ -86,6 +94,56 @@ export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, onRefresh
     return null
   }
 
+  // 编辑模式
+  if (isEditing && editValues && onEditChange) {
+    return (
+      <div className="relative flex items-center justify-between p-3 rounded-xl bg-[var(--color-primary)]/[0.04] border border-[var(--color-primary)]/20 transition-all">
+        <div className="flex items-center gap-3 flex-1">
+          <div className="w-8 h-8 rounded-full bg-[var(--color-primary)]/15 flex items-center justify-center text-xs font-medium text-[var(--color-primary-light)] shrink-0">
+            {editValues.name[0] || '?'}
+          </div>
+          <div className="grid grid-cols-3 gap-2 flex-1">
+            <input
+              className="glass-input text-xs py-1 px-2"
+              placeholder="姓名"
+              value={editValues.name}
+              onChange={(e) => onEditChange({ ...editValues, name: e.target.value })}
+              autoFocus
+            />
+            <input
+              className="glass-input text-xs py-1 px-2"
+              placeholder="手机号"
+              value={editValues.phone}
+              onChange={(e) => onEditChange({ ...editValues, phone: e.target.value })}
+            />
+            <input
+              className="glass-input text-xs py-1 px-2"
+              placeholder="护照号"
+              value={editValues.passportNo}
+              onChange={(e) => onEditChange({ ...editValues, passportNo: e.target.value })}
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0 ml-2">
+          <button
+            onClick={onCancelEdit}
+            className="text-[10px] px-2 py-1 rounded bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all"
+          >
+            取消
+          </button>
+          <button
+            onClick={onSaveEdit}
+            disabled={isSaving}
+            className="text-[10px] px-2 py-1 rounded bg-[var(--color-primary)]/15 text-[var(--color-primary-light)] hover:bg-[var(--color-primary)]/25 transition-all disabled:opacity-50"
+          >
+            {isSaving ? '保存中...' : '保存'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // 正常模式
   return (
     <div className="relative flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-all">
       <div className="flex items-center gap-3 min-w-0">
@@ -106,6 +164,16 @@ export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, onRefresh
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
+        {/* 编辑按钮 */}
+        {canEdit && !applicant.visaResult && (
+          <button
+            onClick={onEdit}
+            className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all"
+          >
+            编辑
+          </button>
+        )}
+
         {/* 资料状态 */}
         <Badge variant={applicant.documentsComplete ? 'success' : 'warning'} size="sm">
           {applicant.documentsComplete ? '资料齐全' : '收集中'}

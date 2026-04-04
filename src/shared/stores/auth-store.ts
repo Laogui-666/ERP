@@ -40,7 +40,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     await apiFetch('/api/auth/logout', { method: 'POST' })
     set({ user: null, isAuthenticated: false })
     if (typeof window !== 'undefined') {
-      window.location.href = '/login'
+      window.location.href = '/'
     }
   },
 

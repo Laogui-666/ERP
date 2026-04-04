@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@shared/hooks/use-auth'
 import { GlassCard } from '@shared/ui/glass-card'
@@ -10,7 +9,6 @@ import { apiFetch } from '@shared/lib/api-client'
 import { USER_ROLE_LABELS } from '@shared/types/user'
 
 export default function CustomerProfilePage() {
-  const router = useRouter()
   const { user, logout } = useAuth()
   const { toast } = useToast()
 
@@ -99,7 +97,6 @@ export default function CustomerProfilePage() {
   const handleLogout = async () => {
     if (!confirm('确定退出登录？')) return
     await logout()
-    router.push('/login')
   }
 
   if (!user) return null

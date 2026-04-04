@@ -22,7 +22,7 @@ export async function PATCH(
     requirePermission(user, 'documents', 'update')
 
     const body = await request.json()
-    const { rejectReason } = body as { rejectReason?: string }
+    const { rejectReason, reviewStatus } = body as { rejectReason?: string; reviewStatus?: string }
 
     const docFile = await prisma.documentFile.findFirst({
       where: { id, companyId: user.companyId },
@@ -34,10 +34,13 @@ export async function PATCH(
     })
     if (!docFile) throw new AppError('NOT_FOUND', '文件不存在', 404)
 
-    // 更新单个文件的 rejectReason
+    // 更新单个文件的审核状态和驳回原因
+    const updateData: Record<string, unknown> = {}
+    if (reviewStatus !== undefined) updateData.reviewStatus = reviewStatus
+    if (rejectReason !== undefined) updateData.rejectReason = rejectReason || null
     const updated = await prisma.documentFile.update({
       where: { id },
-      data: { rejectReason: rejectReason ?? null },
+      data: updateData,
     })
 
     // 写操作日志

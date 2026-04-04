@@ -118,7 +118,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
   // ===== 拉取资料清单（独立于外部 props，支持本地刷新） =====
   const fetchRequirements = useCallback(async () => {
     try {
-      const res = await apiFetch(`/api/orders/${orderId}/documents`)
+      const res = await apiFetch(`/api/orders/${orderId}/documents?t=${Date.now()}`)
       const json = await res.json()
       if (json.success) {
         setLocalReqs(json.data)
@@ -421,7 +421,8 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          rejectReason: (status === 'REJECTED' || status === 'SUPPLEMENT') ? previewReviewReason : '',
+          reviewStatus: status,
+          rejectReason: (status === 'REJECTED' || status === 'SUPPLEMENT') ? previewReviewReason : undefined,
         }),
       })
       const json = await res.json()
@@ -958,11 +959,11 @@ function FileItemCompact({
         {file.fileName}
       </button>
       <span className="text-[var(--color-text-placeholder)] shrink-0">({formatSize(file.fileSize)})</span>
-      {/* 审核状态 */}
-      {reqStatus === 'APPROVED' && <span className="text-[10px] text-[var(--color-success)] shrink-0">合格</span>}
-      {reqStatus === 'REJECTED' && <span className="text-[10px] text-[var(--color-error)] shrink-0">已驳回</span>}
-      {reqStatus === 'SUPPLEMENT' && <span className="text-[10px] text-[var(--color-warning)] shrink-0">需补充</span>}
-      {reqStatus === 'REVIEWING' && <span className="text-[10px] text-[var(--color-accent)] shrink-0">审核中</span>}
+      {/* 审核状态 - 优先显示文件级审核状态 */}
+      {(file as Record<string, unknown>).reviewStatus === 'APPROVED' && <span className="text-[10px] text-[var(--color-success)] shrink-0">✓ 合格</span>}
+      {(file as Record<string, unknown>).reviewStatus === 'REJECTED' && <span className="text-[10px] text-[var(--color-error)] shrink-0">✗ 已驳回</span>}
+      {(file as Record<string, unknown>).reviewStatus === 'SUPPLEMENT' && <span className="text-[10px] text-[var(--color-warning)] shrink-0">+ 需补充</span>}
+      {!(file as Record<string, unknown>).reviewStatus || (file as Record<string, unknown>).reviewStatus === 'PENDING' ? null : null}
       {/* 驳回原因 */}
       {rejectReason && (reqStatus === 'REJECTED' || reqStatus === 'SUPPLEMENT') && (
         <span className="text-[10px] text-[var(--color-error)] truncate max-w-[120px]" title={rejectReason}>

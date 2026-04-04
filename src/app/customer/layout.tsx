@@ -56,11 +56,32 @@ export default function CustomerLayout({
 
   useEffect(() => {
     if (isConnected) return
-    const interval = setInterval(() => {
-      fetchUnreadCount()
-      fetchRooms()
-    }, 30000)
-    return () => clearInterval(interval)
+
+    let interval: ReturnType<typeof setInterval> | null = null
+
+    const poll = () => {
+      if (!document.hidden) {
+        fetchUnreadCount()
+        fetchRooms()
+      }
+    }
+
+    const startPolling = () => {
+      if (!interval) interval = setInterval(poll, 30000)
+    }
+
+    const stopPolling = () => {
+      if (interval) { clearInterval(interval); interval = null }
+    }
+
+    const onVisibility = () => {
+      if (document.hidden) stopPolling()
+      else { poll(); startPolling() }
+    }
+
+    if (!document.hidden) startPolling()
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => { stopPolling(); document.removeEventListener('visibilitychange', onVisibility) }
   }, [isConnected, fetchUnreadCount, fetchRooms])
 
   return (

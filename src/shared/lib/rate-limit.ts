@@ -3,10 +3,10 @@ import { LRUCache } from 'lru-cache'
 
 // 速率限制配置
 const RATE_LIMIT_CONFIG = {
-  // 每个IP每分钟最大请求数
-  maxRequestsPerMinute: 60,
+  // 每个IP每分钟最大请求数（放宽到120，覆盖轮询+业务请求）
+  maxRequestsPerMinute: 120,
   // 每个IP每小时最大请求数
-  maxRequestsPerHour: 1000,
+  maxRequestsPerHour: 2000,
   // 缓存大小
   cacheSize: 10000,
   // 缓存过期时间（1小时）
@@ -34,9 +34,14 @@ export function rateLimit() {
     // 获取客户端IP
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     
-    // 跳过静态资源
+    // 跳过静态资源、Socket.io 连接、favicon 等
     const pathname = request.nextUrl.pathname
-    if (pathname.startsWith('/_next/') || pathname.startsWith('/api/health')) {
+    if (
+      pathname.startsWith('/_next/') ||
+      pathname.startsWith('/api/health') ||
+      pathname.startsWith('/socket.io/') ||
+      pathname === '/favicon.ico'
+    ) {
       return NextResponse.next()
     }
 

@@ -19,6 +19,9 @@ import { formatDateTime, formatDate } from '@shared/lib/utils'
 import { ORDER_STATUS_LABELS } from '@erp/types/order'
 import type { OrderStatus } from '@erp/types/order'
 
+// 可编辑的角色
+const EDIT_ROLES = ['SUPER_ADMIN', 'COMPANY_OWNER', 'CS_ADMIN', 'CUSTOMER_SERVICE', 'VISA_ADMIN', 'DOC_COLLECTOR']
+
 export default function OrderDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -35,6 +38,102 @@ export default function OrderDetailPage() {
   // 智能检查
   const [checkWarnings, setCheckWarnings] = useState<Array<{level:string;message:string;field?:string}>>([])
   const [showCheck, setShowCheck] = useState(false)
+
+  // 编辑模式
+  const [editingSection, setEditingSection] = useState<string | null>(null)
+  const [editValues, setEditValues] = useState<Record<string, string>>({})
+  const [isSaving, setIsSaving] = useState(false)
+
+  // 备注系统
+  const [showRemarkModal, setShowRemarkModal] = useState(false)
+  const [newRemark, setNewRemark] = useState('')
+  const [isAddingRemark, setIsAddingRemark] = useState(false)
+  const [remarks, setRemarks] = useState<Array<{ content: string; author: string; time: string }>>([])
+
+  // 解析备注 JSON
+  const parseRemarks = useCallback((remarkStr: string | null | undefined): Array<{ content: string; author: string; time: string }> => {
+    if (!remarkStr) return []
+    try {
+      const parsed = JSON.parse(remarkStr)
+      if (Array.isArray(parsed)) return parsed
+    } catch {
+      // 兼容旧格式：纯文本备注
+      if (remarkStr.trim()) return [{ content: remarkStr, author: '系统', time: '' }]
+    }
+    return []
+  }, [])
+
+  // 进入编辑模式
+  const startEdit = (section: string, initial: Record<string, string>) => {
+    setEditingSection(section)
+    setEditValues(initial)
+  }
+
+  // 取消编辑
+  const cancelEdit = () => {
+    setEditingSection(null)
+    setEditValues({})
+  }
+
+  // 保存编辑
+  const saveEdit = async () => {
+    setIsSaving(true)
+    try {
+      const res = await apiFetch(`/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editValues),
+      })
+      const json = await res.json()
+      if (json.success) {
+        toast('success', '保存成功')
+        setEditingSection(null)
+        setEditValues({})
+        fetchOrder(orderId)
+      } else {
+        toast('error', json.error?.message ?? '保存失败')
+      }
+    } catch {
+      toast('error', '保存失败')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // 添加备注
+  const handleAddRemark = async () => {
+    if (!newRemark.trim()) {
+      toast('error', '请输入备注内容')
+      return
+    }
+    setIsAddingRemark(true)
+    try {
+      const newEntry = {
+        content: newRemark.trim(),
+        author: user?.realName ?? '未知',
+        time: new Date().toISOString(),
+      }
+      const updatedRemarks = [...remarks, newEntry]
+      const res = await apiFetch(`/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ remark: JSON.stringify(updatedRemarks) }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setRemarks(updatedRemarks)
+        setNewRemark('')
+        setShowRemarkModal(false)
+        toast('success', '备注已添加')
+      } else {
+        toast('error', json.error?.message ?? '添加失败')
+      }
+    } catch {
+      toast('error', '添加失败')
+    } finally {
+      setIsAddingRemark(false)
+    }
+  }
 
   useEffect(() => {
     fetchOrder(orderId)
@@ -56,8 +155,11 @@ export default function OrderDetailPage() {
   }, [orderId])
 
   useEffect(() => {
-    if (currentOrder) runSmartCheck()
-  }, [currentOrder, runSmartCheck])
+    if (currentOrder) {
+      runSmartCheck()
+      setRemarks(parseRemarks(currentOrder.remark))
+    }
+  }, [currentOrder, runSmartCheck, parseRemarks])
 
   // 可执行的状态流转
   const getAvailableActions = useCallback((): { toStatus: OrderStatus; label: string }[] => {
@@ -211,6 +313,8 @@ export default function OrderDetailPage() {
   const availableActions = getAvailableActions()
   const canCancel = user?.role && ['COMPANY_OWNER', 'CS_ADMIN', 'VISA_ADMIN', 'SUPER_ADMIN'].includes(user.role)
     && !['APPROVED', 'REJECTED'].includes(order.status)
+  const canEdit = user?.role && EDIT_ROLES.includes(user.role)
+    && !['APPROVED', 'REJECTED', 'PARTIAL'].includes(order.status)
 
   return (
     <div className="space-y-6">
@@ -273,20 +377,48 @@ export default function OrderDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* 客户信息 */}
           <GlassCard className="p-5 animate-fade-in-up">
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
-              <svg className="w-4 h-4 text-[var(--color-primary-light)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              客户信息
-            </h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <InfoField label="联系人" value={order.contactName ?? order.customerName} />
-              <InfoField label="手机号" value={order.customerPhone} />
-              <InfoField label="邮箱" value={order.customerEmail} />
-              <InfoField label="护照号" value={order.passportNo} />
-              <InfoField label="护照签发日" value={formatDate(order.passportIssue)} />
-              <InfoField label="护照有效期" value={formatDate(order.passportExpiry)} />
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+                <svg className="w-4 h-4 text-[var(--color-primary-light)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                客户信息
+              </h3>
+              {canEdit && editingSection !== 'customer' && (
+                <button
+                  onClick={() => startEdit('customer', {
+                    contactName: order.contactName ?? order.customerName,
+                    customerPhone: order.customerPhone,
+                    customerEmail: order.customerEmail ?? '',
+                    passportNo: order.passportNo ?? '',
+                  })}
+                  className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors flex items-center gap-1"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                  编辑
+                </button>
+              )}
             </div>
+            {editingSection === 'customer' ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <EditField label="联系人" value={editValues.contactName} onChange={(v) => setEditValues(p => ({...p, contactName: v}))} />
+                  <EditField label="手机号" value={editValues.customerPhone} onChange={(v) => setEditValues(p => ({...p, customerPhone: v}))} />
+                  <EditField label="邮箱" value={editValues.customerEmail} onChange={(v) => setEditValues(p => ({...p, customerEmail: v}))} />
+                  <EditField label="护照号" value={editValues.passportNo} onChange={(v) => setEditValues(p => ({...p, passportNo: v}))} />
+                </div>
+                <EditActions onSave={saveEdit} onCancel={cancelEdit} isSaving={isSaving} />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <InfoField label="联系人" value={order.contactName ?? order.customerName} />
+                <InfoField label="手机号" value={order.customerPhone} />
+                <InfoField label="邮箱" value={order.customerEmail} />
+                <InfoField label="护照号" value={order.passportNo} />
+                <InfoField label="护照签发日" value={formatDate(order.passportIssue)} />
+                <InfoField label="护照有效期" value={formatDate(order.passportExpiry)} />
+              </div>
+            )}
           </GlassCard>
 
           {/* M5：申请人卡片 */}
@@ -325,20 +457,48 @@ export default function OrderDetailPage() {
 
           {/* 签证信息 */}
           <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '50ms' }}>
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
-              <svg className="w-4 h-4 text-[var(--color-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-              签证信息
-            </h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <InfoField label="申请国家" value={order.targetCountry} />
-              <InfoField label="签证类型" value={order.visaType} />
-              <InfoField label="签证类别" value={order.visaCategory} />
-              <InfoField label="出行日期" value={formatDate(order.travelDate)} />
-              <InfoField label="预约日期" value={formatDate(order.appointmentDate)} />
-              <InfoField label="需录指纹" value={order.fingerprintRequired ? '是' : '否'} />
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+                <svg className="w-4 h-4 text-[var(--color-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+                签证信息
+              </h3>
+              {canEdit && editingSection !== 'visa' && (
+                <button
+                  onClick={() => startEdit('visa', {
+                    targetCountry: order.targetCountry,
+                    visaType: order.visaType,
+                    visaCategory: order.visaCategory ?? '',
+                    travelDate: order.travelDate ? order.travelDate.split('T')[0] : '',
+                  })}
+                  className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors flex items-center gap-1"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                  编辑
+                </button>
+              )}
             </div>
+            {editingSection === 'visa' ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <EditField label="申请国家" value={editValues.targetCountry} onChange={(v) => setEditValues(p => ({...p, targetCountry: v}))} />
+                  <EditField label="签证类型" value={editValues.visaType} onChange={(v) => setEditValues(p => ({...p, visaType: v}))} />
+                  <EditField label="签证类别" value={editValues.visaCategory} onChange={(v) => setEditValues(p => ({...p, visaCategory: v}))} />
+                  <EditField label="出行日期" value={editValues.travelDate} onChange={(v) => setEditValues(p => ({...p, travelDate: v}))} type="date" />
+                </div>
+                <EditActions onSave={saveEdit} onCancel={cancelEdit} isSaving={isSaving} />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <InfoField label="申请国家" value={order.targetCountry} />
+                <InfoField label="签证类型" value={order.visaType} />
+                <InfoField label="签证类别" value={order.visaCategory} />
+                <InfoField label="出行日期" value={formatDate(order.travelDate)} />
+                <InfoField label="预约日期" value={formatDate(order.appointmentDate)} />
+                <InfoField label="需录指纹" value={order.fingerprintRequired ? '是' : '否'} />
+              </div>
+            )}
           </GlassCard>
 
           {/* 签证分类流程提示 */}
@@ -350,22 +510,52 @@ export default function OrderDetailPage() {
 
           {/* 订单信息 */}
           <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
-              <svg className="w-4 h-4 text-[var(--color-info)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              订单信息
-            </h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <InfoField label="订单号" value={order.orderNo} highlight />
-              <InfoField label="外部订单号" value={order.externalOrderNo} />
-              <InfoField label="金额" value={`¥${Number(order.amount).toLocaleString()}`} highlight />
-              <InfoField label="支付方式" value={order.paymentMethod} />
-              <InfoField label="来源渠道" value={order.sourceChannel} />
-              <InfoField label="创建者" value={order.customer?.realName ?? order.createdBy} />
-              <InfoField label="送签城市" value={order.targetCity} />
-              <InfoField label="递交日期" value={formatDate(order.submittedAt)} />
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+                <svg className="w-4 h-4 text-[var(--color-info)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                订单信息
+              </h3>
+              {canEdit && editingSection !== 'order' && (
+                <button
+                  onClick={() => startEdit('order', {
+                    externalOrderNo: order.externalOrderNo ?? '',
+                    amount: String(order.amount),
+                    paymentMethod: order.paymentMethod ?? '',
+                    sourceChannel: order.sourceChannel ?? '',
+                    targetCity: order.targetCity ?? '',
+                  })}
+                  className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors flex items-center gap-1"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                  编辑
+                </button>
+              )}
             </div>
+            {editingSection === 'order' ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <EditField label="外部订单号" value={editValues.externalOrderNo} onChange={(v) => setEditValues(p => ({...p, externalOrderNo: v}))} />
+                  <EditField label="金额" value={editValues.amount} onChange={(v) => setEditValues(p => ({...p, amount: v}))} type="number" />
+                  <EditField label="支付方式" value={editValues.paymentMethod} onChange={(v) => setEditValues(p => ({...p, paymentMethod: v}))} />
+                  <EditField label="来源渠道" value={editValues.sourceChannel} onChange={(v) => setEditValues(p => ({...p, sourceChannel: v}))} />
+                  <EditField label="送签城市" value={editValues.targetCity} onChange={(v) => setEditValues(p => ({...p, targetCity: v}))} />
+                </div>
+                <EditActions onSave={saveEdit} onCancel={cancelEdit} isSaving={isSaving} />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <InfoField label="订单号" value={order.orderNo} highlight />
+                <InfoField label="外部订单号" value={order.externalOrderNo} />
+                <InfoField label="金额" value={`¥${Number(order.amount).toLocaleString()}`} highlight />
+                <InfoField label="支付方式" value={order.paymentMethod} />
+                <InfoField label="来源渠道" value={order.sourceChannel} />
+                <InfoField label="创建者" value={order.customer?.realName ?? order.createdBy} />
+                <InfoField label="送签城市" value={order.targetCity} />
+                <InfoField label="递交日期" value={formatDate(order.submittedAt)} />
+              </div>
+            )}
 
             {/* 财务明细 */}
             {(order.platformFee || order.visaFee || order.grossProfit) && (
@@ -404,11 +594,42 @@ export default function OrderDetailPage() {
                 </div>
               </div>
             )}
+          </GlassCard>
 
-            {order.remark && (
-              <div className="mt-4 pt-4 border-t border-white/5">
-                <span className="text-xs text-[var(--color-text-placeholder)]">备注</span>
-                <p className="text-sm text-[var(--color-text-secondary)] mt-1">{order.remark}</p>
+          {/* 备注 */}
+          <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '125ms' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+                <svg className="w-4 h-4 text-[var(--color-warning)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                </svg>
+                备注 ({remarks.length})
+              </h3>
+              {canEdit && (
+                <button
+                  onClick={() => setShowRemarkModal(true)}
+                  className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors flex items-center gap-1"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
+                  添加备注
+                </button>
+              )}
+            </div>
+            {remarks.length === 0 ? (
+              <p className="text-xs text-[var(--color-text-placeholder)] py-4 text-center">暂无备注</p>
+            ) : (
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {remarks.map((r, i) => (
+                  <div key={i} className="bg-white/[0.03] rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-[var(--color-primary-light)]">{r.author}</span>
+                      <span className="text-[10px] text-[var(--color-text-placeholder)]">
+                        {r.time ? formatDateTime(r.time) : ''}
+                      </span>
+                    </div>
+                    <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">{r.content}</p>
+                  </div>
+                ))}
               </div>
             )}
           </GlassCard>
@@ -501,6 +722,42 @@ export default function OrderDetailPage() {
         />
       )}
 
+      {/* 添加备注弹窗 */}
+      {showRemarkModal && (
+        <Modal isOpen onClose={() => { setShowRemarkModal(false); setNewRemark('') }} title="添加备注" size="md">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                备注内容 *
+              </label>
+              <textarea
+                className="glass-input w-full text-sm resize-none"
+                rows={4}
+                placeholder="请输入备注信息，如非标准订单信息、特殊要求等..."
+                value={newRemark}
+                onChange={(e) => setNewRemark(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => { setShowRemarkModal(false); setNewRemark('') }}
+                className="px-4 py-2 text-sm rounded-xl bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleAddRemark}
+                disabled={isAddingRemark || !newRemark.trim()}
+                className="glass-btn-primary px-6 py-2 text-sm font-medium disabled:opacity-50"
+              >
+                {isAddingRemark ? '添加中...' : '确认添加'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {/* 取消订单确认弹窗 */}
       {showCancelConfirm && (
         <Modal isOpen onClose={() => { setShowCancelConfirm(false); setCancelReason('') }} title="确认取消订单" size="md">
@@ -550,6 +807,41 @@ function InfoField({ label, value, highlight }: { label: string; value: string |
       <p className={`mt-0.5 ${highlight ? 'text-[var(--color-primary-light)] font-medium' : 'text-[var(--color-text-primary)]'}`}>
         {value || '-'}
       </p>
+    </div>
+  )
+}
+
+function EditField({ label, value, onChange, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+  return (
+    <div>
+      <label className="block text-xs text-[var(--color-text-placeholder)] mb-1">{label}</label>
+      <input
+        type={type}
+        className="glass-input w-full text-sm"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        step={type === 'number' ? '0.01' : undefined}
+      />
+    </div>
+  )
+}
+
+function EditActions({ onSave, onCancel, isSaving }: { onSave: () => void; onCancel: () => void; isSaving: boolean }) {
+  return (
+    <div className="flex justify-end gap-2 pt-2">
+      <button
+        onClick={onCancel}
+        className="px-4 py-2 text-sm rounded-xl bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all"
+      >
+        取消
+      </button>
+      <button
+        onClick={onSave}
+        disabled={isSaving}
+        className="glass-btn-primary px-5 py-2 text-sm font-medium disabled:opacity-50"
+      >
+        {isSaving ? '保存中...' : '确认保存'}
+      </button>
     </div>
   )
 }

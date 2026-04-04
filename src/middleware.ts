@@ -4,7 +4,7 @@ import { getCurrentUser } from '@shared/lib/auth'
 import { canAccessRoute } from '@shared/lib/rbac'
 import rateLimit from '@shared/lib/rate-limit'
 
-// 公开路由
+// 公开路由（不需要登录即可访问）
 const PUBLIC_ROUTES = [
   '/api/auth/login',
   '/api/auth/register',
@@ -14,6 +14,13 @@ const PUBLIC_ROUTES = [
   '/api/cron/',
   '/api/shop/',
   '/api/sms/',
+  '/api/news',
+  '/api/visa-assessments',
+  '/api/translations',
+  '/api/doc-helper',
+  '/api/itineraries',
+  '/api/form-templates',
+  '/api/form-records',
   '/login',
   '/register',
   '/reset-password',
@@ -21,12 +28,9 @@ const PUBLIC_ROUTES = [
   '/tools',
   '/portal',
   '/portal/tools',
-  '/portal/news',
-  '/portal/itinerary',
-  '/portal/form-helper',
-  '/portal/assessment',
-  '/portal/translator',
-  '/portal/documents',
+  '/portal/orders',
+  '/portal/profile',
+  '/portal/notifications',
 ]
 
 function isPublicRoute(pathname: string): boolean {

@@ -227,7 +227,7 @@ async function main() {
   ]
 
   for (const account of accounts) {
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: {
         companyId: account.companyId,
         departmentId: account.departmentId,

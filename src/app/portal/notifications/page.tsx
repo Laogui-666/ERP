@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@shared/hooks/use-auth'
 import { GlassCard } from '@shared/ui/glass-card'
 import { useToast } from '@shared/ui/toast'
 import { apiFetch } from '@shared/lib/api-client'
 import { cn } from '@shared/lib/utils'
+import { getNotificationRoute } from '@shared/lib/notification-icons'
 
 interface NotificationItem {
   id: string
@@ -48,6 +50,7 @@ function formatRelativeTime(dateStr: string): string {
 
 export default function NotificationsPage() {
   const { user } = useAuth()
+  const router = useRouter()
   const { toast } = useToast()
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
@@ -162,9 +165,15 @@ export default function NotificationsPage() {
           {notifications.map((notif) => {
             const iconInfo = NOTIFICATION_ICONS[notif.type] ?? NOTIFICATION_ICONS.SYSTEM
             return (
-              <Link
+              <div
                 key={notif.id}
-                href={notif.orderId ? `/portal/orders` : '#'}
+                onClick={() => {
+                  const route = getNotificationRoute(notif.orderId ?? null, user?.role)
+                  if (route) {
+                    router.push(route)
+                  }
+                }}
+                className={notif.orderId ? 'cursor-pointer' : ''}
               >
                 <GlassCard
                   intensity="light"
@@ -204,7 +213,7 @@ export default function NotificationsPage() {
                     <div className="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-[var(--color-primary)]" />
                   )}
                 </GlassCard>
-              </Link>
+              </div>
             )
           })}
 

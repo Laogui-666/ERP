@@ -3,11 +3,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useNotifications } from '@shared/hooks/use-notifications'
+import { useAuth } from '@shared/hooks/use-auth'
 import { formatDateTime } from '@shared/lib/utils'
 import { NOTIFICATION_ICONS, getNotificationRoute } from '@shared/lib/notification-icons'
 
 export function NotificationBell() {
   const router = useRouter()
+  const { user } = useAuth()
   const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead } = useNotifications()
   const [isOpen, setIsOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -74,7 +76,7 @@ export function NotificationBell() {
                   }`}
                   onClick={() => {
                     void markAsRead(n.id)
-                    const route = getNotificationRoute(n.orderId)
+                    const route = getNotificationRoute(n.orderId, user?.role)
                     if (route) {
                       setIsOpen(false)
                       router.push(route)

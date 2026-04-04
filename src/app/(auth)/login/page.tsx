@@ -3,11 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuthStore } from '@shared/stores/auth-store'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login } = useAuthStore()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -19,9 +17,29 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      await login(username, password)
-      // Zustand 状态已更新，直接跳转
-      router.push('/')
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      })
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error?.message ?? '登录失败')
+
+      const user = json.data.user
+      // 按角色智能跳转到对应工作台
+      const roleRedirect: Record<string, string> = {
+        SUPER_ADMIN: '/admin/dashboard',
+        COMPANY_OWNER: '/admin/dashboard',
+        CS_ADMIN: '/admin/dashboard',
+        CUSTOMER_SERVICE: '/admin/workspace',
+        VISA_ADMIN: '/admin/dashboard',
+        DOC_COLLECTOR: '/admin/workspace',
+        OPERATOR: '/admin/workspace',
+        OUTSOURCE: '/admin/workspace',
+        CUSTOMER: '/customer/orders',
+      }
+      const target = roleRedirect[user.role] ?? '/'
+      router.push(target)
       router.refresh()
     } catch (err) {
       const msg = err instanceof Error ? err.message : '登录失败'

@@ -73,23 +73,7 @@ export async function GET(
       }
     }
 
-    // 4. 根据签证类型推荐缺失资料
-    const commonDocs: Record<string, string[]> = {
-      '旅游': ['护照', '照片', '在职证明', '银行流水', '行程单', '酒店预订单', '旅行保险'],
-      '商务': ['护照', '照片', '邀请函', '在职证明', '公司营业执照'],
-      '留学': ['护照', '照片', '录取通知书', '资金证明', '学历证明'],
-    }
-    const recommendedDocs = commonDocs[order.visaType] ?? commonDocs['旅游']
-    const existingNames = order.documentRequirements.map(r => r.name)
-    const missingDocs = recommendedDocs.filter(d => !existingNames.some(e => e.includes(d)))
-    if (missingDocs.length > 0) {
-      warnings.push({
-        level: 'info',
-        message: `建议补充：${missingDocs.join('、')}`,
-      })
-    }
-
-    // 5. 财务异常检查
+    // 4. 财务异常检查
     if (order.grossProfit !== null) {
       const profit = order.grossProfit.toNumber()
       if (profit < 0) {

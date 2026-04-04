@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@shared/lib/prisma'
 import { getCurrentUser } from '@shared/lib/auth'
-import { requirePermission, getDataScopeFilter } from '@shared/lib/rbac'
+import { requirePermission } from '@shared/lib/rbac'
 import { AppError, createSuccessResponse } from '@shared/types/api'
 import { z } from 'zod'
 
@@ -12,14 +12,14 @@ export async function GET(request: NextRequest) {
     if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
     requirePermission(user, 'templates', 'read')
 
-    const scopeFilter = getDataScopeFilter(user)
     const { searchParams } = request.nextUrl
     const country = searchParams.get('country') ?? undefined
     const visaType = searchParams.get('visaType') ?? undefined
     const search = searchParams.get('search') ?? undefined
 
-    const where: Record<string, unknown> = {
-      ...scopeFilter,
+    // 模板只按 companyId 隔离（不使用 getDataScopeFilter，VisaTemplate 无 collectorId/operatorId）
+    const companyFilter: Record<string, unknown> = {
+      companyId: user.companyId,
       ...(country && { country }),
       ...(visaType && { visaType }),
       ...(search && {
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const templates = await prisma.visaTemplate.findMany({
       where: {
         OR: [
-          where,
+          companyFilter,
           { isSystem: true },
         ],
       },

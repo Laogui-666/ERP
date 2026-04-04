@@ -252,21 +252,6 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
           </p>
         )}
 
-        {/* 驳回原因（点击状态切换显示） */}
-        {(req.status === 'REJECTED' || req.status === 'SUPPLEMENT') && req.rejectReason && (
-          <div className={`mb-2 ml-4 text-xs rounded-lg px-3 py-2.5 transition-all ${
-            req.status === 'REJECTED'
-              ? 'text-[#B87C7C] bg-[#B87C7C]/10 border border-[#B87C7C]/20'
-              : 'text-[#C4A97D] bg-[#C4A97D]/10 border border-[#C4A97D]/20'
-          }`}>
-            <div className="flex items-center gap-1.5 font-medium mb-1">
-              <span>{req.status === 'REJECTED' ? '❌' : '⚠️'}</span>
-              <span>{req.status === 'REJECTED' ? '驳回原因' : '补充说明'}</span>
-            </div>
-            <p className="leading-relaxed">{req.rejectReason}</p>
-          </div>
-        )}
-
         {/* 已上传文件列表 */}
         {req.files.length > 0 && (
           <div className="ml-4 space-y-1.5 mb-2">
@@ -277,6 +262,8 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
                   fileType={file.fileType}
                   ossUrl={file.ossUrl}
                   fileSize={file.fileSize}
+                  fileId={file.id}
+                  rejectReason={(req.status === 'REJECTED' || req.status === 'SUPPLEMENT') ? req.rejectReason : null}
                   compact
                 />
                 {canOperate && (

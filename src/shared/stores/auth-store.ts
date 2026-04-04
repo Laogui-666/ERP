@@ -39,6 +39,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     await apiFetch('/api/auth/logout', { method: 'POST' })
     set({ user: null, isAuthenticated: false })
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    }
   },
 
   fetchMe: async () => {

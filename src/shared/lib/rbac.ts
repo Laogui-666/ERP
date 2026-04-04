@@ -44,7 +44,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'orders', actions: ['read', 'create', 'update', 'assign', 'transition', 'reassign'] },
     { resource: 'pool', actions: ['read', 'claim'] },
     { resource: 'users', actions: ['read'] },
-    { resource: 'documents', actions: ['read', 'create', 'update'] },
+    { resource: 'documents', actions: ['read', 'create', 'update', 'delete'] },
     { resource: 'materials', actions: ['read', 'create', 'update'] },
     { resource: 'templates', actions: ['read', 'create', 'update', 'delete'] },
     { resource: 'analytics', actions: ['read'] },
@@ -55,7 +55,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   DOC_COLLECTOR: [
     { resource: 'orders', actions: ['read', 'transition'] },
     { resource: 'pool', actions: ['read', 'claim'] },
-    { resource: 'documents', actions: ['read', 'create', 'update'] },
+    { resource: 'documents', actions: ['read', 'create', 'update', 'delete'] },
     { resource: 'templates', actions: ['read', 'create', 'update', 'delete'] },
     { resource: 'notifications', actions: ['read', 'update'] },
     { resource: 'chat', actions: ['read', 'send'] },

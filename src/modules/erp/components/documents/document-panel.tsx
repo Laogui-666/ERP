@@ -314,10 +314,13 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
   }
 
   // ===== 上传 =====
-  const handleUploadClick = (requirementId: string) => {
+  const handleUploadClick = (requirementId: string, clearFirst = false) => {
     setTargetReqId(requirementId)
+    setClearFirstUpload(clearFirst)
     fileInputRef.current?.click()
   }
+
+  const [clearFirstUpload, setClearFirstUpload] = useState(false)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -330,6 +333,17 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
+
+    // 重新提交时先删除旧文件
+    if (clearFirstUpload) {
+      const req = localReqs.find(r => r.id === targetReqId)
+      if (req && req.files.length > 0) {
+        for (const f of req.files) {
+          try { await apiFetch(`/api/documents/files/${f.id}`, { method: 'DELETE' }) } catch { /* ignore */ }
+        }
+      }
+    }
+
     setUploadingId(targetReqId)
     setUploadProgress({ current: 0, total: fileArray.length })
     try {
@@ -362,6 +376,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       setUploadingId(null)
       setUploadProgress(null)
       setTargetReqId(null)
+      setClearFirstUpload(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
@@ -643,7 +658,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                               key={req.id}
                               req={req}
                               canUpload={canUpload && ['PENDING', 'REJECTED', 'SUPPLEMENT'].includes(req.status)}
-                              canReview={canReview && ['UPLOADED', 'REVIEWING'].includes(req.status)}
+                              canReview={canReview && ['UPLOADED', 'REVIEWING', 'APPROVED', 'REJECTED', 'SUPPLEMENT'].includes(req.status)}
                               canDeleteFile={canDeleteFile}
                               canEdit={canEdit}
                               isEditing={editingId === req.id}
@@ -661,7 +676,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                               onCancelEdit={() => setEditingId(null)}
                               onDeleteReq={() => handleDeleteReq(req.id)}
                               onReviewReasonChange={setReviewReason}
-                              onUpload={() => handleUploadClick(req.id)}
+                              onUpload={(clearFirst?: boolean) => handleUploadClick(req.id, !!clearFirst)}
                               onCamera={() => setCameraTargetId(req.id)}
                               onApprove={() => handleReview(req.id, 'APPROVED')}
                               onReject={(status) => handleReview(req.id, status)}
@@ -710,7 +725,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
           reqName={previewFile.reqName}
           reqStatus={previewFile.reqStatus}
           rejectReason={previewFile.rejectReason}
-          canReview={canReview && ['UPLOADED', 'REVIEWING'].includes(previewFile.reqStatus)}
+          canReview={canReview && ['UPLOADED', 'REVIEWING', 'APPROVED', 'REJECTED', 'SUPPLEMENT'].includes(previewFile.reqStatus)}
           reviewReason={previewReviewReason}
           onReviewReasonChange={setPreviewReviewReason}
           onApprove={() => handlePreviewReview('APPROVED')}
@@ -760,9 +775,18 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                   ) : templates.length === 0 ? (
                     <div className="text-center py-12 space-y-3">
                       <p className="text-sm text-[var(--color-text-placeholder)]">暂无可用模板</p>
-                      <a href="/admin/templates" className="inline-block text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)]">前往模板库创建 →</a>
+                      <a href="/admin/templates" target="_blank" rel="noopener noreferrer" className="inline-block text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] underline underline-offset-2">前往模板库创建 →</a>
                     </div>
                   ) : (
+                    <>
+                      {/* 模板库入口 */}
+                      <a href="/admin/templates" target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-white/10 hover:border-[var(--color-primary)]/30 hover:bg-white/[0.02] transition-all mb-3 group">
+                        <svg className="w-4 h-4 text-[var(--color-text-placeholder)] group-hover:text-[var(--color-primary-light)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        <span className="text-xs text-[var(--color-text-placeholder)] group-hover:text-[var(--color-primary-light)] transition-colors">管理模板库（创建/编辑/删除模板）</span>
+                      </a>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {templates.map((tpl) => (
                         <button key={tpl.id} onClick={() => handleSelectTemplate(tpl)}
@@ -776,6 +800,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                         </button>
                       ))}
                     </div>
+                    </>
                   )}
                 </>
               ) : (
@@ -852,7 +877,7 @@ function DocumentItem({
   onCancelEdit: () => void
   onDeleteReq: () => void
   onReviewReasonChange: (v: string) => void
-  onUpload: () => void
+  onUpload: (clearFirst?: boolean) => void
   onCamera: () => void
   onApprove: () => void
   onReject: (status: 'REJECTED' | 'SUPPLEMENT') => void
@@ -930,9 +955,9 @@ function DocumentItem({
                 if (canDeleteFile) {
                   fileItemProps.onDelete = () => onDeleteFile(file.id)
                 }
-                // 重新上传：被驳回时可重新提交
+                // 重新上传：被驳回时可重新提交（先删旧文件再上传）
                 if (canUpload && ['REJECTED', 'SUPPLEMENT'].includes(req.status)) {
-                  fileItemProps.onReupload = () => onUpload()
+                  fileItemProps.onReupload = () => onUpload(true)
                 }
                 return <FileItemCompact key={file.id} {...fileItemProps} />
               })}
@@ -942,7 +967,7 @@ function DocumentItem({
           <div className="flex items-center gap-2 mt-2">
             {canUpload && (
               <>
-                <button onClick={onUpload} disabled={isUploading}
+                <button onClick={() => onUpload()} disabled={isUploading}
                   className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-info)]/15 text-[var(--color-info)] hover:bg-[var(--color-info)]/25 transition-colors disabled:opacity-50">
                   {isUploading ? (uploadProgress ? `上传中 (${uploadProgress.current}/${uploadProgress.total})...` : '上传中...') : '📁 上传'}
                 </button>
@@ -1008,8 +1033,9 @@ function FileItemCompact({
     if (file.fileType.startsWith('image/')) return '🖼️'
     if (file.fileType === 'application/pdf') return '📄'
     if (file.fileType === 'text/plain') return '📝'
-    if (file.fileType.includes('word')) return '📃'
-    if (file.fileType.includes('excel') || file.fileType.includes('sheet')) return '📊'
+    if (file.fileType.includes('word') || file.fileType.includes('document') || file.fileName.endsWith('.doc') || file.fileName.endsWith('.docx')) return '📃'
+    if (file.fileType.includes('excel') || file.fileType.includes('sheet') || file.fileName.endsWith('.xls') || file.fileName.endsWith('.xlsx')) return '📊'
+    if (file.fileType.includes('presentation') || file.fileName.endsWith('.ppt') || file.fileName.endsWith('.pptx')) return '📑'
     return '📎'
   }
 
@@ -1089,7 +1115,9 @@ function FilePreviewReviewModal({
   const isImage = fileType.startsWith('image/')
   const isPdf = fileType === 'application/pdf'
   const isText = fileType === 'text/plain'
-  const canPreview = isImage || isPdf || isText
+  const isWord = fileType.includes('word') || fileType.includes('document') || fileName.endsWith('.doc') || fileName.endsWith('.docx')
+  const isExcel = fileType.includes('excel') || fileType.includes('sheet') || fileName.endsWith('.xls') || fileName.endsWith('.xlsx')
+  const canPreview = isImage || isPdf || isText || isWord
 
   // 获取新鲜签名 URL 用于预览
   useEffect(() => {
@@ -1178,6 +1206,18 @@ function FilePreviewReviewModal({
               <iframe src={previewUrl} className="w-full h-full border-0 min-h-[400px]" title={fileName} />
             ) : previewUrl && isText ? (
               <iframe src={previewUrl} className="w-full h-full border-0 min-h-[400px]" title={fileName} />
+            ) : previewUrl && isWord ? (
+              <iframe
+                src={`https://docs.google.com/gview?url=${encodeURIComponent(previewUrl)}&embedded=true`}
+                className="w-full h-full border-0 min-h-[400px]"
+                title={fileName}
+              />
+            ) : previewUrl && isExcel ? (
+              <iframe
+                src={`https://docs.google.com/gview?url=${encodeURIComponent(previewUrl)}&embedded=true`}
+                className="w-full h-full border-0 min-h-[400px]"
+                title={fileName}
+              />
             ) : (
               <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center gap-4 text-white/60">
                 <span className="text-5xl">📎</span>

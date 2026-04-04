@@ -38,8 +38,29 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
   const canUpload = (status: DocReqStatus) =>
     ['PENDING', 'REJECTED', 'SUPPLEMENT'].includes(status)
 
+  // 清除某需求下的所有旧文件（用于重新提交）
+  const clearRequirementFiles = async (requirementId: string): Promise<boolean> => {
+    const req = requirements.find(r => r.id === requirementId)
+    if (!req || req.files.length === 0) return true
+    try {
+      for (const file of req.files) {
+        await apiFetch(`/api/documents/files/${file.id}`, { method: 'DELETE' })
+      }
+      return true
+    } catch {
+      toast('error', '清除旧文件失败')
+      return false
+    }
+  }
+
   // 预签名三步上传（返回是否成功，不自动刷新——批量上传时由调用方统一刷新）
-  const handleUpload = async (requirementId: string, file: File): Promise<boolean> => {
+  const handleUpload = async (requirementId: string, file: File, clearFirst = false): Promise<boolean> => {
+    // 如果需要先清空旧文件（重新提交场景）
+    if (clearFirst) {
+      const cleared = await clearRequirementFiles(requirementId)
+      if (!cleared) return false
+    }
+
     // 客户端预校验大小
     if (file.size > 50 * 1024 * 1024) {
       toast('error', '文件大小超出限制（最大 50MB）')
@@ -122,8 +143,19 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
   // 文件选择触发
   const handleUploadClick = (requirementId: string) => {
     setTargetReqId(requirementId)
+    setClearFirst(false)
     fileInputRef.current?.click()
   }
+
+  // 重新提交触发（先清空旧文件）
+  const handleResubmitClick = (requirementId: string) => {
+    setTargetReqId(requirementId)
+    setClearFirst(true)
+    fileInputRef.current?.click()
+  }
+
+  // 是否清除旧文件
+  const [clearFirst, setClearFirst] = useState(false)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -131,10 +163,11 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
 
     const fileArray = Array.from(files)
     let successCount = 0
+    const shouldClear = clearFirst
 
     // 逐文件上传，全部完成后统一刷新
-    for (const file of fileArray) {
-      const ok = await handleUpload(targetReqId, file)
+    for (let i = 0; i < fileArray.length; i++) {
+      const ok = await handleUpload(targetReqId, fileArray[i], shouldClear && i === 0)
       if (ok) successCount++
     }
 
@@ -142,6 +175,7 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
       onRefresh()
     }
     if (fileInputRef.current) fileInputRef.current.value = ''
+    setClearFirst(false)
   }
 
   // 拍照上传（单文件，直接刷新）
@@ -194,7 +228,7 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
     return (
       <div key={req.id} className={`rounded-xl border border-white/[0.06] p-4 ${style.bg}`}>
         {/* 标题行 */}
-        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${style.dot}`} />
             <span className="text-sm font-medium text-[var(--color-text-primary)]">
@@ -218,10 +252,18 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
           </p>
         )}
 
-        {/* 驳回原因 */}
+        {/* 驳回原因（点击状态切换显示） */}
         {(req.status === 'REJECTED' || req.status === 'SUPPLEMENT') && req.rejectReason && (
-          <div className="mb-2 ml-4 text-xs text-[#B87C7C] bg-[#B87C7C]/10 rounded-lg px-3 py-2">
-            ❌ {req.rejectReason}
+          <div className={`mb-2 ml-4 text-xs rounded-lg px-3 py-2.5 transition-all ${
+            req.status === 'REJECTED'
+              ? 'text-[#B87C7C] bg-[#B87C7C]/10 border border-[#B87C7C]/20'
+              : 'text-[#C4A97D] bg-[#C4A97D]/10 border border-[#C4A97D]/20'
+          }`}>
+            <div className="flex items-center gap-1.5 font-medium mb-1">
+              <span>{req.status === 'REJECTED' ? '❌' : '⚠️'}</span>
+              <span>{req.status === 'REJECTED' ? '驳回原因' : '补充说明'}</span>
+            </div>
+            <p className="leading-relaxed">{req.rejectReason}</p>
           </div>
         )}
 
@@ -279,6 +321,18 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
               className="text-xs px-3 py-1.5 rounded-lg bg-white/[0.06] text-[var(--color-text-secondary)] hover:bg-white/[0.10] transition-colors"
             >
               📷 拍照
+            </button>
+          </div>
+        )}
+
+        {/* 重新提交按钮（仅已驳回/需补充时显示） */}
+        {(req.status === 'REJECTED' || req.status === 'SUPPLEMENT') && req.files.length > 0 && !isUploading && (
+          <div className="ml-4 flex gap-2 mt-2">
+            <button
+              onClick={() => handleResubmitClick(req.id)}
+              className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-warning)]/15 text-[var(--color-warning)] hover:bg-[var(--color-warning)]/25 transition-colors"
+            >
+              🔄 重新提交
             </button>
           </div>
         )}

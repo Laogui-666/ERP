@@ -26,15 +26,18 @@ export function FilePreview({ fileName, fileType, ossUrl, fileSize, compact = fa
   const isImage = fileType.startsWith('image/')
   const isPdf = fileType === 'application/pdf'
   const isText = fileType === 'text/plain'
+  const isWord = fileType.includes('word') || fileType.includes('document') || fileName.endsWith('.doc') || fileName.endsWith('.docx')
+  const isExcel = fileType.includes('excel') || fileType.includes('sheet') || fileName.endsWith('.xls') || fileName.endsWith('.xlsx')
 
   // 文件类型图标
   const getFileIcon = () => {
     if (isImage) return '🖼️'
     if (isPdf) return '📄'
     if (isText) return '📝'
-    if (fileType.includes('word') || fileType.includes('document')) return '📃'
-    if (fileType.includes('excel') || fileType.includes('sheet')) return '📊'
+    if (isWord) return '📃'
+    if (isExcel) return '📊'
     if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('7z')) return '📦'
+    if (fileType.includes('presentation') || fileName.endsWith('.ppt') || fileName.endsWith('.pptx')) return '📑'
     return '📎'
   }
 
@@ -44,7 +47,7 @@ export function FilePreview({ fileName, fileType, ossUrl, fileSize, compact = fa
     return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
   }
 
-  const canPreview = isImage || isPdf || isText
+  const canPreview = isImage || isPdf || isText || isWord || isExcel
 
   if (compact) {
     return (
@@ -208,6 +211,8 @@ function FileLightbox({
   const isImage = fileType.startsWith('image/')
   const isPdf = fileType === 'application/pdf'
   const isText = fileType === 'text/plain'
+  const isWord = fileType.includes('word') || fileType.includes('document') || fileName.endsWith('.doc') || fileName.endsWith('.docx')
+  const isExcel = fileType.includes('excel') || fileType.includes('sheet') || fileName.endsWith('.xls') || fileName.endsWith('.xlsx')
 
   return createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -275,7 +280,15 @@ function FileLightbox({
             />
           )}
 
-          {!isImage && !isPdf && !isText && (
+          {(isWord || isExcel) && (
+            <iframe
+              src={`https://docs.google.com/gview?url=${encodeURIComponent(ossUrl)}&embedded=true`}
+              className="w-full h-[75vh] border-0"
+              title={fileName}
+            />
+          )}
+
+          {!isImage && !isPdf && !isText && !isWord && !isExcel && (
             <div className="w-full h-[300px] flex flex-col items-center justify-center gap-4 text-white/60">
               <span className="text-5xl">📎</span>
               <p className="text-sm">此文件类型不支持在线预览</p>

@@ -34,8 +34,18 @@ interface Template {
   isSystem: boolean
 }
 
+/** 选中项的本地状态（支持修改 required） */
+interface SelectableItem extends TemplateItem {
+  selected: boolean
+}
+
 export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _orderStatus, applicantCount = 1, applicants = [], onRefresh }: DocumentPanelProps) {
   const { toast } = useToast()
+
+  // 内部资料列表（支持本地乐观更新）
+  const [localReqs, setLocalReqs] = useState<DocumentRequirement[]>(requirements)
+  // 当外部 requirements 变化时同步
+  useEffect(() => { setLocalReqs(requirements) }, [requirements])
 
   // 添加菜单
   const [showAddMenu, setShowAddMenu] = useState(false)
@@ -53,7 +63,8 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
   const [templates, setTemplates] = useState<Template[]>([])
   const [loadingTemplates, setLoadingTemplates] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
-  const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set())
+  // 模板项选择状态（支持修改 required）
+  const [selectableItems, setSelectableItems] = useState<SelectableItem[]>([])
   const [isApplying, setIsApplying] = useState(false)
 
   // 编辑资料
@@ -93,15 +104,28 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     return () => document.removeEventListener('mousedown', handler)
   }, [showAddMenu])
 
-  // 加载模板列表
+  // ===== 拉取资料清单（独立于外部 props，支持本地刷新） =====
+  const fetchRequirements = useCallback(async () => {
+    try {
+      const res = await apiFetch(`/api/orders/${orderId}/documents`)
+      const json = await res.json()
+      if (json.success) {
+        setLocalReqs(json.data)
+        // 同步通知父组件
+        onRefresh()
+      }
+    } catch {
+      // 静默失败，不打断用户
+    }
+  }, [orderId, onRefresh])
+
+  // ===== 模板相关 =====
   const loadTemplates = useCallback(async () => {
     setLoadingTemplates(true)
     try {
       const res = await apiFetch('/api/templates')
       const json = await res.json()
-      if (json.success) {
-        setTemplates(json.data)
-      }
+      if (json.success) setTemplates(json.data)
     } catch {
       toast('error', '加载模板失败')
     } finally {
@@ -109,53 +133,57 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     }
   }, [toast])
 
-  // 打开模板弹窗
   const openTemplateModal = () => {
     setShowAddMenu(false)
     setSelectedTemplate(null)
-    setSelectedItems(new Set())
+    setSelectableItems([])
     setShowTemplateModal(true)
     loadTemplates()
   }
 
-  // 选择模板 → 展开材料清单
+  // 选择模板 → 展开材料清单（默认全选 + 默认必填跟随模板）
   const handleSelectTemplate = (tpl: Template) => {
     setSelectedTemplate(tpl)
-    setSelectedItems(new Set(tpl.items.map((_, i) => i))) // 默认全选
+    setSelectableItems(tpl.items.map(item => ({
+      ...item,
+      selected: true,
+      required: item.required ?? true,
+    })))
   }
 
   // 切换单项选中
   const toggleItem = (index: number) => {
-    setSelectedItems(prev => {
-      const next = new Set(prev)
-      if (next.has(index)) next.delete(index)
-      else next.add(index)
-      return next
-    })
+    setSelectableItems(prev => prev.map((item, i) =>
+      i === index ? { ...item, selected: !item.selected } : item
+    ))
+  }
+
+  // 切换单项必填
+  const toggleRequired = (index: number) => {
+    setSelectableItems(prev => prev.map((item, i) =>
+      i === index ? { ...item, required: !item.required } : item
+    ))
   }
 
   // 全选/取消全选
   const toggleSelectAll = () => {
-    if (!selectedTemplate) return
-    if (selectedItems.size === selectedTemplate.items.length) {
-      setSelectedItems(new Set())
-    } else {
-      setSelectedItems(new Set(selectedTemplate.items.map((_, i) => i)))
-    }
+    const allSelected = selectableItems.every(i => i.selected)
+    setSelectableItems(prev => prev.map(item => ({ ...item, selected: !allSelected })))
   }
 
   // 应用选中的模板项
   const handleApplySelected = async () => {
-    if (!selectedTemplate || selectedItems.size === 0) {
+    const chosen = selectableItems.filter(i => i.selected)
+    if (chosen.length === 0) {
       toast('error', '请至少选择一项')
       return
     }
     setIsApplying(true)
     try {
-      const items = Array.from(selectedItems).sort((a, b) => a - b).map(i => ({
-        name: selectedTemplate.items[i].name,
-        description: selectedTemplate.items[i].description || undefined,
-        isRequired: selectedTemplate.items[i].required ?? true,
+      const items = chosen.map(item => ({
+        name: item.name,
+        description: item.description || undefined,
+        isRequired: item.required ?? true,
       }))
 
       const res = await apiFetch(`/api/orders/${orderId}/documents`, {
@@ -168,7 +196,8 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         toast('success', `已添加 ${items.length} 项资料需求`)
         setShowTemplateModal(false)
         setSelectedTemplate(null)
-        onRefresh()
+        // 关键：立即拉取最新资料列表
+        await fetchRequirements()
       } else {
         toast('error', json.error?.message ?? '添加失败')
       }
@@ -179,7 +208,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     }
   }
 
-  // 手动添加
+  // ===== 手动添加 =====
   const handleAddItem = async () => {
     if (!newItemName.trim()) {
       toast('error', '请输入资料名称')
@@ -204,7 +233,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         setNewItemName('')
         setNewItemDesc('')
         setShowManualForm(false)
-        onRefresh()
+        await fetchRequirements()
       } else {
         toast('error', json.error?.message ?? '添加失败')
       }
@@ -215,7 +244,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     }
   }
 
-  // 开始编辑
+  // ===== 编辑资料 =====
   const startEdit = (req: DocumentRequirement) => {
     setEditingId(req.id)
     setEditName(req.name)
@@ -223,7 +252,6 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     setEditRequired(req.isRequired)
   }
 
-  // 保存编辑
   const handleSaveEdit = async () => {
     if (!editingId || !editName.trim()) {
       toast('error', '请输入资料名称')
@@ -244,6 +272,13 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       if (json.success) {
         toast('success', '已保存')
         setEditingId(null)
+        // 乐观更新本地状态
+        setLocalReqs(prev => prev.map(r => r.id === editingId ? {
+          ...r,
+          name: editName.trim(),
+          description: editDesc.trim() || null,
+          isRequired: editRequired,
+        } : r))
         onRefresh()
       } else {
         toast('error', json.error?.message ?? '保存失败')
@@ -255,7 +290,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     }
   }
 
-  // 删除资料需求
+  // ===== 删除资料需求 =====
   const handleDeleteReq = async (reqId: string) => {
     if (!confirm('确定删除该资料需求？已上传的文件也会被删除。')) return
     try {
@@ -263,16 +298,15 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       const json = await res.json()
       if (json.success) {
         toast('success', '已删除')
+        setLocalReqs(prev => prev.filter(r => r.id !== reqId))
         onRefresh()
       } else {
         toast('error', json.error?.message ?? '删除失败')
       }
-    } catch {
-      toast('error', '删除失败')
-    }
+    } catch { toast('error', '删除失败') }
   }
 
-  // 上传文件
+  // ===== 上传 =====
   const handleUploadClick = (requirementId: string) => {
     setTargetReqId(requirementId)
     fileInputRef.current?.click()
@@ -313,7 +347,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       }
       if (successCount > 0) {
         toast('success', `${successCount} 个文件上传成功`)
-        onRefresh()
+        await fetchRequirements()
       }
     } catch {
       toast('error', '上传失败')
@@ -325,7 +359,6 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     }
   }
 
-  // 拍照上传
   const handleCameraCapture = async (file: File) => {
     if (!cameraTargetId) return
     setUploadingId(cameraTargetId)
@@ -338,7 +371,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       const json = await res.json()
       if (json.success) {
         toast('success', '照片上传成功')
-        onRefresh()
+        await fetchRequirements()
       } else {
         toast('error', json.error?.message ?? '上传失败')
       }
@@ -349,18 +382,17 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     }
   }
 
-  // 删除文件
   const handleFileDelete = async (fileId: string) => {
     if (!confirm('确定删除该文件？')) return
     try {
       const res = await apiFetch(`/api/documents/files/${fileId}`, { method: 'DELETE' })
       const json = await res.json()
-      if (json.success) { toast('success', '已删除'); onRefresh() }
+      if (json.success) { toast('success', '已删除'); await fetchRequirements() }
       else toast('error', json.error?.message ?? '删除失败')
     } catch { toast('error', '删除失败') }
   }
 
-  // 审核资料
+  // ===== 审核 =====
   const handleReview = async (reqId: string, status: DocReqStatus) => {
     setReviewingId(reqId)
     try {
@@ -374,7 +406,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         toast('success', '审核完成')
         setReviewingId(null)
         setReviewReason('')
-        onRefresh()
+        await fetchRequirements()
       } else {
         toast('error', json.error?.message ?? '审核失败')
       }
@@ -385,26 +417,25 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     }
   }
 
-  // 统计
-  const approved = requirements.filter((r) => r.status === 'APPROVED').length
-  const total = requirements.length
-
-  // 是否按申请人分组
+  // ===== 统计 =====
+  const approved = localReqs.filter((r) => r.status === 'APPROVED').length
+  const total = localReqs.length
   const showGrouped = applicantCount > 1 && applicants.length > 1
 
   const groupedRequirements = (): Array<{ name: string; items: DocumentRequirement[] }> => {
-    if (!showGrouped) return [{ name: '', items: requirements }]
+    if (!showGrouped) return [{ name: '', items: localReqs }]
     const groups: Array<{ name: string; items: DocumentRequirement[] }> = []
-    const perPerson = Math.ceil(requirements.length / applicants.length)
+    const perPerson = Math.ceil(localReqs.length / applicants.length)
     for (let i = 0; i < applicants.length; i++) {
       const start = i * perPerson
-      const end = Math.min(start + perPerson, requirements.length)
-      groups.push({ name: applicants[i].name, items: requirements.slice(start, end) })
+      const end = Math.min(start + perPerson, localReqs.length)
+      groups.push({ name: applicants[i].name, items: localReqs.slice(start, end) })
     }
     return groups
   }
 
   const groups = groupedRequirements()
+  const selectedCount = selectableItems.filter(i => i.selected).length
 
   return (
     <div className="space-y-3">
@@ -436,7 +467,6 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
               </svg>
             </button>
 
-            {/* 下拉菜单 */}
             {showAddMenu && (
               <div className="absolute right-0 top-full mt-1 w-44 rounded-xl overflow-hidden z-50 shadow-xl border border-white/10"
                 style={{ background: 'rgba(32, 38, 54, 0.96)', backdropFilter: 'blur(20px)' }}>
@@ -468,40 +498,22 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       {/* 手动添加表单 */}
       {showManualForm && (
         <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 space-y-2">
-          <input
-            className="glass-input w-full text-sm"
-            placeholder="资料名称（如：护照、照片）"
-            value={newItemName}
-            onChange={(e) => setNewItemName(e.target.value)}
-          />
-          <input
-            className="glass-input w-full text-sm"
-            placeholder="说明（可选，如：有效期6个月以上）"
-            value={newItemDesc}
-            onChange={(e) => setNewItemDesc(e.target.value)}
-          />
+          <input className="glass-input w-full text-sm" placeholder="资料名称（如：护照、照片）"
+            value={newItemName} onChange={(e) => setNewItemName(e.target.value)} />
+          <input className="glass-input w-full text-sm" placeholder="说明（可选，如：有效期6个月以上）"
+            value={newItemDesc} onChange={(e) => setNewItemDesc(e.target.value)} />
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
-              <input
-                type="checkbox"
-                checked={newItemRequired}
+              <input type="checkbox" checked={newItemRequired}
                 onChange={(e) => setNewItemRequired(e.target.checked)}
-                className="accent-[var(--color-primary)]"
-              />
+                className="accent-[var(--color-primary)]" />
               必填项
             </label>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowManualForm(false)}
-                className="text-xs px-3 py-1.5 text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleAddItem}
-                disabled={isAdding}
-                className="glass-btn-primary px-3 py-1.5 text-xs font-medium disabled:opacity-50"
-              >
+              <button onClick={() => setShowManualForm(false)}
+                className="text-xs px-3 py-1.5 text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]">取消</button>
+              <button onClick={handleAddItem} disabled={isAdding}
+                className="glass-btn-primary px-3 py-1.5 text-xs font-medium disabled:opacity-50">
                 {isAdding ? '添加中...' : '确定'}
               </button>
             </div>
@@ -510,14 +522,13 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       )}
 
       {/* 资料列表 */}
-      {requirements.length === 0 ? (
+      {localReqs.length === 0 ? (
         <p className="text-xs text-[var(--color-text-placeholder)] py-2">暂无资料需求</p>
       ) : (
         <div className="space-y-3">
           {groups.map((group, gi) => {
             const groupApproved = group.items.filter(r => r.status === 'APPROVED').length
             const groupTotal = group.items.length
-
             return (
               <div key={gi}>
                 {showGrouped && (
@@ -532,12 +543,9 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                       groupApproved === groupTotal
                         ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]'
                         : 'bg-white/5 text-[var(--color-text-placeholder)]'
-                    }`}>
-                      {groupApproved}/{groupTotal}
-                    </span>
+                    }`}>{groupApproved}/{groupTotal}</span>
                   </div>
                 )}
-
                 <div className={showGrouped ? 'space-y-2 pl-1' : 'space-y-2'}>
                   {group.items.map((req) => (
                     <DocumentItem
@@ -548,9 +556,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                       canDeleteFile={canDeleteFile}
                       canEdit={canEdit}
                       isEditing={editingId === req.id}
-                      editName={editName}
-                      editDesc={editDesc}
-                      editRequired={editRequired}
+                      editName={editName} editDesc={editDesc} editRequired={editRequired}
                       isSaving={isSaving}
                       isUploading={uploadingId === req.id}
                       uploadProgress={uploadingId === req.id ? uploadProgress : null}
@@ -579,22 +585,13 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       )}
 
       {/* 隐藏的文件输入 */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        className="hidden"
-        onChange={handleFileChange}
-        accept="image/*,.heic,.heif,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.7z,.txt"
-        multiple
-      />
+      <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange}
+        accept="image/*,.heic,.heif,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.7z,.txt" multiple />
 
       {/* 拍照弹窗 */}
       {cameraTargetId && (
-        <CameraCapture
-          onCapture={handleCameraCapture}
-          onClose={() => setCameraTargetId(null)}
-          frameType="passport"
-        />
+        <CameraCapture onCapture={handleCameraCapture}
+          onClose={() => setCameraTargetId(null)} frameType="passport" />
       )}
 
       {/* ===== 模板选择弹窗 ===== */}
@@ -616,12 +613,8 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
               </h2>
               <button
                 onClick={() => {
-                  if (selectedTemplate) {
-                    setSelectedTemplate(null)
-                    setSelectedItems(new Set())
-                  } else {
-                    setShowTemplateModal(false)
-                  }
+                  if (selectedTemplate) { setSelectedTemplate(null); setSelectableItems([]) }
+                  else setShowTemplateModal(false)
                 }}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] hover:bg-white/5 transition-colors"
               >
@@ -648,55 +641,68 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                       <span className="ml-3 text-sm text-[var(--color-text-secondary)]">加载中...</span>
                     </div>
                   ) : templates.length === 0 ? (
-                    <p className="text-center text-sm text-[var(--color-text-placeholder)] py-12">
-                      暂无可用模板，可前往模板库创建
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {templates.map((tpl) => (
-                        <button
-                          key={tpl.id}
-                          onClick={() => handleSelectTemplate(tpl)}
-                          className="text-left p-4 rounded-xl border border-white/5 hover:border-[var(--color-primary)]/30 hover:bg-white/[0.03] transition-all group"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <h3 className="text-sm font-medium text-[var(--color-text-primary)] truncate group-hover:text-[var(--color-primary-light)] transition-colors">
-                                {tpl.name}
-                              </h3>
-                              <div className="flex items-center gap-2 mt-1.5">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-info)]/10 text-[var(--color-info)]">
-                                  {tpl.country}
-                                </span>
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
-                                  {tpl.visaType}
-                                </span>
-                                {tpl.isSystem && (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-success)]/10 text-[var(--color-success)]">
-                                    系统
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <span className="text-[11px] text-[var(--color-text-placeholder)] ml-2 shrink-0">
-                              {tpl.items.length} 项
-                            </span>
-                          </div>
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            {tpl.items.slice(0, 4).map((item, i) => (
-                              <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[var(--color-text-placeholder)]">
-                                {item.name}
-                              </span>
-                            ))}
-                            {tpl.items.length > 4 && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[var(--color-text-placeholder)]">
-                                +{tpl.items.length - 4}
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      ))}
+                    <div className="text-center py-12 space-y-3">
+                      <p className="text-sm text-[var(--color-text-placeholder)]">暂无可用模板</p>
+                      <a href="/admin/templates"
+                        className="inline-block text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors">
+                        前往模板库创建 →
+                      </a>
                     </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {templates.map((tpl) => (
+                          <button
+                            key={tpl.id}
+                            onClick={() => handleSelectTemplate(tpl)}
+                            className="text-left p-4 rounded-xl border border-white/5 hover:border-[var(--color-primary)]/30 hover:bg-white/[0.03] transition-all group"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-sm font-medium text-[var(--color-text-primary)] truncate group-hover:text-[var(--color-primary-light)] transition-colors">
+                                  {tpl.name}
+                                </h3>
+                                <div className="flex items-center gap-2 mt-1.5">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-info)]/10 text-[var(--color-info)]">
+                                    {tpl.country}
+                                  </span>
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
+                                    {tpl.visaType}
+                                  </span>
+                                  {tpl.isSystem && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-success)]/10 text-[var(--color-success)]">
+                                      系统
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <span className="text-[11px] text-[var(--color-text-placeholder)] ml-2 shrink-0">
+                                {tpl.items.length} 项
+                              </span>
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {tpl.items.slice(0, 4).map((item, i) => (
+                                <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[var(--color-text-placeholder)]">
+                                  {item.name}
+                                </span>
+                              ))}
+                              {tpl.items.length > 4 && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[var(--color-text-placeholder)]">
+                                  +{tpl.items.length - 4}
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                      {/* 管理模板链接 */}
+                      <div className="mt-4 text-center">
+                        <a href="/admin/templates"
+                          className="text-xs text-[var(--color-text-placeholder)] hover:text-[var(--color-info)] transition-colors">
+                          管理模板库 →
+                        </a>
+                      </div>
+                    </>
                   )}
                 </>
               )}
@@ -704,54 +710,73 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
               {/* 材料清单选择视图 */}
               {selectedTemplate && (
                 <div className="space-y-3">
-                  {/* 全选 */}
+                  {/* 全选 + 必填/选填说明 */}
                   <div className="flex items-center justify-between pb-2 border-b border-white/5">
-                    <label className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] cursor-pointer">
+                    <label className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] cursor-pointer select-none">
                       <input
                         type="checkbox"
-                        checked={selectedItems.size === selectedTemplate.items.length}
+                        checked={selectableItems.length > 0 && selectableItems.every(i => i.selected)}
                         onChange={toggleSelectAll}
                         className="accent-[var(--color-primary)] w-4 h-4"
                       />
                       全选
                     </label>
-                    <span className="text-xs text-[var(--color-text-placeholder)]">
-                      已选 {selectedItems.size}/{selectedTemplate.items.length}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] text-[var(--color-text-placeholder)]">
+                        💡 点击「必填」可切换为选填
+                      </span>
+                      <span className="text-xs text-[var(--color-text-placeholder)]">
+                        已选 {selectedCount}/{selectableItems.length}
+                      </span>
+                    </div>
                   </div>
 
                   {/* 材料列表 */}
-                  {selectedTemplate.items.map((item, index) => {
-                    const isSelected = selectedItems.has(index)
-                    return (
-                      <label
-                        key={index}
-                        className={`flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all ${
-                          isSelected
-                            ? 'bg-[var(--color-primary)]/8 border border-[var(--color-primary)]/20'
-                            : 'bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]'
-                        }`}
-                      >
+                  {selectableItems.map((item, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-start gap-3 p-3 rounded-xl transition-all ${
+                        item.selected
+                          ? 'bg-[var(--color-primary)]/8 border border-[var(--color-primary)]/20'
+                          : 'bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      {/* 勾选 */}
+                      <label className="flex items-center cursor-pointer select-none">
                         <input
                           type="checkbox"
-                          checked={isSelected}
+                          checked={item.selected}
                           onChange={() => toggleItem(index)}
                           className="mt-0.5 accent-[var(--color-primary)] w-4 h-4 shrink-0"
                         />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-[var(--color-text-primary)]">{item.name}</span>
-                            {(item.required ?? true) && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-error)]/10 text-[var(--color-error)]">必填</span>
-                            )}
-                          </div>
+                      </label>
+                      {/* 内容 */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-[var(--color-text-primary)]">{item.name}</span>
                           {item.description && (
-                            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{item.description}</p>
+                            <span className="text-[10px] text-[var(--color-text-placeholder)] hidden sm:inline">
+                              {item.description}
+                            </span>
                           )}
                         </div>
-                      </label>
-                    )
-                  })}
+                        {item.description && (
+                          <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 sm:hidden">{item.description}</p>
+                        )}
+                      </div>
+                      {/* 必填/选填 切换按钮 */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleRequired(index) }}
+                        className={`text-[10px] px-2 py-0.5 rounded-full transition-colors shrink-0 ${
+                          item.required
+                            ? 'bg-[var(--color-error)]/15 text-[var(--color-error)] hover:bg-[var(--color-error)]/25'
+                            : 'bg-white/5 text-[var(--color-text-placeholder)] hover:bg-white/10'
+                        }`}
+                      >
+                        {item.required ? '必填' : '选填'}
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -760,17 +785,17 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
             {selectedTemplate && (
               <div className="flex items-center justify-between px-5 py-4 border-t border-white/5">
                 <button
-                  onClick={() => { setSelectedTemplate(null); setSelectedItems(new Set()) }}
+                  onClick={() => { setSelectedTemplate(null); setSelectableItems([]) }}
                   className="text-xs px-4 py-2 rounded-lg text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] hover:bg-white/5 transition-colors"
                 >
                   返回模板列表
                 </button>
                 <button
                   onClick={handleApplySelected}
-                  disabled={isApplying || selectedItems.size === 0}
+                  disabled={isApplying || selectedCount === 0}
                   className="glass-btn-primary px-5 py-2 text-sm font-medium disabled:opacity-50"
                 >
-                  {isApplying ? '添加中...' : `添加选中项 (${selectedItems.size})`}
+                  {isApplying ? '添加中...' : `添加选中项 (${selectedCount})`}
                 </button>
               </div>
             )}
@@ -831,40 +856,22 @@ function DocumentItem({
   if (isEditing) {
     return (
       <div className="p-3 rounded-xl bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/20 space-y-2">
-        <input
-          className="glass-input w-full text-sm"
-          placeholder="资料名称"
-          value={editName}
-          onChange={(e) => onEditNameChange(e.target.value)}
-        />
-        <input
-          className="glass-input w-full text-sm"
-          placeholder="说明（可选）"
-          value={editDesc}
-          onChange={(e) => onEditDescChange(e.target.value)}
-        />
+        <input className="glass-input w-full text-sm" placeholder="资料名称"
+          value={editName} onChange={(e) => onEditNameChange(e.target.value)} />
+        <input className="glass-input w-full text-sm" placeholder="说明（可选）"
+          value={editDesc} onChange={(e) => onEditDescChange(e.target.value)} />
         <div className="flex items-center justify-between">
           <label className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
-            <input
-              type="checkbox"
-              checked={editRequired}
+            <input type="checkbox" checked={editRequired}
               onChange={(e) => onEditRequiredChange(e.target.checked)}
-              className="accent-[var(--color-primary)]"
-            />
+              className="accent-[var(--color-primary)]" />
             必填项
           </label>
           <div className="flex items-center gap-2">
-            <button
-              onClick={onCancelEdit}
-              className="text-xs px-3 py-1.5 text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]"
-            >
-              取消
-            </button>
-            <button
-              onClick={onSaveEdit}
-              disabled={isSaving}
-              className="glass-btn-primary px-3 py-1.5 text-xs font-medium disabled:opacity-50"
-            >
+            <button onClick={onCancelEdit}
+              className="text-xs px-3 py-1.5 text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]">取消</button>
+            <button onClick={onSaveEdit} disabled={isSaving}
+              className="glass-btn-primary px-3 py-1.5 text-xs font-medium disabled:opacity-50">
               {isSaving ? '保存中...' : '保存'}
             </button>
           </div>
@@ -876,10 +883,7 @@ function DocumentItem({
   return (
     <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 group">
       <div className="flex items-start gap-3">
-        {/* 状态点 */}
         <span className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${statusColor[req.status]}`} />
-
-        {/* 内容 */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm text-[var(--color-text-primary)] font-medium">{req.name}</span>
@@ -889,24 +893,16 @@ function DocumentItem({
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[var(--color-text-placeholder)]">
               {DOC_REQ_STATUS_LABELS[req.status]}
             </span>
-
-            {/* 编辑/删除按钮 */}
             {canEdit && (
               <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={onStartEdit}
-                  className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-placeholder)] hover:text-[var(--color-info)] hover:bg-[var(--color-info)]/10 transition-colors"
-                  title="编辑"
-                >
+                <button onClick={onStartEdit}
+                  className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-placeholder)] hover:text-[var(--color-info)] hover:bg-[var(--color-info)]/10 transition-colors" title="编辑">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
-                <button
-                  onClick={onDeleteReq}
-                  className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-placeholder)] hover:text-[var(--color-error)] hover:bg-[var(--color-error)]/10 transition-colors"
-                  title="删除"
-                >
+                <button onClick={onDeleteReq}
+                  className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-placeholder)] hover:text-[var(--color-error)] hover:bg-[var(--color-error)]/10 transition-colors" title="删除">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
@@ -914,112 +910,63 @@ function DocumentItem({
               </div>
             )}
           </div>
-          {req.description && (
-            <p className="text-xs text-[var(--color-text-secondary)] mt-1">{req.description}</p>
-          )}
-          {req.rejectReason && (
-            <p className="text-xs text-[var(--color-error)] mt-1">驳回原因：{req.rejectReason}</p>
-          )}
+          {req.description && <p className="text-xs text-[var(--color-text-secondary)] mt-1">{req.description}</p>}
+          {req.rejectReason && <p className="text-xs text-[var(--color-error)] mt-1">驳回原因：{req.rejectReason}</p>}
 
-          {/* 已上传文件 */}
           {req.files.length > 0 && (
             <div className="mt-2 space-y-1">
               {req.files.map((file) => (
-                <FilePreview
-                  key={file.id}
-                  fileName={file.fileName}
-                  fileType={file.fileType}
-                  ossUrl={file.ossUrl}
-                  fileSize={file.fileSize}
-                  compact
-                  {...(canDeleteFile ? { onDelete: () => onDeleteFile(file.id) } : {})}
-                />
+                <FilePreview key={file.id} fileName={file.fileName} fileType={file.fileType}
+                  ossUrl={file.ossUrl} fileSize={file.fileSize} compact
+                  {...(canDeleteFile ? { onDelete: () => onDeleteFile(file.id) } : {})} />
               ))}
             </div>
           )}
 
-          {/* 操作按钮 */}
           <div className="flex items-center gap-2 mt-2">
             {canUpload && (
               <>
-                <button
-                  onClick={onUpload}
-                  disabled={isUploading}
-                  className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-info)]/15 text-[var(--color-info)] hover:bg-[var(--color-info)]/25 transition-colors disabled:opacity-50"
-                >
-                  {isUploading
-                    ? (uploadProgress ? `上传中 (${uploadProgress.current}/${uploadProgress.total})...` : '上传中...')
-                    : '📁 上传'}
+                <button onClick={onUpload} disabled={isUploading}
+                  className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-info)]/15 text-[var(--color-info)] hover:bg-[var(--color-info)]/25 transition-colors disabled:opacity-50">
+                  {isUploading ? (uploadProgress ? `上传中 (${uploadProgress.current}/${uploadProgress.total})...` : '上传中...') : '📁 上传'}
                 </button>
-                <button
-                  onClick={onCamera}
-                  disabled={isUploading}
-                  className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-accent)]/15 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/25 transition-colors disabled:opacity-50"
-                >
+                <button onClick={onCamera} disabled={isUploading}
+                  className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-accent)]/15 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/25 transition-colors disabled:opacity-50">
                   📷 拍照
                 </button>
               </>
             )}
             {canReview && !showReviewForm && (
-              <button
-                onClick={() => setShowReviewForm(true)}
-                className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-accent)]/15 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/25 transition-colors"
-              >
+              <button onClick={() => setShowReviewForm(true)}
+                className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-accent)]/15 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/25 transition-colors">
                 审核
               </button>
             )}
           </div>
 
-          {/* 上传进度条 */}
           {isUploading && uploadProgress && (
             <div className="mt-2">
               <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                <div
-                  className="h-full rounded-full bg-[var(--color-info)] transition-all duration-300"
-                  style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
-                />
+                <div className="h-full rounded-full bg-[var(--color-info)] transition-all duration-300"
+                  style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }} />
               </div>
             </div>
           )}
 
-          {/* 审核表单 */}
           {showReviewForm && (
             <div className="mt-2 p-2 rounded-lg bg-white/[0.03] space-y-2">
-              <textarea
-                className="glass-input w-full text-xs resize-none"
-                rows={2}
+              <textarea className="glass-input w-full text-xs resize-none" rows={2}
                 placeholder="审核意见（驳回时必填）"
-                value={reviewReason}
-                onChange={(e) => onReviewReasonChange(e.target.value)}
-              />
+                value={reviewReason} onChange={(e) => onReviewReasonChange(e.target.value)} />
               <div className="flex gap-2">
-                <button
-                  onClick={() => { onApprove(); setShowReviewForm(false) }}
-                  disabled={isReviewing}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-success)]/15 text-[var(--color-success)] hover:bg-[var(--color-success)]/25 transition-colors disabled:opacity-50"
-                >
-                  合格
-                </button>
-                <button
-                  onClick={() => { onReject('REJECTED'); setShowReviewForm(false) }}
-                  disabled={isReviewing}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-error)]/15 text-[var(--color-error)] hover:bg-[var(--color-error)]/25 transition-colors disabled:opacity-50"
-                >
-                  需修改
-                </button>
-                <button
-                  onClick={() => { onReject('SUPPLEMENT'); setShowReviewForm(false) }}
-                  disabled={isReviewing}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-warning)]/15 text-[var(--color-warning)] hover:bg-[var(--color-warning)]/25 transition-colors disabled:opacity-50"
-                >
-                  需补充
-                </button>
-                <button
-                  onClick={() => setShowReviewForm(false)}
-                  className="text-xs px-3 py-1.5 text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]"
-                >
-                  取消
-                </button>
+                <button onClick={() => { onApprove(); setShowReviewForm(false) }} disabled={isReviewing}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-success)]/15 text-[var(--color-success)] hover:bg-[var(--color-success)]/25 transition-colors disabled:opacity-50">合格</button>
+                <button onClick={() => { onReject('REJECTED'); setShowReviewForm(false) }} disabled={isReviewing}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-error)]/15 text-[var(--color-error)] hover:bg-[var(--color-error)]/25 transition-colors disabled:opacity-50">需修改</button>
+                <button onClick={() => { onReject('SUPPLEMENT'); setShowReviewForm(false) }} disabled={isReviewing}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-warning)]/15 text-[var(--color-warning)] hover:bg-[var(--color-warning)]/25 transition-colors disabled:opacity-50">需补充</button>
+                <button onClick={() => setShowReviewForm(false)}
+                  className="text-xs px-3 py-1.5 text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]">取消</button>
               </div>
             </div>
           )}

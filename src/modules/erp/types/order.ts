@@ -169,6 +169,7 @@ export interface DocumentFile {
   uploadedBy: string
   sortOrder: number
   label: string | null
+  reviewStatus: string | null
   createdAt: string
 }
 

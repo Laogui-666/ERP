@@ -69,11 +69,12 @@ export async function PATCH(
       throw new AppError('VALIDATION_ERROR', '缺少操作参数', 400)
     }
 
-    // 更新状态
+    // 更新审核结果（只更新 rejectReason，不改变 requirement 状态）
+    // requirement 状态由上传/删除等操作驱动，不由审核驱动
+    // 审核反馈通过 rejectReason 字段记录，前端按文件独立展示
     const updated = await prisma.documentRequirement.update({
       where: { id: id },
       data: {
-        status: data.status,
         rejectReason: data.status === 'REJECTED' || data.status === 'SUPPLEMENT'
           ? (data.rejectReason ?? null)
           : null,

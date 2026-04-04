@@ -39,7 +39,7 @@ interface SelectableItem extends TemplateItem {
   selected: boolean
 }
 
-export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _orderStatus, applicantCount = 1, applicants = [], onRefresh: _onRefresh }: DocumentPanelProps) {
+export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _orderStatus, applicantCount = 1, applicants = [], onRefresh }: DocumentPanelProps) {
   const { toast } = useToast()
 
   // 内部资料列表（支持本地乐观更新）
@@ -390,6 +390,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       if (json.success) {
         toast('success', '照片上传成功')
         await fetchRequirements()
+        onRefresh()
       } else {
         toast('error', json.error?.message ?? '上传失败')
       }
@@ -411,16 +412,16 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
   }
 
   // ===== 预览弹窗审核 =====
+  // 单文件审核 - 只更新当前文件的 rejectReason，不影响清单中其他文件
   const handlePreviewReview = async (status: DocReqStatus) => {
     if (!previewFile) return
     setPreviewReviewing(true)
     try {
-      const res = await apiFetch(`/api/documents/${previewFile.requirementId}`, {
+      const res = await apiFetch(`/api/documents/files/${previewFile.file.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status,
-          rejectReason: (status === 'REJECTED' || status === 'SUPPLEMENT') ? previewReviewReason : undefined,
+          rejectReason: (status === 'REJECTED' || status === 'SUPPLEMENT') ? previewReviewReason : '',
         }),
       })
       const json = await res.json()
@@ -441,7 +442,6 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
   }
 
   // ===== 统计 =====
-  const approved = localReqs.filter((r) => r.status === 'APPROVED').length
   const total = localReqs.length
   const showGrouped = applicantCount > 1 && applicants.length > 1
 
@@ -478,25 +478,12 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
             <div>
               <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">资料清单</h3>
               <p className="text-xs text-[var(--color-text-placeholder)] mt-0.5">
-                {total > 0 ? `${approved}/${total} 已合格` : '暂无资料需求'}
-                {localReqs.filter(r => r.status === 'REJECTED' || r.status === 'SUPPLEMENT').length > 0 && (
-                  <span className="text-[var(--color-error)] ml-2">
-                    · {localReqs.filter(r => r.status === 'REJECTED' || r.status === 'SUPPLEMENT').length} 项需处理
-                  </span>
-                )}
+                {total > 0 ? `${total} 项资料` : '暂无资料需求'}
+
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* 进度条 */}
-            {total > 0 && (
-              <div className="w-20 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-[var(--color-success)] transition-all duration-500"
-                  style={{ width: `${(approved / total) * 100}%` }}
-                />
-              </div>
-            )}
             <svg className="w-5 h-5 text-[var(--color-text-placeholder)] group-hover:text-[var(--color-primary-light)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
@@ -515,18 +502,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
           >
             {/* 弹窗头部 */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-              <div className="flex items-center gap-3">
-                <h2 className="text-base font-semibold text-[var(--color-text-primary)]">📋 资料清单</h2>
-                {total > 0 && (
-                  <span className={`text-xs px-2.5 py-0.5 rounded-full ${
-                    approved === total
-                      ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]'
-                      : 'bg-white/5 text-[var(--color-text-placeholder)]'
-                  }`}>
-                    {approved}/{total} 已合格
-                  </span>
-                )}
-              </div>
+              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">📋 资料清单</h2>
               <div className="flex items-center gap-2">
                 {canEdit && (
                   <div className="relative" ref={addMenuRef}>
@@ -604,23 +580,17 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
               ) : (
                 <div className="space-y-4">
                   {groups.map((group, gi) => {
-                    const groupApproved = group.items.filter(r => r.status === 'APPROVED').length
-                    const groupTotal = group.items.length
                     return (
                       <div key={gi}>
                         {showGrouped && (
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center mb-2">
                             <span className="text-xs font-medium text-[var(--color-text-primary)] flex items-center gap-2">
                               <span className="w-6 h-6 rounded-full bg-[var(--color-primary)]/15 flex items-center justify-center text-[10px] font-bold text-[var(--color-primary-light)]">
                                 {group.name[0]}
                               </span>
                               {group.name}
                             </span>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                              groupApproved === groupTotal
-                                ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]'
-                                : 'bg-white/5 text-[var(--color-text-placeholder)]'
-                            }`}>{groupApproved}/{groupTotal}</span>
+
                           </div>
                         )}
                         <div className={showGrouped ? 'space-y-2 pl-1' : 'space-y-2'}>
@@ -1164,11 +1134,11 @@ function FilePreviewModal({
             ) : previewUrl && isText ? (
               <iframe src={previewUrl} className="w-full h-[70vh] border-0" title={fileName} />
             ) : previewUrl && (isWord || isExcel) ? (
-              <iframe
-                src={`https://docs.google.com/gview?url=${encodeURIComponent(previewUrl)}&embedded=true`}
-                className="w-full h-[70vh] border-0"
-                title={fileName}
-              />
+              <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center gap-4 text-white/60">
+                <span className="text-5xl">{isWord ? '📃' : '📊'}</span>
+                <p className="text-sm">{isWord ? 'Word' : 'Excel'} 文件请下载后查看</p>
+                <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="glass-btn-primary px-4 py-2 text-sm">下载文件</a>
+              </div>
             ) : (
               <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center gap-4 text-white/60">
                 <span className="text-5xl">📎</span>

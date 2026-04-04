@@ -329,6 +329,7 @@ model DocumentFile {
   uploadedBy      String   @map("uploaded_by")
   sortOrder       Int      @default(0) @map("sort_order")       // 排序序号
   label           String?  @db.VarChar(100) @map("label")                      // 自定义标签 "房产证1"
+  rejectReason    String?  @db.Text @map("reject_reason")               // 单文件审核驳回原因
   createdAt       DateTime @default(now()) @map("created_at")
 
   requirement     DocumentRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)

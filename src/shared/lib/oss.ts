@@ -128,7 +128,7 @@ export async function generatePresignedPutUrl(
 /**
  * 生成签名下载 URL（带过期时间）
  */
-export function getSignedUrl(ossKey: string, expires: number = 3600): SignedUrlResult {
+export function getSignedUrl(ossKey: string, expires: number = 3600, contentType?: string): SignedUrlResult {
   const client = getOssClient()
 
   const url = client.signatureUrl(ossKey, {
@@ -136,6 +136,7 @@ export function getSignedUrl(ossKey: string, expires: number = 3600): SignedUrlR
     response: {
       // 浏览器内联展示（而非下载）
       'content-disposition': 'inline',
+      ...(contentType ? { 'content-type': contentType } : {}),
     },
   })
 

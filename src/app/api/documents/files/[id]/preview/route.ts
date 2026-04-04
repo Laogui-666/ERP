@@ -4,7 +4,6 @@ import { getCurrentUser } from '@shared/lib/auth'
 import { getSignedUrl } from '@shared/lib/oss'
 import { AppError, createSuccessResponse } from '@shared/types/api'
 
-// GET /api/documents/files/[id]/preview - 获取文件预览签名URL
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -20,7 +19,7 @@ export async function GET(
     })
     if (!docFile) throw new AppError('NOT_FOUND', '文件不存在', 404)
 
-    const { url } = getSignedUrl(docFile.ossKey, 3600)
+    const { url } = getSignedUrl(docFile.ossKey, 3600, docFile.fileType)
 
     return NextResponse.json(createSuccessResponse({
       url,

@@ -352,11 +352,11 @@ function FileLightbox({
           ) : isText ? (
             <iframe src={url} className="w-full h-[75vh] border-0" title={fileName} />
           ) : (isWord || isExcel) ? (
-            <iframe
-              src={`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`}
-              className="w-full h-[75vh] border-0"
-              title={fileName}
-            />
+            <div className="w-full h-[300px] flex flex-col items-center justify-center gap-4 text-white/60">
+              <span className="text-5xl">{isWord ? '📃' : '📊'}</span>
+              <p className="text-sm">{isWord ? 'Word' : 'Excel'} 文件请下载后查看</p>
+              <a href={url} target="_blank" rel="noopener noreferrer" className="glass-btn-primary px-4 py-2 text-sm">下载文件</a>
+            </div>
           ) : (
             <div className="w-full h-[300px] flex flex-col items-center justify-center gap-4 text-white/60">
               <span className="text-5xl">📎</span>

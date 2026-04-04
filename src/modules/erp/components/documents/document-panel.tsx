@@ -82,14 +82,10 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [targetReqId, setTargetReqId] = useState<string | null>(null)
 
-  // 审核
-  const [reviewingId, setReviewingId] = useState<string | null>(null)
-  const [reviewReason, setReviewReason] = useState('')
-
   // 拍照
   const [cameraTargetId, setCameraTargetId] = useState<string | null>(null)
 
-  // 文件预览弹窗
+  // 文件预览弹窗（含审核）
   const [previewFile, setPreviewFile] = useState<{
     file: DocumentFile
     requirementId: string
@@ -97,6 +93,8 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     reqStatus: DocReqStatus
     rejectReason: string | null
   } | null>(null)
+  const [previewReviewing, setPreviewReviewing] = useState(false)
+  const [previewReviewReason, setPreviewReviewReason] = useState('')
 
   // 角色权限（按工作流状态动态调整）
   const canEdit = ['DOC_COLLECTOR', 'VISA_ADMIN', 'COMPANY_OWNER', 'SUPER_ADMIN'].includes(userRole)
@@ -412,20 +410,25 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     } catch { toast('error', '删除失败') }
   }
 
-  // ===== 审核 =====
-  const handleReview = async (reqId: string, status: DocReqStatus, reason?: string) => {
-    setReviewingId(reqId)
+  // ===== 预览弹窗审核 =====
+  const handlePreviewReview = async (status: DocReqStatus) => {
+    if (!previewFile) return
+    setPreviewReviewing(true)
     try {
-      const res = await apiFetch(`/api/documents/${reqId}`, {
+      const res = await apiFetch(`/api/documents/${previewFile.requirementId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, rejectReason: (status === 'REJECTED' || status === 'SUPPLEMENT') ? (reason || reviewReason) : undefined }),
+        body: JSON.stringify({
+          status,
+          rejectReason: (status === 'REJECTED' || status === 'SUPPLEMENT') ? previewReviewReason : undefined,
+        }),
       })
       const json = await res.json()
       if (json.success) {
-        toast('success', '审核完成')
-        setReviewingId(null)
-        setReviewReason('')
+        const label = status === 'APPROVED' ? '合格' : status === 'REJECTED' ? '已驳回' : '需补充'
+        toast('success', label)
+        setPreviewFile(null)
+        setPreviewReviewReason('')
         await fetchRequirements()
       } else {
         toast('error', json.error?.message ?? '审核失败')
@@ -433,7 +436,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     } catch {
       toast('error', '审核失败')
     } finally {
-      setReviewingId(null)
+      setPreviewReviewing(false)
     }
   }
 
@@ -626,7 +629,6 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                               key={req.id}
                               req={req}
                               canUpload={canUpload && ['PENDING', 'REJECTED', 'SUPPLEMENT'].includes(req.status)}
-                              canReview={canReview && ['UPLOADED', 'REVIEWING', 'APPROVED', 'REJECTED', 'SUPPLEMENT'].includes(req.status)}
                               canDeleteFile={canDeleteFile}
                               canEdit={canEdit}
                               isEditing={editingId === req.id}
@@ -634,8 +636,6 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                               isSaving={isSaving}
                               isUploading={uploadingId === req.id}
                               uploadProgress={uploadingId === req.id ? uploadProgress : null}
-                              isReviewing={reviewingId === req.id}
-                              reviewReason={reviewReason}
                               onEditNameChange={setEditName}
                               onEditDescChange={setEditDesc}
                               onEditRequiredChange={setEditRequired}
@@ -643,11 +643,8 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                               onSaveEdit={handleSaveEdit}
                               onCancelEdit={() => setEditingId(null)}
                               onDeleteReq={() => handleDeleteReq(req.id)}
-                              onReviewReasonChange={setReviewReason}
                               onUpload={(clearFirst?: boolean) => handleUploadClick(req.id, !!clearFirst)}
                               onCamera={() => setCameraTargetId(req.id)}
-                              onApprove={() => handleReview(req.id, 'APPROVED')}
-                              onReject={(status) => handleReview(req.id, status)}
                               onDeleteFile={handleFileDelete}
                               onFilePreview={(file) => {
                                 setPreviewFile({
@@ -682,7 +679,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
           onClose={() => setCameraTargetId(null)} frameType="passport" />
       )}
 
-      {/* ===== 文件预览弹窗 ===== */}
+      {/* ===== 文件预览弹窗（含审核） ===== */}
       {previewFile && typeof document !== 'undefined' && createPortal(
         <FilePreviewModal
           fileId={previewFile.file.id}
@@ -693,7 +690,14 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
           reqName={previewFile.reqName}
           reqStatus={previewFile.reqStatus}
           rejectReason={previewFile.rejectReason}
-          onClose={() => { setPreviewFile(null) }}
+          canReview={canReview && ['UPLOADED', 'REVIEWING', 'APPROVED', 'REJECTED', 'SUPPLEMENT'].includes(previewFile.reqStatus)}
+          reviewReason={previewReviewReason}
+          onReviewReasonChange={setPreviewReviewReason}
+          onApprove={() => handlePreviewReview('APPROVED')}
+          onReject={() => handlePreviewReview('REJECTED')}
+          onSupplement={() => handlePreviewReview('SUPPLEMENT')}
+          isReviewing={previewReviewing}
+          onClose={() => { setPreviewFile(null); setPreviewReviewReason('') }}
         />,
         document.body,
       )}
@@ -811,14 +815,13 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
 
 // ==================== 单条资料需求 ====================
 function DocumentItem({
-  req, canUpload, canReview, canDeleteFile, canEdit, isEditing, editName, editDesc, editRequired,
-  isSaving, isUploading, uploadProgress, isReviewing, reviewReason,
+  req, canUpload, canDeleteFile, canEdit, isEditing, editName, editDesc, editRequired,
+  isSaving, isUploading, uploadProgress,
   onEditNameChange, onEditDescChange, onEditRequiredChange, onStartEdit, onSaveEdit, onCancelEdit,
-  onDeleteReq, onReviewReasonChange, onUpload, onCamera, onApprove, onReject, onDeleteFile, onFilePreview,
+  onDeleteReq, onUpload, onCamera, onDeleteFile, onFilePreview,
 }: {
   req: DocumentRequirement
   canUpload: boolean
-  canReview: boolean
   canDeleteFile: boolean
   canEdit: boolean
   isEditing: boolean
@@ -828,8 +831,6 @@ function DocumentItem({
   isSaving: boolean
   isUploading: boolean
   uploadProgress: { current: number; total: number } | null
-  isReviewing: boolean
-  reviewReason: string
   onEditNameChange: (v: string) => void
   onEditDescChange: (v: string) => void
   onEditRequiredChange: (v: boolean) => void
@@ -837,16 +838,11 @@ function DocumentItem({
   onSaveEdit: () => void
   onCancelEdit: () => void
   onDeleteReq: () => void
-  onReviewReasonChange: (v: string) => void
   onUpload: (clearFirst?: boolean) => void
   onCamera: () => void
-  onApprove: () => void
-  onReject: (status: 'REJECTED' | 'SUPPLEMENT') => void
   onDeleteFile: (fileId: string) => void
   onFilePreview: (file: DocumentFile) => void
 }) {
-  const [showReviewForm, setShowReviewForm] = useState(false)
-
   const statusColor: Record<DocReqStatus, string> = {
     PENDING: 'bg-[var(--color-text-placeholder)]',
     UPLOADED: 'bg-[var(--color-info)]',
@@ -938,12 +934,6 @@ function DocumentItem({
                 </button>
               </>
             )}
-            {canReview && !showReviewForm && (
-              <button onClick={() => setShowReviewForm(true)}
-                className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-accent)]/15 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/25 transition-colors">
-                审核
-              </button>
-            )}
           </div>
 
           {isUploading && uploadProgress && (
@@ -951,24 +941,6 @@ function DocumentItem({
               <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
                 <div className="h-full rounded-full bg-[var(--color-info)] transition-all duration-300"
                   style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }} />
-              </div>
-            </div>
-          )}
-
-          {showReviewForm && (
-            <div className="mt-2 p-2 rounded-lg bg-white/[0.03] space-y-2">
-              <textarea className="glass-input w-full text-xs resize-none" rows={2}
-                placeholder="审核意见（驳回时必填）"
-                value={reviewReason} onChange={(e) => onReviewReasonChange(e.target.value)} />
-              <div className="flex gap-2">
-                <button onClick={() => { onApprove(); setShowReviewForm(false) }} disabled={isReviewing}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-success)]/15 text-[var(--color-success)] hover:bg-[var(--color-success)]/25 transition-colors disabled:opacity-50">合格</button>
-                <button onClick={() => { onReject('REJECTED'); setShowReviewForm(false) }} disabled={isReviewing}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-error)]/15 text-[var(--color-error)] hover:bg-[var(--color-error)]/25 transition-colors disabled:opacity-50">需修改</button>
-                <button onClick={() => { onReject('SUPPLEMENT'); setShowReviewForm(false) }} disabled={isReviewing}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-warning)]/15 text-[var(--color-warning)] hover:bg-[var(--color-warning)]/25 transition-colors disabled:opacity-50">需补充</button>
-                <button onClick={() => setShowReviewForm(false)}
-                  className="text-xs px-3 py-1.5 text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]">取消</button>
               </div>
             </div>
           )}
@@ -1047,10 +1019,12 @@ function FileItemCompact({
   )
 }
 
-// ==================== 文件预览弹窗 ====================
+// ==================== 文件预览弹窗（含审核） ====================
 function FilePreviewModal({
   fileId, fileName, fileType, ossUrl, fileSize,
-  reqName, reqStatus, rejectReason, onClose,
+  reqName, reqStatus, rejectReason,
+  canReview, reviewReason, onReviewReasonChange,
+  onApprove, onReject, onSupplement, isReviewing, onClose,
 }: {
   fileId: string
   fileName: string
@@ -1060,6 +1034,13 @@ function FilePreviewModal({
   reqName: string
   reqStatus: DocReqStatus
   rejectReason?: string | null
+  canReview: boolean
+  reviewReason: string
+  onReviewReasonChange: (v: string) => void
+  onApprove: () => void
+  onReject: () => void
+  onSupplement: () => void
+  isReviewing: boolean
   onClose: () => void
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -1160,37 +1141,88 @@ function FilePreviewModal({
           </div>
         )}
 
-        {/* 文件预览 */}
-        <div className="flex-1 min-h-[300px] overflow-auto bg-[#12151f]">
-          {loadingPreview ? (
-            <div className="w-full h-full min-h-[300px] flex items-center justify-center">
-              <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
-            </div>
-          ) : previewUrl && isImage ? (
-            <div className="w-full h-full flex items-center justify-center p-6">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={previewUrl} alt={fileName}
-                className="max-w-full max-h-[70vh] object-contain rounded-lg"
-                onError={() => setPreviewUrl(null)} />
-            </div>
-          ) : previewUrl && isPdf ? (
-            <object data={previewUrl} type="application/pdf"
-              className="w-full h-[70vh]">
+        {/* 内容区：左侧预览 + 右侧审核 */}
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+          {/* 左侧：文件预览 */}
+          <div className="flex-1 min-h-[300px] md:min-h-0 overflow-auto bg-[#12151f]">
+            {loadingPreview ? (
+              <div className="w-full h-full min-h-[300px] flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+              </div>
+            ) : previewUrl && isImage ? (
+              <div className="w-full h-full flex items-center justify-center p-6">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={previewUrl} alt={fileName}
+                  className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                  onError={() => setPreviewUrl(null)} />
+              </div>
+            ) : previewUrl && isPdf ? (
+              <object data={previewUrl} type="application/pdf"
+                className="w-full h-[70vh]">
+                <iframe src={previewUrl} className="w-full h-[70vh] border-0" title={fileName} />
+              </object>
+            ) : previewUrl && isText ? (
               <iframe src={previewUrl} className="w-full h-[70vh] border-0" title={fileName} />
-            </object>
-          ) : previewUrl && isText ? (
-            <iframe src={previewUrl} className="w-full h-[70vh] border-0" title={fileName} />
-          ) : previewUrl && (isWord || isExcel) ? (
-            <iframe
-              src={`https://docs.google.com/gview?url=${encodeURIComponent(previewUrl)}&embedded=true`}
-              className="w-full h-[70vh] border-0"
-              title={fileName}
-            />
-          ) : (
-            <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center gap-4 text-white/60">
-              <span className="text-5xl">📎</span>
-              <p className="text-sm">{canPreview ? '预览加载失败' : '此文件类型不支持在线预览'}</p>
-              <a href={previewUrl || ossUrl} target="_blank" rel="noopener noreferrer" className="glass-btn-primary px-4 py-2 text-sm">下载文件</a>
+            ) : previewUrl && (isWord || isExcel) ? (
+              <iframe
+                src={`https://docs.google.com/gview?url=${encodeURIComponent(previewUrl)}&embedded=true`}
+                className="w-full h-[70vh] border-0"
+                title={fileName}
+              />
+            ) : (
+              <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center gap-4 text-white/60">
+                <span className="text-5xl">📎</span>
+                <p className="text-sm">{canPreview ? '预览加载失败' : '此文件类型不支持在线预览'}</p>
+                <a href={previewUrl || ossUrl} target="_blank" rel="noopener noreferrer" className="glass-btn-primary px-4 py-2 text-sm">下载文件</a>
+              </div>
+            )}
+          </div>
+
+          {/* 右侧：审核面板 */}
+          {canReview && (
+            <div className="w-full md:w-72 border-t md:border-t-0 md:border-l border-white/5 p-5 flex flex-col gap-4 overflow-y-auto">
+              <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">审核操作</h4>
+
+              {/* 历史驳回原因 */}
+              {rejectReason && (
+                <div className="p-3 rounded-xl bg-[var(--color-error)]/8 border border-[var(--color-error)]/15">
+                  <span className="text-[10px] text-[var(--color-error)] font-medium">上次驳回原因</span>
+                  <p className="text-xs text-[var(--color-text-primary)] mt-1">{rejectReason}</p>
+                </div>
+              )}
+
+              {/* 审核备注输入 */}
+              <div>
+                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                  备注 / 驳回理由
+                </label>
+                <textarea
+                  className="glass-input w-full text-sm resize-none"
+                  rows={3}
+                  placeholder="驳回时必填，合格可留空..."
+                  value={reviewReason}
+                  onChange={(e) => onReviewReasonChange(e.target.value)}
+                />
+              </div>
+
+              {/* 操作按钮 */}
+              <div className="space-y-2">
+                <button onClick={onApprove} disabled={isReviewing}
+                  className="w-full py-2.5 rounded-xl text-sm font-medium bg-[var(--color-success)]/15 text-[var(--color-success)] border border-[var(--color-success)]/20 hover:bg-[var(--color-success)]/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  {isReviewing ? '处理中...' : '合格'}
+                </button>
+                <button onClick={onReject} disabled={isReviewing || !reviewReason.trim()}
+                  className="w-full py-2.5 rounded-xl text-sm font-medium bg-[var(--color-error)]/15 text-[var(--color-error)] border border-[var(--color-error)]/20 hover:bg-[var(--color-error)]/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  {isReviewing ? '处理中...' : '驳回（需修改）'}
+                </button>
+                <button onClick={onSupplement} disabled={isReviewing || !reviewReason.trim()}
+                  className="w-full py-2.5 rounded-xl text-sm font-medium bg-[var(--color-warning)]/15 text-[var(--color-warning)] border border-[var(--color-warning)]/20 hover:bg-[var(--color-warning)]/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  {isReviewing ? '处理中...' : '需补充'}
+                </button>
+              </div>
             </div>
           )}
         </div>

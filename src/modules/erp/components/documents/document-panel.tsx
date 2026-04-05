@@ -97,8 +97,8 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
   const [previewReviewing, setPreviewReviewing] = useState(false)
   const [previewReviewReason, setPreviewReviewReason] = useState('')
 
-  // 审核记录弹窗
-  const [reviewHistoryFile, setReviewHistoryFile] = useState<DocumentFile | null>(null)
+  // 审核状态卡片弹窗
+  const [reviewHistoryFile, setReviewHistoryFile] = useState<{ file: DocumentFile; rejectReason: string | null } | null>(null)
 
   // 角色权限（按工作流状态动态调整）
   const canEdit = ['DOC_COLLECTOR', 'VISA_ADMIN', 'COMPANY_OWNER', 'SUPER_ADMIN'].includes(userRole)
@@ -621,7 +621,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                               onUpload={(clearFirst?: boolean) => handleUploadClick(req.id, !!clearFirst)}
                               onCamera={() => setCameraTargetId(req.id)}
                               onDeleteFile={handleFileDelete}
-                              onReviewFileClick={(file) => setReviewHistoryFile(file)}
+                              onReviewFileClick={(file) => setReviewHistoryFile({ file, rejectReason: req.status === 'REJECTED' || req.status === 'SUPPLEMENT' ? (req.rejectReason ?? null) : null })}
                               onFilePreview={(file) => {
                                 setPreviewFile({
                                   file,
@@ -680,12 +680,13 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         document.body,
       )}
 
-      {/* ===== 审核记录弹窗 ===== */}
+      {/* ===== 审核状态卡片弹窗 ===== */}
       {reviewHistoryFile && typeof document !== 'undefined' && createPortal(
         <ReviewHistoryCard
-          fileId={reviewHistoryFile.id}
-          fileName={reviewHistoryFile.fileName}
-          reviewStatus={reviewHistoryFile.reviewStatus}
+          fileId={reviewHistoryFile.file.id}
+          fileName={reviewHistoryFile.file.fileName}
+          reviewStatus={reviewHistoryFile.file.reviewStatus}
+          rejectReason={reviewHistoryFile.rejectReason}
           onClose={() => setReviewHistoryFile(null)}
         />,
         document.body,
@@ -980,7 +981,7 @@ function FileItemCompact({
         {file.fileName}
       </button>
       <span className="text-[var(--color-text-placeholder)] shrink-0">({formatSize(file.fileSize)})</span>
-      {/* 文件级审核状态 - 可点击查看审核记录 */}
+      {/* 文件级审核状态 - 可点击查看审核状态 */}
       {file.reviewStatus === 'APPROVED' && (
         <button onClick={(e) => { e.stopPropagation(); onReviewClick?.(file) }}
           className="text-[10px] text-[var(--color-success)] shrink-0 px-1.5 py-0.5 rounded bg-[var(--color-success)]/10 hover:bg-[var(--color-success)]/20 transition-colors cursor-pointer">
@@ -1031,101 +1032,61 @@ function FileItemCompact({
   )
 }
 
-// ==================== 审核记录弹窗 ====================
+// ==================== 审核状态卡片（仅显示当前状态及原因，无历史记录） ====================
 function ReviewHistoryCard({
-  fileId, fileName, reviewStatus, onClose,
+  fileId: _fileId, fileName, reviewStatus, rejectReason, onClose,
 }: {
   fileId: string
   fileName: string
   reviewStatus: string | null | undefined
+  rejectReason?: string | null
   onClose: () => void
 }) {
-  const [history, setHistory] = useState<Array<{
-    id: string; detail: string | null; reviewStatus?: string; rejectReason?: string;
-    reviewer: string; createdAt: string
-  }>>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let cancelled = false
-    apiFetch(`/api/documents/files/${fileId}/history`).then(r => r.json()).then(json => {
-      if (!cancelled && json.success) setHistory(json.data.history || [])
-    }).catch(() => {}).finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [fileId])
-
-  const statusConfig: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-    APPROVED: { label: '合格', color: 'text-[var(--color-success)]', bg: 'bg-[var(--color-success)]/15', icon: '✓' },
-    REJECTED: { label: '已驳回', color: 'text-[var(--color-error)]', bg: 'bg-[var(--color-error)]/15', icon: '✗' },
-    SUPPLEMENT: { label: '需补充', color: 'text-[var(--color-warning)]', bg: 'bg-[var(--color-warning)]/15', icon: '⚠' },
-    PENDING: { label: '待审核', color: 'text-[var(--color-text-placeholder)]', bg: 'bg-white/5', icon: '⏳' },
+  const statusConfig: Record<string, { label: string; color: string; bg: string; border: string; icon: string; desc: string }> = {
+    APPROVED: { label: '合格', color: 'text-[var(--color-success)]', bg: 'bg-[var(--color-success)]/15', border: 'border-[var(--color-success)]/20', icon: '✓', desc: '该资料已通过审核' },
+    REJECTED: { label: '已驳回', color: 'text-[var(--color-error)]', bg: 'bg-[var(--color-error)]/15', border: 'border-[var(--color-error)]/20', icon: '✗', desc: '该资料未通过审核，请根据原因重新提交' },
+    SUPPLEMENT: { label: '需补充', color: 'text-[var(--color-warning)]', bg: 'bg-[var(--color-warning)]/15', border: 'border-[var(--color-warning)]/20', icon: '⚠', desc: '该资料需要补充材料' },
+    PENDING: { label: '待审核', color: 'text-[var(--color-text-placeholder)]', bg: 'bg-white/5', border: 'border-white/10', icon: '⏳', desc: '该资料尚未审核' },
   }
   const s = statusConfig[reviewStatus || 'PENDING'] || statusConfig.PENDING
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="relative w-full max-w-md rounded-2xl border border-white/10 overflow-hidden animate-scale-in"
+      <div className="relative w-full max-w-sm rounded-2xl border border-white/10 overflow-hidden animate-scale-in"
         style={{ background: 'rgba(28, 33, 48, 0.97)', backdropFilter: 'blur(40px)' }}
         onClick={(e) => e.stopPropagation()}>
         {/* 头部 */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
-          <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">{fileName}</h3>
-            <div className="flex items-center gap-2 mt-1">
-              <span className={`text-[10px] px-2 py-0.5 rounded-full ${s.bg} ${s.color} font-medium`}>{s.icon} {s.label}</span>
-            </div>
-          </div>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">{fileName}</h3>
           <button onClick={onClose}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] hover:bg-white/5 transition-colors shrink-0 ml-3">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
 
-        {/* 审核记录列表 */}
-        <div className="p-5 max-h-[60vh] overflow-y-auto">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+        {/* 仅显示当前状态及原因 */}
+        <div className="p-5 space-y-4">
+          {/* 状态标识 */}
+          <div className={`p-4 rounded-xl ${s.bg} border ${s.border} text-center`}>
+            <span className={`text-2xl font-bold ${s.color}`}>{s.icon}</span>
+            <p className={`text-sm font-semibold ${s.color} mt-1`}>{s.label}</p>
+            <p className="text-xs text-[var(--color-text-secondary)] mt-1">{s.desc}</p>
+          </div>
+
+          {/* 驳回/补充原因 */}
+          {rejectReason && (reviewStatus === 'REJECTED' || reviewStatus === 'SUPPLEMENT') && (
+            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+              <span className="text-[10px] uppercase tracking-wide text-[var(--color-text-placeholder)] font-medium">
+                {reviewStatus === 'REJECTED' ? '驳回原因' : '补充说明'}
+              </span>
+              <p className="text-sm text-[var(--color-text-primary)] mt-1.5 leading-relaxed">{rejectReason}</p>
             </div>
-          ) : history.length === 0 ? (
-            <div className="text-center py-8">
-              <span className="text-3xl block mb-2">📋</span>
-              <p className="text-xs text-[var(--color-text-placeholder)]">暂无审核记录</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {history.map((log, i) => {
-                const rs = log.reviewStatus
-                const icon = rs === 'APPROVED' ? '✓' : rs === 'REJECTED' ? '✗' : rs === 'SUPPLEMENT' ? '⚠' : '•'
-                const color = rs === 'APPROVED' ? 'text-[var(--color-success)]' : rs === 'REJECTED' ? 'text-[var(--color-error)]' : rs === 'SUPPLEMENT' ? 'text-[var(--color-warning)]' : 'text-[var(--color-text-placeholder)]'
-                const borderColor = rs === 'APPROVED' ? 'border-[var(--color-success)]/20' : rs === 'REJECTED' ? 'border-[var(--color-error)]/20' : rs === 'SUPPLEMENT' ? 'border-[var(--color-warning)]/20' : 'border-white/5'
-                return (
-                  <div key={log.id} className={`relative pl-7 ${i < history.length - 1 ? 'pb-3 border-l border-white/5 ml-2' : 'ml-2'}`}>
-                    {/* 时间线圆点 */}
-                    <span className={`absolute left-[-5px] top-0 w-3 h-3 rounded-full border-2 ${borderColor} ${rs === 'APPROVED' ? 'bg-[var(--color-success)]' : rs === 'REJECTED' ? 'bg-[var(--color-error)]' : rs === 'SUPPLEMENT' ? 'bg-[var(--color-warning)]' : 'bg-white/20'}`} />
-                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-sm font-bold ${color}`}>{icon}</span>
-                        <span className="text-xs text-[var(--color-text-primary)] font-medium">
-                          {rs === 'APPROVED' ? '审核通过' : rs === 'REJECTED' ? '审核驳回' : rs === 'SUPPLEMENT' ? '需要补充' : '审核操作'}
-                        </span>
-                      </div>
-                      {log.detail && <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">{log.detail}</p>}
-                      {log.rejectReason && (
-                        <p className="text-xs text-[var(--color-error)] mt-1">驳回原因：{log.rejectReason}</p>
-                      )}
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-[10px] text-[var(--color-text-placeholder)]">审核人：{log.reviewer}</span>
-                        <span className="text-[10px] text-[var(--color-text-placeholder)]">
-                          {new Date(log.createdAt).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+          )}
+
+          {/* 待审核提示 */}
+          {(!reviewStatus || reviewStatus === 'PENDING') && (
+            <p className="text-xs text-[var(--color-text-placeholder)] text-center">等待审核员处理</p>
           )}
         </div>
       </div>
@@ -1160,11 +1121,7 @@ function FilePreviewModal({
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [loadingPreview, setLoadingPreview] = useState(true)
-  const [reviewHistory, setReviewHistory] = useState<Array<{
-    id: string; detail: string | null; reviewStatus?: string; rejectReason?: string;
-    reviewer: string; createdAt: string
-  }>>([])
-  const [loadingHistory, setLoadingHistory] = useState(true)
+
 
   const isImage = fileType.startsWith('image/')
   const isPdf = fileType === 'application/pdf'
@@ -1196,22 +1153,7 @@ function FilePreviewModal({
     return () => { cancelled = true }
   }, [fileId, ossUrl])
 
-  // 获取审核记录
-  useEffect(() => {
-    let cancelled = false
-    async function fetchHistory() {
-      try {
-        const res = await apiFetch(`/api/documents/files/${fileId}/history`)
-        const json = await res.json()
-        if (!cancelled && json.success) {
-          setReviewHistory(json.data.history || [])
-        }
-      } catch { /* ignore */ }
-      finally { if (!cancelled) setLoadingHistory(false) }
-    }
-    fetchHistory()
-    return () => { cancelled = true }
-  }, [fileId])
+
 
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes}B`
@@ -1337,41 +1279,15 @@ function FilePreviewModal({
                 </div>
               </div>
 
-              {/* 审核记录 */}
-              <div>
-                <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">审核记录</h4>
-                {loadingHistory ? (
-                  <div className="flex items-center gap-2 py-3">
-                    <div className="w-4 h-4 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
-                    <span className="text-xs text-[var(--color-text-placeholder)]">加载中...</span>
-                  </div>
-                ) : reviewHistory.length === 0 ? (
-                  <p className="text-xs text-[var(--color-text-placeholder)] py-2">暂无审核记录</p>
-                ) : (
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {reviewHistory.map((log) => {
-                      const rStatus = log.reviewStatus
-                      const statusIcon = rStatus === 'APPROVED' ? '✓' : rStatus === 'REJECTED' ? '✗' : rStatus === 'SUPPLEMENT' ? '⚠' : '•'
-                      const statusColor = rStatus === 'APPROVED' ? 'text-[var(--color-success)]' : rStatus === 'REJECTED' ? 'text-[var(--color-error)]' : rStatus === 'SUPPLEMENT' ? 'text-[var(--color-warning)]' : 'text-[var(--color-text-placeholder)]'
-                      return (
-                        <div key={log.id} className="p-2.5 rounded-lg bg-white/[0.03] border border-white/5">
-                          <div className="flex items-center gap-2">
-                            <span className={`text-sm font-bold ${statusColor}`}>{statusIcon}</span>
-                            <span className="text-xs text-[var(--color-text-primary)] flex-1 truncate">{log.detail || log.reviewer}</span>
-                          </div>
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-[10px] text-[var(--color-text-placeholder)]">{log.reviewer}</span>
-                            <span className="text-[10px] text-[var(--color-text-placeholder)]">{new Date(log.createdAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-                          </div>
-                          {log.rejectReason && (
-                            <p className="text-[10px] text-[var(--color-error)] mt-1 leading-relaxed">原因：{log.rejectReason}</p>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
+              {/* 当前审核原因（仅显示，无历史记录） */}
+              {rejectReason && (fileReviewStatus === 'REJECTED' || fileReviewStatus === 'SUPPLEMENT') && (
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                  <span className="text-[10px] uppercase tracking-wide text-[var(--color-text-placeholder)] font-medium">
+                    {fileReviewStatus === 'REJECTED' ? '驳回原因' : '补充说明'}
+                  </span>
+                  <p className="text-xs text-[var(--color-text-primary)] mt-1.5 leading-relaxed">{rejectReason}</p>
+                </div>
+              )}
 
               {/* 审核操作 */}
               <div className="border-t border-white/5 pt-4">

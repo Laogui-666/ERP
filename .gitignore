@@ -60,3 +60,7 @@ ERP-README.md
 # 本地初始化文件（不入仓库）
 ERP-BOOTSTRAP.sh
 ERP-README.md
+
+# 部署脚本（含服务器密码，不入仓库）
+deploy-py.py
+deploy.sh

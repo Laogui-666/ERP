@@ -170,6 +170,7 @@ export interface DocumentFile {
   sortOrder: number
   label: string | null
   reviewStatus: string | null
+  rejectReason: string | null
   createdAt: string
 }
 

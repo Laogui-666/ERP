@@ -621,14 +621,14 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                               onUpload={(clearFirst?: boolean) => handleUploadClick(req.id, !!clearFirst)}
                               onCamera={() => setCameraTargetId(req.id)}
                               onDeleteFile={handleFileDelete}
-                              onReviewFileClick={(file) => setReviewHistoryFile({ file, rejectReason: req.status === 'REJECTED' || req.status === 'SUPPLEMENT' ? (req.rejectReason ?? null) : null })}
+                              onReviewFileClick={(file) => setReviewHistoryFile({ file, rejectReason: file.rejectReason ?? (req.status === 'REJECTED' || req.status === 'SUPPLEMENT' ? (req.rejectReason ?? null) : null) })}
                               onFilePreview={(file) => {
                                 setPreviewFile({
                                   file,
                                   requirementId: req.id,
                                   reqName: req.name,
                                   reqStatus: req.status,
-                                  rejectReason: req.status === 'REJECTED' || req.status === 'SUPPLEMENT' ? (req.rejectReason ?? null) : null,
+                                  rejectReason: file.rejectReason ?? (req.status === 'REJECTED' || req.status === 'SUPPLEMENT' ? (req.rejectReason ?? null) : null),
                                   reviewStatus: file.reviewStatus ?? null,
                                 })
                               }}

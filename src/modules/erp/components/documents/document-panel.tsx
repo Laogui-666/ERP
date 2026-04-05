@@ -406,13 +406,13 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     try {
       const res = await apiFetch(`/api/documents/files/${fileId}`, { method: 'DELETE' })
       const json = await res.json()
-      if (json.success) { toast('success', '已删除'); await fetchRequirements() }
+      if (json.success) { toast('success', '已删除'); await fetchRequirements(); onRefresh() }
       else toast('error', json.error?.message ?? '删除失败')
     } catch { toast('error', '删除失败') }
   }
 
   // ===== 预览弹窗审核 =====
-  // 单文件审核 - 只更新当前文件的 rejectReason，不影响清单中其他文件
+  // 单文件审核 - 更新文件 reviewStatus + 通知父组件刷新
   const handlePreviewReview = async (status: DocReqStatus) => {
     if (!previewFile) return
     setPreviewReviewing(true)
@@ -432,6 +432,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         setPreviewFile(null)
         setPreviewReviewReason('')
         await fetchRequirements()
+        onRefresh()
       } else {
         toast('error', json.error?.message ?? '审核失败')
       }
@@ -962,12 +963,7 @@ function FileItemCompact({
       {/* 文件级审核状态 */}
       {file.reviewStatus === 'APPROVED' && <span className="text-[10px] text-[var(--color-success)] shrink-0">✓ 合格</span>}
       {file.reviewStatus === 'REJECTED' && <span className="text-[10px] text-[var(--color-error)] shrink-0">✗ 驳回</span>}
-      {file.reviewStatus === 'SUPPLEMENT' && <span className="text-[10px] text-[var(--color-warning)] shrink-0">补充</span>}
-      {/* 审核状态 - 优先显示文件级审核状态 */}
-      {file.reviewStatus === 'APPROVED' && <span className="text-[10px] text-[var(--color-success)] shrink-0">✓ 合格</span>}
-      {file.reviewStatus === 'REJECTED' && <span className="text-[10px] text-[var(--color-error)] shrink-0">✗ 已驳回</span>}
-      {file.reviewStatus === 'SUPPLEMENT' && <span className="text-[10px] text-[var(--color-warning)] shrink-0">+ 需补充</span>}
-      {!file.reviewStatus || file.reviewStatus === 'PENDING' ? null : null}
+      {file.reviewStatus === 'SUPPLEMENT' && <span className="text-[10px] text-[var(--color-warning)] shrink-0">需补充</span>}
       {/* 驳回原因 */}
       {rejectReason && (reqStatus === 'REJECTED' || reqStatus === 'SUPPLEMENT') && (
         <span className="text-[10px] text-[var(--color-error)] truncate max-w-[120px]" title={rejectReason}>

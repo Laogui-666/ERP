@@ -964,10 +964,10 @@ function FileItemCompact({
       {file.reviewStatus === 'REJECTED' && <span className="text-[10px] text-[var(--color-error)] shrink-0">✗ 驳回</span>}
       {file.reviewStatus === 'SUPPLEMENT' && <span className="text-[10px] text-[var(--color-warning)] shrink-0">补充</span>}
       {/* 审核状态 - 优先显示文件级审核状态 */}
-      {(file as Record<string, unknown>).reviewStatus === 'APPROVED' && <span className="text-[10px] text-[var(--color-success)] shrink-0">✓ 合格</span>}
-      {(file as Record<string, unknown>).reviewStatus === 'REJECTED' && <span className="text-[10px] text-[var(--color-error)] shrink-0">✗ 已驳回</span>}
-      {(file as Record<string, unknown>).reviewStatus === 'SUPPLEMENT' && <span className="text-[10px] text-[var(--color-warning)] shrink-0">+ 需补充</span>}
-      {!(file as Record<string, unknown>).reviewStatus || (file as Record<string, unknown>).reviewStatus === 'PENDING' ? null : null}
+      {file.reviewStatus === 'APPROVED' && <span className="text-[10px] text-[var(--color-success)] shrink-0">✓ 合格</span>}
+      {file.reviewStatus === 'REJECTED' && <span className="text-[10px] text-[var(--color-error)] shrink-0">✗ 已驳回</span>}
+      {file.reviewStatus === 'SUPPLEMENT' && <span className="text-[10px] text-[var(--color-warning)] shrink-0">+ 需补充</span>}
+      {!file.reviewStatus || file.reviewStatus === 'PENDING' ? null : null}
       {/* 驳回原因 */}
       {rejectReason && (reqStatus === 'REJECTED' || reqStatus === 'SUPPLEMENT') && (
         <span className="text-[10px] text-[var(--color-error)] truncate max-w-[120px]" title={rejectReason}>

@@ -22,15 +22,25 @@ npx prisma generate
 echo "4. 构建项目..."
 npm run build
 
-echo "5. 重启服务..."
-# 停止旧服务
-pm2 stop erp || true
-# 启动新服务
-npm run start > /dev/null 2>&1 &
+echo "5. 重启服务（通过PM2管理）..."
+# 通过 PM2 管理重启，避免端口冲突和进程泄漏
+pm2 restart erp || pm2 start ecosystem.config.json
 
-echo "6. 验证服务状态..."
-sleep 5
-curl -s http://localhost:3002/api/health
+echo "6. 等待服务启动..."
+sleep 8
 
-echo "\n=== 部署完成！==="
+echo "7. 验证服务状态..."
+HEALTH=$(curl -s http://localhost:3002/api/health 2>/dev/null)
+if echo "$HEALTH" | grep -q '"status":"ok"'; then
+    echo "   ✅ 服务正常运行"
+else
+    echo "   ⚠️ 健康检查未通过，查看日志："
+    pm2 logs erp --lines 10 --nostream
+    exit 1
+fi
+
+echo ""
+echo "=== 部署完成！==="
 echo "访问地址: http://223.6.248.154:3002"
+echo "PM2 状态："
+pm2 list

@@ -39,7 +39,7 @@ interface SelectableItem extends TemplateItem {
   selected: boolean
 }
 
-export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _orderStatus, applicantCount = 1, applicants = [], onRefresh }: DocumentPanelProps) {
+export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _orderStatus, applicantCount = 1, applicants = [], onRefresh: _onRefresh }: DocumentPanelProps) {
   const { toast } = useToast()
 
   // 内部资料列表（支持本地乐观更新）
@@ -390,7 +390,6 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       if (json.success) {
         toast('success', '照片上传成功')
         await fetchRequirements()
-        onRefresh()
       } else {
         toast('error', json.error?.message ?? '上传失败')
       }
@@ -406,7 +405,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     try {
       const res = await apiFetch(`/api/documents/files/${fileId}`, { method: 'DELETE' })
       const json = await res.json()
-      if (json.success) { toast('success', '已删除'); await fetchRequirements(); onRefresh() }
+      if (json.success) { toast('success', '已删除'); await fetchRequirements() }
       else toast('error', json.error?.message ?? '删除失败')
     } catch { toast('error', '删除失败') }
   }
@@ -431,8 +430,8 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         toast('success', label)
         setPreviewFile(null)
         setPreviewReviewReason('')
+        // 仅局部刷新资料列表，不触发整页刷新
         await fetchRequirements()
-        onRefresh()
       } else {
         toast('error', json.error?.message ?? '审核失败')
       }

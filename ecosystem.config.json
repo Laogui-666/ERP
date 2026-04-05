@@ -1,0 +1,29 @@
+{
+  "apps": [
+    {
+      "name": "erp",
+      "script": "node_modules/.bin/next",
+      "args": "start -p 3002",
+      "cwd": "/www/wwwroot/ERP",
+      "instances": 1,
+      "exec_mode": "fork",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": 3002
+      },
+      "max_memory_restart": "1G",
+      "error_file": "/var/log/erp/error.log",
+      "out_file": "/var/log/erp/out.log",
+      "merge_logs": true,
+      "log_date_format": "YYYY-MM-DD HH:mm:ss Z",
+      "autorestart": true,
+      "max_restarts": 20,
+      "restart_delay": 8000,
+      "watch": false,
+      "ignore_watch": ["node_modules", "backups", ".git"],
+      "kill_timeout": 10000,
+      "listen_timeout": 15000,
+      "wait_ready": false
+    }
+  ]
+}

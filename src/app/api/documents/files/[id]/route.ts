@@ -43,6 +43,34 @@ export async function PATCH(
       data: updateData,
     })
 
+    // 同步更新父级资料需求的 status（基于同需求下所有文件的审核状态）
+    const siblingFiles = await prisma.documentFile.findMany({
+      where: { requirementId: docFile.requirementId },
+      select: { reviewStatus: true },
+    })
+    const statuses = siblingFiles.map(f => f.reviewStatus || 'PENDING')
+    let newReqStatus: string | null = null
+    if (statuses.every(s => s === 'APPROVED')) {
+      newReqStatus = 'APPROVED'
+    } else if (statuses.some(s => s === 'REJECTED')) {
+      newReqStatus = 'REJECTED'
+    } else if (statuses.some(s => s === 'SUPPLEMENT')) {
+      newReqStatus = 'SUPPLEMENT'
+    } else if (statuses.some(s => s === 'APPROVED')) {
+      newReqStatus = 'REVIEWING'
+    }
+    if (newReqStatus) {
+      await prisma.documentRequirement.update({
+        where: { id: docFile.requirementId },
+        data: {
+          status: newReqStatus as any,
+          rejectReason: (newReqStatus === 'REJECTED' || newReqStatus === 'SUPPLEMENT')
+            ? (rejectReason || null)
+            : null,
+        },
+      })
+    }
+
     // 写操作日志（含审核状态，供审核记录查询）
     const statusLabel = reviewStatus === 'APPROVED' ? '合格' : reviewStatus === 'REJECTED' ? '已驳回' : reviewStatus === 'SUPPLEMENT' ? '需补充' : reviewStatus
     await prisma.orderLog.create({

@@ -5,6 +5,30 @@ import { requirePermission } from '@shared/lib/rbac'
 import { AppError, createSuccessResponse } from '@shared/types/api'
 import { z } from 'zod'
 
+// GET /api/companies/me - 获取当前公司信息
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getCurrentUser(request)
+    if (!user) throw new AppError('UNAUTHORIZED', '未登录', 401)
+
+    const company = await prisma.company.findUnique({
+      where: { id: user.companyId },
+      include: {
+        departments: { orderBy: { sortOrder: 'asc' } },
+        _count: { select: { users: true, orders: true } },
+      },
+    })
+    if (!company) throw new AppError('NOT_FOUND', '公司不存在', 404)
+
+    return NextResponse.json(createSuccessResponse(company))
+  } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json(error.toJSON(), { status: error.statusCode })
+    }
+    throw error
+  }
+}
+
 // PATCH /api/companies/me - 更新当前公司信息
 const updateSchema = z.object({
   name: z.string().min(1).max(100).optional(),

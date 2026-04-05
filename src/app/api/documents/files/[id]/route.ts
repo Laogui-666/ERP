@@ -43,14 +43,23 @@ export async function PATCH(
       data: updateData,
     })
 
-    // 写操作日志
+    // 写操作日志（含审核状态，供审核记录查询）
+    const statusLabel = reviewStatus === 'APPROVED' ? '合格' : reviewStatus === 'REJECTED' ? '已驳回' : reviewStatus === 'SUPPLEMENT' ? '需补充' : reviewStatus
     await prisma.orderLog.create({
       data: {
         orderId: docFile.requirement.orderId,
         companyId: user.companyId,
         userId: user.userId,
-        action: `审核文件: ${docFile.requirement.name}`,
-        detail: `文件 "${docFile.fileName}"${rejectReason ? ` - 驳回原因: ${rejectReason}` : ' - 通过'}`,
+        action: `审核文件: ${docFile.requirement.name}/${docFile.fileName}`,
+        detail: `状态: ${statusLabel}${rejectReason ? ` | 原因: ${rejectReason}` : ''}`,
+        metadata: {
+          type: 'FILE_REVIEW',
+          fileId: id,
+          fileName: docFile.fileName,
+          requirementName: docFile.requirement.name,
+          reviewStatus,
+          rejectReason: rejectReason || null,
+        },
       },
     })
 

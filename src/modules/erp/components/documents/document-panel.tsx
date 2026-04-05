@@ -92,9 +92,13 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     reqName: string
     reqStatus: DocReqStatus
     rejectReason: string | null
+    reviewStatus: string | null
   } | null>(null)
   const [previewReviewing, setPreviewReviewing] = useState(false)
   const [previewReviewReason, setPreviewReviewReason] = useState('')
+
+  // 审核记录弹窗
+  const [reviewHistoryFile, setReviewHistoryFile] = useState<DocumentFile | null>(null)
 
   // 角色权限（按工作流状态动态调整）
   const canEdit = ['DOC_COLLECTOR', 'VISA_ADMIN', 'COMPANY_OWNER', 'SUPER_ADMIN'].includes(userRole)
@@ -617,6 +621,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                               onUpload={(clearFirst?: boolean) => handleUploadClick(req.id, !!clearFirst)}
                               onCamera={() => setCameraTargetId(req.id)}
                               onDeleteFile={handleFileDelete}
+                              onReviewFileClick={(file) => setReviewHistoryFile(file)}
                               onFilePreview={(file) => {
                                 setPreviewFile({
                                   file,
@@ -624,6 +629,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                                   reqName: req.name,
                                   reqStatus: req.status,
                                   rejectReason: req.status === 'REJECTED' || req.status === 'SUPPLEMENT' ? (req.rejectReason ?? null) : null,
+                                  reviewStatus: file.reviewStatus ?? null,
                                 })
                               }}
                             />
@@ -661,6 +667,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
           reqName={previewFile.reqName}
           reqStatus={previewFile.reqStatus}
           rejectReason={previewFile.rejectReason}
+          fileReviewStatus={previewFile.reviewStatus}
           canReview={canReview && ['UPLOADED', 'REVIEWING', 'APPROVED', 'REJECTED', 'SUPPLEMENT'].includes(previewFile.reqStatus)}
           reviewReason={previewReviewReason}
           onReviewReasonChange={setPreviewReviewReason}
@@ -669,6 +676,17 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
           onSupplement={() => handlePreviewReview('SUPPLEMENT')}
           isReviewing={previewReviewing}
           onClose={() => { setPreviewFile(null); setPreviewReviewReason('') }}
+        />,
+        document.body,
+      )}
+
+      {/* ===== 审核记录弹窗 ===== */}
+      {reviewHistoryFile && typeof document !== 'undefined' && createPortal(
+        <ReviewHistoryCard
+          fileId={reviewHistoryFile.id}
+          fileName={reviewHistoryFile.fileName}
+          reviewStatus={reviewHistoryFile.reviewStatus}
+          onClose={() => setReviewHistoryFile(null)}
         />,
         document.body,
       )}
@@ -789,7 +807,7 @@ function DocumentItem({
   req, canUpload, canDeleteFile, canEdit, isEditing, editName, editDesc, editRequired,
   isSaving, isUploading, uploadProgress,
   onEditNameChange, onEditDescChange, onEditRequiredChange, onStartEdit, onSaveEdit, onCancelEdit,
-  onDeleteReq, onUpload, onCamera, onDeleteFile, onFilePreview,
+  onDeleteReq, onUpload, onCamera, onDeleteFile, onFilePreview, onReviewFileClick,
 }: {
   req: DocumentRequirement
   canUpload: boolean
@@ -813,6 +831,7 @@ function DocumentItem({
   onCamera: () => void
   onDeleteFile: (fileId: string) => void
   onFilePreview: (file: DocumentFile) => void
+  onReviewFileClick?: (file: DocumentFile) => void
 }) {
   const statusColor: Record<DocReqStatus, string> = {
     PENDING: 'bg-[var(--color-text-placeholder)]',
@@ -873,11 +892,12 @@ function DocumentItem({
           {req.files.length > 0 && (
             <div className="mt-2 space-y-1">
               {req.files.map((file) => {
-                const fileItemProps: { file: DocumentFile; reqStatus: DocReqStatus; rejectReason?: string | null; onClick: () => void; onDelete?: () => void; onReupload?: () => void } = {
+                const fileItemProps: { file: DocumentFile; reqStatus: DocReqStatus; rejectReason?: string | null; onClick: () => void; onDelete?: () => void; onReupload?: () => void; onReviewClick?: (file: DocumentFile) => void } = {
                   file,
                   reqStatus: req.status,
                   rejectReason: req.rejectReason,
                   onClick: () => onFilePreview(file),
+                  onReviewClick: (f: DocumentFile) => onReviewFileClick?.(f),
                 }
                 // 删除权限：当前环节的负责人可删除
                 if (canDeleteFile) {
@@ -924,7 +944,7 @@ function DocumentItem({
 // ==================== 文件条目（紧凑模式，点击打开预览） ====================
 function FileItemCompact({
   file, reqStatus, rejectReason,
-  onClick, onDelete, onReupload,
+  onClick, onDelete, onReupload, onReviewClick,
 }: {
   file: DocumentFile
   reqStatus: DocReqStatus
@@ -932,6 +952,7 @@ function FileItemCompact({
   onClick: () => void
   onDelete?: () => void
   onReupload?: () => void
+  onReviewClick?: (file: DocumentFile) => void
 }) {
   const getFileIcon = () => {
     if (file.fileType.startsWith('image/')) return '🖼️'
@@ -959,10 +980,31 @@ function FileItemCompact({
         {file.fileName}
       </button>
       <span className="text-[var(--color-text-placeholder)] shrink-0">({formatSize(file.fileSize)})</span>
-      {/* 文件级审核状态 */}
-      {file.reviewStatus === 'APPROVED' && <span className="text-[10px] text-[var(--color-success)] shrink-0">✓ 合格</span>}
-      {file.reviewStatus === 'REJECTED' && <span className="text-[10px] text-[var(--color-error)] shrink-0">✗ 驳回</span>}
-      {file.reviewStatus === 'SUPPLEMENT' && <span className="text-[10px] text-[var(--color-warning)] shrink-0">需补充</span>}
+      {/* 文件级审核状态 - 可点击查看审核记录 */}
+      {file.reviewStatus === 'APPROVED' && (
+        <button onClick={(e) => { e.stopPropagation(); onReviewClick?.(file) }}
+          className="text-[10px] text-[var(--color-success)] shrink-0 px-1.5 py-0.5 rounded bg-[var(--color-success)]/10 hover:bg-[var(--color-success)]/20 transition-colors cursor-pointer">
+          ✓ 合格
+        </button>
+      )}
+      {file.reviewStatus === 'REJECTED' && (
+        <button onClick={(e) => { e.stopPropagation(); onReviewClick?.(file) }}
+          className="text-[10px] text-[var(--color-error)] shrink-0 px-1.5 py-0.5 rounded bg-[var(--color-error)]/10 hover:bg-[var(--color-error)]/20 transition-colors cursor-pointer">
+          ✗ 驳回
+        </button>
+      )}
+      {file.reviewStatus === 'SUPPLEMENT' && (
+        <button onClick={(e) => { e.stopPropagation(); onReviewClick?.(file) }}
+          className="text-[10px] text-[var(--color-warning)] shrink-0 px-1.5 py-0.5 rounded bg-[var(--color-warning)]/10 hover:bg-[var(--color-warning)]/20 transition-colors cursor-pointer">
+          需补充
+        </button>
+      )}
+      {(!file.reviewStatus || file.reviewStatus === 'PENDING') && (
+        <button onClick={(e) => { e.stopPropagation(); onReviewClick?.(file) }}
+          className="text-[10px] text-[var(--color-text-placeholder)] shrink-0 px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+          待审核
+        </button>
+      )}
       {/* 驳回原因 */}
       {rejectReason && (reqStatus === 'REJECTED' || reqStatus === 'SUPPLEMENT') && (
         <span className="text-[10px] text-[var(--color-error)] truncate max-w-[120px]" title={rejectReason}>
@@ -989,10 +1031,112 @@ function FileItemCompact({
   )
 }
 
+// ==================== 审核记录弹窗 ====================
+function ReviewHistoryCard({
+  fileId, fileName, reviewStatus, onClose,
+}: {
+  fileId: string
+  fileName: string
+  reviewStatus: string | null | undefined
+  onClose: () => void
+}) {
+  const [history, setHistory] = useState<Array<{
+    id: string; detail: string | null; reviewStatus?: string; rejectReason?: string;
+    reviewer: string; createdAt: string
+  }>>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    apiFetch(`/api/documents/files/${fileId}/history`).then(r => r.json()).then(json => {
+      if (!cancelled && json.success) setHistory(json.data.history || [])
+    }).catch(() => {}).finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [fileId])
+
+  const statusConfig: Record<string, { label: string; color: string; bg: string; icon: string }> = {
+    APPROVED: { label: '合格', color: 'text-[var(--color-success)]', bg: 'bg-[var(--color-success)]/15', icon: '✓' },
+    REJECTED: { label: '已驳回', color: 'text-[var(--color-error)]', bg: 'bg-[var(--color-error)]/15', icon: '✗' },
+    SUPPLEMENT: { label: '需补充', color: 'text-[var(--color-warning)]', bg: 'bg-[var(--color-warning)]/15', icon: '⚠' },
+    PENDING: { label: '待审核', color: 'text-[var(--color-text-placeholder)]', bg: 'bg-white/5', icon: '⏳' },
+  }
+  const s = statusConfig[reviewStatus || 'PENDING'] || statusConfig.PENDING
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="relative w-full max-w-md rounded-2xl border border-white/10 overflow-hidden animate-scale-in"
+        style={{ background: 'rgba(28, 33, 48, 0.97)', backdropFilter: 'blur(40px)' }}
+        onClick={(e) => e.stopPropagation()}>
+        {/* 头部 */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">{fileName}</h3>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`text-[10px] px-2 py-0.5 rounded-full ${s.bg} ${s.color} font-medium`}>{s.icon} {s.label}</span>
+            </div>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] hover:bg-white/5 transition-colors shrink-0 ml-3">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        {/* 审核记录列表 */}
+        <div className="p-5 max-h-[60vh] overflow-y-auto">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+            </div>
+          ) : history.length === 0 ? (
+            <div className="text-center py-8">
+              <span className="text-3xl block mb-2">📋</span>
+              <p className="text-xs text-[var(--color-text-placeholder)]">暂无审核记录</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {history.map((log, i) => {
+                const rs = log.reviewStatus
+                const icon = rs === 'APPROVED' ? '✓' : rs === 'REJECTED' ? '✗' : rs === 'SUPPLEMENT' ? '⚠' : '•'
+                const color = rs === 'APPROVED' ? 'text-[var(--color-success)]' : rs === 'REJECTED' ? 'text-[var(--color-error)]' : rs === 'SUPPLEMENT' ? 'text-[var(--color-warning)]' : 'text-[var(--color-text-placeholder)]'
+                const borderColor = rs === 'APPROVED' ? 'border-[var(--color-success)]/20' : rs === 'REJECTED' ? 'border-[var(--color-error)]/20' : rs === 'SUPPLEMENT' ? 'border-[var(--color-warning)]/20' : 'border-white/5'
+                return (
+                  <div key={log.id} className={`relative pl-7 ${i < history.length - 1 ? 'pb-3 border-l border-white/5 ml-2' : 'ml-2'}`}>
+                    {/* 时间线圆点 */}
+                    <span className={`absolute left-[-5px] top-0 w-3 h-3 rounded-full border-2 ${borderColor} ${rs === 'APPROVED' ? 'bg-[var(--color-success)]' : rs === 'REJECTED' ? 'bg-[var(--color-error)]' : rs === 'SUPPLEMENT' ? 'bg-[var(--color-warning)]' : 'bg-white/20'}`} />
+                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-sm font-bold ${color}`}>{icon}</span>
+                        <span className="text-xs text-[var(--color-text-primary)] font-medium">
+                          {rs === 'APPROVED' ? '审核通过' : rs === 'REJECTED' ? '审核驳回' : rs === 'SUPPLEMENT' ? '需要补充' : '审核操作'}
+                        </span>
+                      </div>
+                      {log.detail && <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">{log.detail}</p>}
+                      {log.rejectReason && (
+                        <p className="text-xs text-[var(--color-error)] mt-1">驳回原因：{log.rejectReason}</p>
+                      )}
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-[10px] text-[var(--color-text-placeholder)]">审核人：{log.reviewer}</span>
+                        <span className="text-[10px] text-[var(--color-text-placeholder)]">
+                          {new Date(log.createdAt).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ==================== 文件预览弹窗（含审核） ====================
 function FilePreviewModal({
   fileId, fileName, fileType, ossUrl, fileSize,
-  reqName, reqStatus, rejectReason,
+  reqName, reqStatus, rejectReason, fileReviewStatus,
   canReview, reviewReason, onReviewReasonChange,
   onApprove, onReject, onSupplement, isReviewing, onClose,
 }: {
@@ -1004,6 +1148,7 @@ function FilePreviewModal({
   reqName: string
   reqStatus: DocReqStatus
   rejectReason?: string | null
+  fileReviewStatus?: string | null
   canReview: boolean
   reviewReason: string
   onReviewReasonChange: (v: string) => void
@@ -1015,6 +1160,11 @@ function FilePreviewModal({
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [loadingPreview, setLoadingPreview] = useState(true)
+  const [reviewHistory, setReviewHistory] = useState<Array<{
+    id: string; detail: string | null; reviewStatus?: string; rejectReason?: string;
+    reviewer: string; createdAt: string
+  }>>([])
+  const [loadingHistory, setLoadingHistory] = useState(true)
 
   const isImage = fileType.startsWith('image/')
   const isPdf = fileType === 'application/pdf'
@@ -1045,6 +1195,23 @@ function FilePreviewModal({
     fetchPreviewUrl()
     return () => { cancelled = true }
   }, [fileId, ossUrl])
+
+  // 获取审核记录
+  useEffect(() => {
+    let cancelled = false
+    async function fetchHistory() {
+      try {
+        const res = await apiFetch(`/api/documents/files/${fileId}/history`)
+        const json = await res.json()
+        if (!cancelled && json.success) {
+          setReviewHistory(json.data.history || [])
+        }
+      } catch { /* ignore */ }
+      finally { if (!cancelled) setLoadingHistory(false) }
+    }
+    fetchHistory()
+    return () => { cancelled = true }
+  }, [fileId])
 
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes}B`
@@ -1150,48 +1317,92 @@ function FilePreviewModal({
 
           {/* 右侧：审核面板 */}
           {canReview && (
-            <div className="w-full md:w-72 border-t md:border-t-0 md:border-l border-white/5 p-5 flex flex-col gap-4 overflow-y-auto">
-              <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">审核操作</h4>
-
-              {/* 历史驳回原因 */}
-              {rejectReason && (
-                <div className="p-3 rounded-xl bg-[var(--color-error)]/8 border border-[var(--color-error)]/15">
-                  <span className="text-[10px] text-[var(--color-error)] font-medium">上次驳回原因</span>
-                  <p className="text-xs text-[var(--color-text-primary)] mt-1">{rejectReason}</p>
-                </div>
-              )}
-
-              {/* 审核备注输入 */}
+            <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-white/5 p-5 flex flex-col gap-4 overflow-y-auto">
+              {/* 当前状态 */}
               <div>
-                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
-                  备注 / 驳回理由
-                </label>
-                <textarea
-                  className="glass-input w-full text-sm resize-none"
-                  rows={3}
-                  placeholder="驳回时必填，合格可留空..."
-                  value={reviewReason}
-                  onChange={(e) => onReviewReasonChange(e.target.value)}
-                />
+                <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">当前状态</h4>
+                <div className="flex items-center gap-2">
+                  {fileReviewStatus === 'APPROVED' && (
+                    <span className="text-xs px-3 py-1.5 rounded-full bg-[var(--color-success)]/15 text-[var(--color-success)] border border-[var(--color-success)]/20 font-medium">✓ 合格</span>
+                  )}
+                  {fileReviewStatus === 'REJECTED' && (
+                    <span className="text-xs px-3 py-1.5 rounded-full bg-[var(--color-error)]/15 text-[var(--color-error)] border border-[var(--color-error)]/20 font-medium">✗ 已驳回</span>
+                  )}
+                  {fileReviewStatus === 'SUPPLEMENT' && (
+                    <span className="text-xs px-3 py-1.5 rounded-full bg-[var(--color-warning)]/15 text-[var(--color-warning)] border border-[var(--color-warning)]/20 font-medium">⚠ 需补充</span>
+                  )}
+                  {(!fileReviewStatus || fileReviewStatus === 'PENDING') && (
+                    <span className="text-xs px-3 py-1.5 rounded-full bg-white/5 text-[var(--color-text-placeholder)] border border-white/10">⏳ 待审核</span>
+                  )}
+                </div>
               </div>
 
-              {/* 操作按钮 */}
-              <div className="space-y-2">
-                <button onClick={onApprove} disabled={isReviewing}
-                  className="w-full py-2.5 rounded-xl text-sm font-medium bg-[var(--color-success)]/15 text-[var(--color-success)] border border-[var(--color-success)]/20 hover:bg-[var(--color-success)]/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                  {isReviewing ? '处理中...' : '合格'}
-                </button>
-                <button onClick={onReject} disabled={isReviewing || !reviewReason.trim()}
-                  className="w-full py-2.5 rounded-xl text-sm font-medium bg-[var(--color-error)]/15 text-[var(--color-error)] border border-[var(--color-error)]/20 hover:bg-[var(--color-error)]/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                  {isReviewing ? '处理中...' : '驳回（需修改）'}
-                </button>
-                <button onClick={onSupplement} disabled={isReviewing || !reviewReason.trim()}
-                  className="w-full py-2.5 rounded-xl text-sm font-medium bg-[var(--color-warning)]/15 text-[var(--color-warning)] border border-[var(--color-warning)]/20 hover:bg-[var(--color-warning)]/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                  {isReviewing ? '处理中...' : '需补充'}
-                </button>
+              {/* 审核记录 */}
+              <div>
+                <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">审核记录</h4>
+                {loadingHistory ? (
+                  <div className="flex items-center gap-2 py-3">
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+                    <span className="text-xs text-[var(--color-text-placeholder)]">加载中...</span>
+                  </div>
+                ) : reviewHistory.length === 0 ? (
+                  <p className="text-xs text-[var(--color-text-placeholder)] py-2">暂无审核记录</p>
+                ) : (
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {reviewHistory.map((log) => {
+                      const rStatus = log.reviewStatus
+                      const statusIcon = rStatus === 'APPROVED' ? '✓' : rStatus === 'REJECTED' ? '✗' : rStatus === 'SUPPLEMENT' ? '⚠' : '•'
+                      const statusColor = rStatus === 'APPROVED' ? 'text-[var(--color-success)]' : rStatus === 'REJECTED' ? 'text-[var(--color-error)]' : rStatus === 'SUPPLEMENT' ? 'text-[var(--color-warning)]' : 'text-[var(--color-text-placeholder)]'
+                      return (
+                        <div key={log.id} className="p-2.5 rounded-lg bg-white/[0.03] border border-white/5">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-bold ${statusColor}`}>{statusIcon}</span>
+                            <span className="text-xs text-[var(--color-text-primary)] flex-1 truncate">{log.detail || log.reviewer}</span>
+                          </div>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[10px] text-[var(--color-text-placeholder)]">{log.reviewer}</span>
+                            <span className="text-[10px] text-[var(--color-text-placeholder)]">{new Date(log.createdAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                          {log.rejectReason && (
+                            <p className="text-[10px] text-[var(--color-error)] mt-1 leading-relaxed">原因：{log.rejectReason}</p>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* 审核操作 */}
+              <div className="border-t border-white/5 pt-4">
+                <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">审核操作</h4>
+
+                {/* 审核备注输入 */}
+                <div className="mb-3">
+                  <textarea
+                    className="glass-input w-full text-sm resize-none"
+                    rows={2}
+                    placeholder="驳回/补充时必填，合格可留空..."
+                    value={reviewReason}
+                    onChange={(e) => onReviewReasonChange(e.target.value)}
+                  />
+                </div>
+
+                {/* 操作按钮 */}
+                <div className="flex gap-2">
+                  <button onClick={onApprove} disabled={isReviewing}
+                    className="flex-1 py-2 rounded-lg text-xs font-medium bg-[var(--color-success)]/15 text-[var(--color-success)] border border-[var(--color-success)]/20 hover:bg-[var(--color-success)]/25 transition-all disabled:opacity-50">
+                    {isReviewing ? '...' : '✓ 合格'}
+                  </button>
+                  <button onClick={onReject} disabled={isReviewing || !reviewReason.trim()}
+                    className="flex-1 py-2 rounded-lg text-xs font-medium bg-[var(--color-error)]/15 text-[var(--color-error)] border border-[var(--color-error)]/20 hover:bg-[var(--color-error)]/25 transition-all disabled:opacity-50">
+                    {isReviewing ? '...' : '✗ 驳回'}
+                  </button>
+                  <button onClick={onSupplement} disabled={isReviewing || !reviewReason.trim()}
+                    className="flex-1 py-2 rounded-lg text-xs font-medium bg-[var(--color-warning)]/15 text-[var(--color-warning)] border border-[var(--color-warning)]/20 hover:bg-[var(--color-warning)]/25 transition-all disabled:opacity-50">
+                    {isReviewing ? '...' : '⚠ 补充'}
+                  </button>
+                </div>
               </div>
             </div>
           )}

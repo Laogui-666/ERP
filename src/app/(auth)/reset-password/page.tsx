@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
@@ -17,6 +17,41 @@ function ResetPasswordForm() {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [fetchingUser, setFetchingUser] = useState(false)
+
+  // 编辑锁定状态：默认不可编辑，点击"修改"才可编辑
+  const [usernameLocked, setUsernameLocked] = useState(!!initialUsername)
+  const [phoneLocked, setPhoneLocked] = useState(true)
+
+  // 根据用户名拉取用户信息，预填手机号
+  const fetchUserInfo = useCallback(async (username: string) => {
+    if (!username) return
+    setFetchingUser(true)
+    try {
+      const res = await fetch(`/api/auth/user-info?username=${encodeURIComponent(username)}`)
+      const json = await res.json()
+      if (json.success) {
+        const { phone, isFirstLogin } = json.data
+        if (phone) {
+          setForm(prev => ({ ...prev, phone }))
+        }
+        if (!isFirstLogin) {
+          setError('该账号已设置密码，请直接登录')
+        }
+      }
+    } catch {
+      // 静默失败，用户可手动填写
+    } finally {
+      setFetchingUser(false)
+    }
+  }, [])
+
+  // 页面加载时如果有 username 参数，自动拉取用户信息
+  useEffect(() => {
+    if (initialUsername) {
+      fetchUserInfo(initialUsername)
+    }
+  }, [initialUsername, fetchUserInfo])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,13 +96,6 @@ function ResetPasswordForm() {
     }
   }
 
-  const fields = [
-    { key: 'username', label: '用户名', placeholder: '请输入用户名（客服已创建）', type: 'text' },
-    { key: 'phone', label: '手机号', placeholder: '请输入注册时的手机号', type: 'tel' },
-    { key: 'newPassword', label: '新密码', placeholder: '至少8位，含大小写+数字', type: 'password' },
-    { key: 'confirmPassword', label: '确认密码', placeholder: '再次输入新密码', type: 'password' },
-  ]
-
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-[400px]">
@@ -87,22 +115,93 @@ function ResetPasswordForm() {
 
         <div className="glass-card p-7 md:p-8 anim-initial animate-fade-in-up delay-150">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {fields.map((field) => (
-              <div key={field.key}>
-                <label className="mb-1.5 block text-[12px] font-medium text-[var(--color-text-secondary)] tracking-wide uppercase">
-                  {field.label}
-                </label>
+            {/* 用户名 */}
+            <div>
+              <label className="mb-1.5 block text-[12px] font-medium text-[var(--color-text-secondary)] tracking-wide uppercase">
+                用户名
+              </label>
+              <div className="flex gap-2">
                 <input
-                  type={field.type}
-                  value={form[field.key as keyof typeof form]}
-                  onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-                  className="glass-input w-full"
-                  placeholder={field.placeholder}
+                  type="text"
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  className="glass-input flex-1"
+                  placeholder="请输入用户名（客服已创建）"
                   required
-                  minLength={field.key === 'newPassword' ? 8 : undefined}
+                  readOnly={usernameLocked}
                 />
+                {usernameLocked && (
+                  <button
+                    type="button"
+                    onClick={() => setUsernameLocked(false)}
+                    className="shrink-0 px-3 rounded-xl text-[12px] text-[var(--color-primary)] bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 transition-colors"
+                  >
+                    修改
+                  </button>
+                )}
               </div>
-            ))}
+            </div>
+
+            {/* 手机号 */}
+            <div>
+              <label className="mb-1.5 block text-[12px] font-medium text-[var(--color-text-secondary)] tracking-wide uppercase">
+                手机号
+                {fetchingUser && (
+                  <span className="ml-2 text-[var(--color-text-placeholder)] normal-case font-normal">加载中...</span>
+                )}
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  className="glass-input flex-1"
+                  placeholder="请输入注册时的手机号"
+                  required
+                  readOnly={phoneLocked}
+                />
+                {phoneLocked && (
+                  <button
+                    type="button"
+                    onClick={() => setPhoneLocked(false)}
+                    className="shrink-0 px-3 rounded-xl text-[12px] text-[var(--color-primary)] bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 transition-colors"
+                  >
+                    修改
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 新密码 */}
+            <div>
+              <label className="mb-1.5 block text-[12px] font-medium text-[var(--color-text-secondary)] tracking-wide uppercase">
+                新密码
+              </label>
+              <input
+                type="password"
+                value={form.newPassword}
+                onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
+                className="glass-input w-full"
+                placeholder="至少8位，含大小写+数字"
+                required
+                minLength={8}
+              />
+            </div>
+
+            {/* 确认密码 */}
+            <div>
+              <label className="mb-1.5 block text-[12px] font-medium text-[var(--color-text-secondary)] tracking-wide uppercase">
+                确认密码
+              </label>
+              <input
+                type="password"
+                value={form.confirmPassword}
+                onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                className="glass-input w-full"
+                placeholder="再次输入新密码"
+                required
+              />
+            </div>
 
             {error && (
               <div className="rounded-xl bg-[var(--color-error)]/10 border border-[var(--color-error)]/15 px-4 py-3 text-[13px] text-[var(--color-error)] animate-shake">

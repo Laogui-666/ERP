@@ -111,8 +111,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="glass-input w-full pl-10"
-                  placeholder="请输入密码"
-                  required
+                  placeholder="请输入密码（首次登录可留空）"
                 />
               </div>
             </div>

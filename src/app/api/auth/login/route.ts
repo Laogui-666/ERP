@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 const loginSchema = z.object({
   username: z.string().min(1),
-  password: z.string().min(1),
+  password: z.string(), // 允许空密码，用于触发首次登录重置流程
 })
 
 export async function POST(request: NextRequest) {
@@ -31,6 +31,11 @@ export async function POST(request: NextRequest) {
     // 客户首次登录：密码为空，需重置
     if (user.passwordHash === '') {
       throw new AppError('RESET_REQUIRED', '首次登录请先设置密码', 403)
+    }
+
+    // 空密码尝试登录 → 也提示重置
+    if (!password) {
+      throw new AppError('AUTH_FAILED', '用户名或密码错误', 401)
     }
 
     // 优化：bcrypt 密码比对

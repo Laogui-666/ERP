@@ -279,8 +279,13 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       if (json.success) {
         toast('success', '已保存')
         setEditingId(null)
-        // 从 API 重新拉取，确保卡片状态与服务端一致
-        await fetchRequirements()
+        // 乐观更新本地状态
+        setLocalReqs(prev => prev.map(r => r.id === editingId ? {
+          ...r,
+          name: editName.trim(),
+          description: editDesc.trim() || null,
+          isRequired: editRequired,
+        } : r))
         // 不调用 onRefresh()，避免弹窗关闭
       } else {
         toast('error', json.error?.message ?? '保存失败')
@@ -300,8 +305,8 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       const json = await res.json()
       if (json.success) {
         toast('success', '已删除')
-        // 从 API 重新拉取，确保卡片状态与服务端一致
-        await fetchRequirements()
+        setLocalReqs(prev => prev.filter(r => r.id !== reqId))
+        // 不调用 onRefresh()，避免弹窗关闭
       } else {
         toast('error', json.error?.message ?? '删除失败')
       }

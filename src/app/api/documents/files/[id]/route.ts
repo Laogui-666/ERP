@@ -36,7 +36,11 @@ export async function PATCH(
 
     // 更新单个文件的审核状态和驳回原因
     const updateData: Record<string, unknown> = {}
-    if (reviewStatus !== undefined) updateData.reviewStatus = reviewStatus
+    if (reviewStatus !== undefined) {
+      updateData.reviewStatus = reviewStatus
+      // 审核合格时清空驳回原因
+      if (reviewStatus === 'APPROVED') updateData.rejectReason = null
+    }
     if (rejectReason !== undefined) updateData.rejectReason = rejectReason || null
     const updated = await prisma.documentFile.update({
       where: { id },
@@ -64,7 +68,8 @@ export async function PATCH(
         where: { id: docFile.requirementId },
         data: {
           status: newReqStatus as any,
-          // 不覆盖 requirement 级别的 rejectReason，每个文件有独立的审核原因
+          // 审核合格时清空需求级驳回原因
+          ...(newReqStatus === 'APPROVED' ? { rejectReason: null } : {}),
         },
       })
     }

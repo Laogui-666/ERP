@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
       page: z.coerce.number().int().min(1).default(1),
       pageSize: z.coerce.number().int().min(1).max(100).default(20),
       unreadOnly: z.coerce.boolean().optional(),
+      from: z.string().datetime().optional(),
     }).parse(Object.fromEntries(request.nextUrl.searchParams))
 
     const skip = (params.page - 1) * params.pageSize
@@ -24,6 +25,9 @@ export async function GET(request: NextRequest) {
     }
     if (params.unreadOnly) {
       where.isRead = false
+    }
+    if (params.from) {
+      where.createdAt = { gte: new Date(params.from) }
     }
 
     const [notifications, total, unreadCount] = await Promise.all([

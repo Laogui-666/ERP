@@ -3,7 +3,7 @@
 /**
  * 客户端消息页 — 订单会话列表
  *
- * 展示客户所有订单的聊天会话，点击卡片弹出站内会话窗口
+ * 展示客户所有订单的聊天会话，点击卡片弹出全屏站内会话窗口
  */
 
 import { useEffect, useState, useCallback } from 'react'
@@ -30,7 +30,7 @@ export default function CustomerChatPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null)
-  const { rooms } = useChatStore()
+  const { rooms, fetchRooms } = useChatStore()
 
   const fetchData = useCallback(async () => {
     setIsLoading(true)
@@ -47,7 +47,8 @@ export default function CustomerChatPage() {
 
   useEffect(() => {
     fetchData()
-  }, [fetchData])
+    fetchRooms()
+  }, [fetchData, fetchRooms])
 
   // 合并订单和聊天房间数据
   const chatSummaries: ChatSummary[] = orders.map((order) => {
@@ -103,12 +104,9 @@ export default function CustomerChatPage() {
                 style={{ animationDelay: `${i * 50}ms` }}
               >
                 <div className="flex items-start gap-3">
-                  {/* 头像区 */}
                   <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[var(--color-primary)]/15 flex items-center justify-center text-sm">
                     🎫
                   </div>
-
-                  {/* 内容区 */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2 min-w-0">
@@ -123,14 +121,12 @@ export default function CustomerChatPage() {
                         </span>
                       )}
                     </div>
-
                     <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)] mb-1.5">
                       <span>🌍</span>
                       <span>{chat.targetCountry}</span>
                       <span className="text-[var(--color-text-placeholder)]">·</span>
                       <span>{chat.visaType}</span>
                     </div>
-
                     <div className="flex items-center justify-between">
                       <p className="text-xs text-[var(--color-text-placeholder)] truncate max-w-[200px]">
                         {chat.lastMessage || '点击进入会话'}
@@ -149,21 +145,24 @@ export default function CustomerChatPage() {
         )}
       </div>
 
-      {/* 会话窗口 - 全屏覆盖 */}
+      {/* 全屏会话窗口 */}
       {activeOrderId && (
-        <div className="fixed inset-0 z-[60] bg-[rgba(10,13,20,0.95)] animate-fade-in flex flex-col">
-          {/* 顶栏 */}
-          <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-b border-white/[0.06]">
+        <div
+          className="fixed inset-0 z-[60] bg-[rgba(10,13,20,0.98)] animate-fade-in"
+          style={{ display: 'flex', flexDirection: 'column' }}
+        >
+          {/* 会话顶栏 */}
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.06]">
             <button
               onClick={() => setActiveOrderId(null)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--color-text-secondary)] hover:bg-white/[0.06] active:scale-90 transition-all"
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-[var(--color-text-secondary)] hover:bg-white/[0.06] active:scale-90 transition-all"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <div>
-              <p className="text-sm font-medium text-[var(--color-text-primary)]">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
                 {chatSummaries.find(c => c.orderId === activeOrderId)?.orderNo ?? '会话'}
               </p>
               <p className="text-[10px] text-[var(--color-text-placeholder)]">
@@ -172,9 +171,10 @@ export default function CustomerChatPage() {
             </div>
           </div>
 
-          {/* 聊天面板 */}
-          <div className="flex-1 overflow-hidden">
+          {/* 聊天面板 — 填满剩余空间 */}
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
             <ChatPanel
+              key={activeOrderId}
               orderId={activeOrderId}
               compact
               onClose={() => setActiveOrderId(null)}

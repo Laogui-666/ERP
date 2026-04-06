@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { apiFetch } from '@shared/lib/api-client'
 import { StatusBadge } from '@erp/components/orders/status-badge'
@@ -9,6 +9,7 @@ import { CustomerUpload } from '@erp/components/documents/customer-upload'
 import { MaterialChecklist } from '@erp/components/orders/material-checklist'
 import { ChatPanel } from '@erp/components/chat/chat-panel'
 import { useChatStore } from '@erp/stores/chat-store'
+import { registerNotificationHandler } from '@shared/hooks/use-socket-client'
 import { GlassCard } from '@shared/ui/glass-card'
 import { useToast } from '@shared/ui/toast'
 import { formatDateTime, formatDate } from '@shared/lib/utils'
@@ -24,6 +25,7 @@ export default function CustomerOrderDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -43,6 +45,27 @@ export default function CustomerOrderDetailPage() {
 
   useEffect(() => {
     fetchOrder()
+  }, [fetchOrder])
+
+  // Socket 监听：收到此订单的通知时自动刷新（资料变更/审核/状态流转等）
+  useEffect(() => {
+    const handlerId = `customer-order-${orderId}`
+    const unregister = registerNotificationHandler(handlerId, (data) => {
+      if (data.orderId === orderId) {
+        fetchOrder()
+      }
+    })
+    return unregister
+  }, [orderId, fetchOrder])
+
+  // 定期刷新（30秒）：Socket 断连时的 fallback，确保文件状态同步
+  useEffect(() => {
+    pollingRef.current = setInterval(() => {
+      fetchOrder()
+    }, 30000)
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+    }
   }, [fetchOrder])
 
   // 确认提交资料

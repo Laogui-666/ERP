@@ -298,6 +298,37 @@ export async function POST(request: NextRequest) {
       return order
     })
 
+    // Socket 推送：通知资料员和客户（事务外，不阻塞返回）
+    try {
+      const { emitToUser } = await import('@shared/lib/socket')
+      // 通知所有资料员
+      const collectors = await prisma.user.findMany({
+        where: {
+          companyId: user.companyId,
+          role: { in: ['DOC_COLLECTOR', 'VISA_ADMIN'] },
+          status: 'ACTIVE',
+        },
+        select: { id: true },
+      })
+      for (const c of collectors) {
+        emitToUser(c.id, 'notification', {
+          type: 'ORDER_NEW',
+          title: '又有新订单啦',
+          orderId: order.id,
+          orderNo,
+        })
+      }
+      // 通知客户
+      if (order.customerId) {
+        emitToUser(order.customerId, 'notification', {
+          type: 'ORDER_CREATED',
+          title: '订单已创建',
+          orderId: order.id,
+          orderNo,
+        })
+      }
+    } catch { /* socket push is best-effort */ }
+
     return NextResponse.json(createSuccessResponse(order), { status: 201 })
   } catch (error) {
     if (error instanceof AppError) {

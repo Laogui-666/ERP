@@ -187,6 +187,17 @@ export async function PATCH(
       }
     }
 
+    // Socket 推送：资料需求审核事件（让所有在线用户刷新资料列表）
+    try {
+      const { emitToRoom } = await import('@shared/lib/socket')
+      emitToRoom(`order:${requirement.orderId}`, 'documents:updated', {
+        orderId: requirement.orderId,
+        requirementId: id,
+        action: 'requirement_reviewed',
+        status: data.status,
+      })
+    } catch { /* socket push is best-effort */ }
+
     return NextResponse.json(createSuccessResponse(updated))
   } catch (error) {
     if (error instanceof AppError) {

@@ -94,27 +94,68 @@ export async function PATCH(
       },
     })
 
-    // 如果有驳回原因，通知客户
-    if (rejectReason) {
-      const order = docFile.requirement.order
-      if (order?.customerId) {
-        await prisma.notification.create({
-          data: {
-            companyId: user.companyId,
-            userId: order.customerId,
-            orderId: docFile.requirement.orderId,
-            type: 'DOC_REVIEWED',
-            title: '资料审核结果',
-            content: `"${docFile.requirement.name}"中的文件 "${docFile.fileName}" 需修改：${rejectReason}`,
-          },
-        })
-        emitToUser(order.customerId, 'notification', {
+    // 通知客户（所有审核结果都需要通知，不仅仅是有驳回原因时）
+    const order = docFile.requirement.order
+    if (order?.customerId) {
+      const statusText = reviewStatus === 'APPROVED' ? '已合格'
+        : reviewStatus === 'REJECTED' ? '需要修改'
+        : reviewStatus === 'SUPPLEMENT' ? '需要补充'
+        : '已更新'
+      const reasonText = rejectReason ? `：${rejectReason}` : ''
+
+      await prisma.notification.create({
+        data: {
+          companyId: user.companyId,
+          userId: order.customerId,
+          orderId: docFile.requirement.orderId,
           type: 'DOC_REVIEWED',
           title: '资料审核结果',
-          orderId: docFile.requirement.orderId,
-        })
-      }
+          content: `"${docFile.requirement.name}"中的文件 "${docFile.fileName}" ${statusText}${reasonText}`,
+        },
+      })
+      emitToUser(order.customerId, 'notification', {
+        type: 'DOC_REVIEWED',
+        title: '资料审核结果',
+        orderId: docFile.requirement.orderId,
+      })
     }
+
+    // 通知资料员（操作员审核时资料员需要同步知道）
+    if (order?.collectorId && order.collectorId !== user.userId) {
+      const statusText = reviewStatus === 'APPROVED' ? '合格'
+        : reviewStatus === 'REJECTED' ? '已驳回'
+        : reviewStatus === 'SUPPLEMENT' ? '需补充'
+        : '已更新'
+
+      await prisma.notification.create({
+        data: {
+          companyId: user.companyId,
+          userId: order.collectorId,
+          orderId: docFile.requirement.orderId,
+          type: 'DOC_REVIEWED',
+          title: `订单 ${order.orderNo} 文件审核`,
+          content: `文件 "${docFile.fileName}" ${statusText}`,
+        },
+      })
+      emitToUser(order.collectorId, 'notification', {
+        type: 'DOC_REVIEWED',
+        title: '文件审核更新',
+        orderId: docFile.requirement.orderId,
+        orderNo: order.orderNo,
+      })
+    }
+
+    // Socket 推送：文件审核事件（让所有在线用户刷新资料列表）
+    try {
+      const { emitToRoom } = await import('@shared/lib/socket')
+      emitToRoom(`order:${docFile.requirement.orderId}`, 'documents:updated', {
+        orderId: docFile.requirement.orderId,
+        requirementId: docFile.requirementId,
+        fileId: id,
+        action: 'file_reviewed',
+        reviewStatus,
+      })
+    } catch { /* socket push is best-effort */ }
 
     return NextResponse.json(createSuccessResponse(updated))
   } catch (error) {

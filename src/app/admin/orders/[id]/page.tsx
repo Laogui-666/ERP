@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useOrders } from '@erp/hooks/use-orders'
 import { useAuth } from '@shared/hooks/use-auth'
 import { useChatStore } from '@erp/stores/chat-store'
+import { registerNotificationHandler } from '@shared/hooks/use-socket-client'
 import { StatusBadge } from '@erp/components/orders/status-badge'
 import { ApplicantCard } from '@erp/components/orders/applicant-card'
 import { GlassCard } from '@shared/ui/glass-card'
@@ -216,6 +217,17 @@ export default function OrderDetailPage() {
 
   useEffect(() => {
     fetchOrder(orderId)
+  }, [orderId, fetchOrder])
+
+  // Socket 监听：收到此订单的通知时自动刷新资料/材料列表
+  useEffect(() => {
+    const handlerId = `admin-order-${orderId}`
+    const unregister = registerNotificationHandler(handlerId, (data) => {
+      if (data.orderId === orderId) {
+        fetchOrder(orderId)
+      }
+    })
+    return unregister
   }, [orderId, fetchOrder])
 
   // 智能资料检查

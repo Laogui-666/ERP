@@ -151,7 +151,37 @@ export async function PATCH(
             content: `${applicant.name} 的出签结果已更新，订单状态变更为 ${result.newOrderStatus}`,
           })),
         })
+
+        // Socket 推送
+        try {
+          const { emitToUser } = await import('@shared/lib/socket')
+          for (const uid of notifyUserIds) {
+            emitToUser(uid, 'notification', {
+              type: 'STATUS_CHANGE',
+              title: '出签结果更新',
+              orderId: order.id,
+              orderNo: order.orderNo,
+            })
+          }
+        } catch { /* socket push is best-effort */ }
       }
+    } else if (data.visaResult !== undefined || data.documentsComplete !== undefined) {
+      // 非终态但有结果/资料变更时，也推送通知让相关方刷新
+      try {
+        const { emitToUser } = await import('@shared/lib/socket')
+        const order = applicant.order
+        const notifyUserIds = new Set<string>()
+        if (order.collectorId && order.collectorId !== user.userId) notifyUserIds.add(order.collectorId)
+        if (order.customerId && order.customerId !== user.userId) notifyUserIds.add(order.customerId)
+        for (const uid of notifyUserIds) {
+          emitToUser(uid, 'notification', {
+            type: 'STATUS_CHANGE',
+            title: '申请人状态更新',
+            orderId: order.id,
+            orderNo: order.orderNo,
+          })
+        }
+      } catch { /* socket push is best-effort */ }
     }
 
     return NextResponse.json(createSuccessResponse({

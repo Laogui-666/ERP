@@ -141,6 +141,57 @@ export async function POST(request: NextRequest) {
       return docFile
     })
 
+    // 通知资料员/操作员：客户上传了新文件（事务外，不阻塞返回）
+    try {
+      const { emitToUser } = await import('@shared/lib/socket')
+      const orderInfo = await prisma.order.findUnique({
+        where: { id: requirement.order.id },
+        select: { orderNo: true, collectorId: true, operatorId: true, customerId: true },
+      })
+
+      // 客户上传时通知资料员
+      if (orderInfo?.collectorId && orderInfo.collectorId !== user.userId) {
+        await prisma.notification.create({
+          data: {
+            companyId: user.companyId,
+            userId: orderInfo.collectorId,
+            orderId: requirement.order.id,
+            type: 'DOC_REVIEWED',
+            title: `订单 ${orderInfo.orderNo} 客户已上传资料`,
+            content: `客户上传了"${requirement.name}"的文件：${data.fileName}`,
+          },
+        })
+        emitToUser(orderInfo.collectorId, 'notification', {
+          type: 'DOC_REVIEWED',
+          title: '客户已上传资料',
+          orderId: requirement.order.id,
+          orderNo: orderInfo.orderNo,
+        })
+      }
+
+      // 如果操作员在审核阶段，也通知操作员
+      if (orderInfo?.operatorId && orderInfo.operatorId !== user.userId) {
+        emitToUser(orderInfo.operatorId, 'notification', {
+          type: 'DOC_REVIEWED',
+          title: '客户已上传资料',
+          orderId: requirement.order.id,
+          orderNo: orderInfo.orderNo,
+        })
+      }
+
+      // Socket 推送：文件变更事件（让所有在线用户刷新资料列表）
+      const roomId = `order:${requirement.order.id}`
+      const { emitToRoom } = await import('@shared/lib/socket')
+      emitToRoom(roomId, 'documents:updated', {
+        orderId: requirement.order.id,
+        requirementId: data.requirementId,
+        action: 'file_uploaded',
+        fileName: data.fileName,
+      })
+    } catch (err) {
+      logApiError('confirm-notify', err as Error)
+    }
+
     // 修正 OSS Content-Type（事务外，不影响 DB 一致性）
     try {
       const ossClient = getOssClient()

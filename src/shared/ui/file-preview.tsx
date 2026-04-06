@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { cn } from '@shared/lib/utils'
+import { WordPreview } from './word-preview'
+import { ExcelPreview } from './excel-preview'
+import { PdfPreview } from './pdf-preview'
 
 interface FilePreviewProps {
   fileName: string
@@ -346,17 +349,13 @@ function FileLightbox({
               />
             </div>
           ) : isPdf ? (
-            <object data={url} type="application/pdf" className="w-full h-[75vh]">
-              <iframe src={url} className="w-full h-[75vh] border-0" title={fileName} />
-            </object>
+            <PdfPreview url={url} />
           ) : isText ? (
             <iframe src={url} className="w-full h-[75vh] border-0" title={fileName} />
-          ) : (isWord || isExcel) ? (
-            <div className="w-full h-[300px] flex flex-col items-center justify-center gap-4 text-white/60">
-              <span className="text-5xl">{isWord ? '📃' : '📊'}</span>
-              <p className="text-sm">{isWord ? 'Word' : 'Excel'} 文件请下载后查看</p>
-              <a href={url} target="_blank" rel="noopener noreferrer" className="glass-btn-primary px-4 py-2 text-sm">下载文件</a>
-            </div>
+          ) : isWord ? (
+            <WordPreview url={url} />
+          ) : isExcel ? (
+            <ExcelPreview url={url} />
           ) : (
             <div className="w-full h-[300px] flex flex-col items-center justify-center gap-4 text-white/60">
               <span className="text-5xl">📎</span>

@@ -9,6 +9,7 @@ export interface ChatMessageSocketPayload {
   senderId: string
   senderName: string
   senderAvatar: string | null
+  senderRole?: string | null
   type: 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
   content: string
   fileName?: string | null

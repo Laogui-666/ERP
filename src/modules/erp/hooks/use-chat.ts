@@ -46,10 +46,17 @@ export function useChat({ orderId, autoJoin = true }: UseChatOptions) {
   useEffect(() => {
     if (!autoJoin) return
 
-    // 加入房间
-    joinRoom(orderId)
+    // 确保 socket 连接后再加入房间
+    let joined = false
+    let retryTimer: ReturnType<typeof setInterval> | null = null
 
-    // 注册消息回调
+    const tryJoin = () => {
+      if (joined) return
+      joinRoom(orderId)
+      joined = true
+    }
+
+    // 注册消息回调（无论 socket 是否已连接都注册）
     const unregisterMsg = registerChatMessageHandler(handlerId, (data) => {
       if (data.orderId === orderId) {
         addMessage(orderId, {
@@ -59,7 +66,7 @@ export function useChat({ orderId, autoJoin = true }: UseChatOptions) {
           senderId: data.senderId,
           senderName: data.senderName,
           senderAvatar: data.senderAvatar,
-          senderRole: null,
+          senderRole: data.senderRole ?? null,
           type: data.type,
           content: data.content,
           fileName: data.fileName ?? null,
@@ -76,10 +83,24 @@ export function useChat({ orderId, autoJoin = true }: UseChatOptions) {
       }
     })
 
+    // 延迟加入房间（等待 socket 连接）
+    tryJoin()
+    // 如果首次加入失败（socket 未连接），1s 后重试
+    retryTimer = setInterval(() => {
+      if (!joined) tryJoin()
+      else if (retryTimer) clearInterval(retryTimer)
+    }, 1000)
+    // 最多重试 10 秒
+    const stopTimer = setTimeout(() => {
+      if (retryTimer) clearInterval(retryTimer)
+    }, 10000)
+
     return () => {
       unregisterMsg()
       unregisterRead()
       leaveRoom(orderId)
+      if (retryTimer) clearInterval(retryTimer)
+      clearTimeout(stopTimer)
     }
   }, [orderId, autoJoin, handlerId, addMessage, user?.id])
 

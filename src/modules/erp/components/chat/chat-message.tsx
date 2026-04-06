@@ -33,7 +33,7 @@ export const ChatMessage = memo(function ChatMessage({
   return (
     <div
       className={cn(
-        'flex gap-2 max-w-[85%] animate-fade-in-up',
+        'flex gap-2.5 max-w-[90%] animate-fade-in-up',
         isOwn ? 'ml-auto flex-row-reverse' : 'mr-auto'
       )}
       style={{ animationDuration: '200ms' }}
@@ -42,7 +42,7 @@ export const ChatMessage = memo(function ChatMessage({
       {showAvatar ? (
         <div
           className={cn(
-            'w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-medium',
+            'w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-sm font-medium',
             isOwn
               ? 'bg-[var(--color-primary)]/20 text-[var(--color-primary-light)]'
               : 'bg-white/10 text-[var(--color-text-secondary)]'
@@ -51,14 +51,14 @@ export const ChatMessage = memo(function ChatMessage({
           {message.senderName?.[0] ?? '?'}
         </div>
       ) : (
-        <div className="w-8 shrink-0" />
+        <div className="w-9 shrink-0" />
       )}
 
-      <div className={cn('flex flex-col gap-0.5', isOwn ? 'items-end' : 'items-start')}>
+      <div className={cn('flex flex-col gap-1', isOwn ? 'items-end' : 'items-start')}>
         {/* 发送者名称 + 时间 */}
         {showAvatar && (
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-[11px] text-[var(--color-text-placeholder)]">
+            <span className="text-xs text-[var(--color-text-placeholder)]">
               {message.senderName}
               {message.senderRole && message.senderRole !== 'CUSTOMER' && (
                 <span className="ml-1 text-[var(--color-accent)]">
@@ -72,27 +72,27 @@ export const ChatMessage = memo(function ChatMessage({
         {/* 消息气泡 */}
         <div
           className={cn(
-            'rounded-2xl px-3.5 py-2 text-sm max-w-full break-words',
+            'rounded-2xl px-4 py-2.5 text-[14px] max-w-full break-words',
             isOwn
               ? 'bg-[var(--color-primary)]/15 border border-[var(--color-primary)]/10 text-[var(--color-text-primary)]'
               : 'bg-white/[0.06] border border-white/[0.06] text-[var(--color-text-primary)]'
           )}
         >
           {message.type === 'TEXT' && (
-            <p className="whitespace-pre-wrap break-words">{message.content}</p>
+            <p className="whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
           )}
 
           {message.type === 'IMAGE' && (
             <button
               onClick={() => onImageClick?.(message.content)}
-              className="block max-w-[220px] rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
+              className="block max-w-[260px] rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
             >
               <Image
                 src={message.content}
                 alt={message.fileName ?? '图片'}
-                width={220}
-                height={200}
-                className="w-full h-auto max-h-[200px] object-cover rounded-lg"
+                width={260}
+                height={240}
+                className="w-full h-auto max-h-[240px] object-cover rounded-lg"
                 loading="lazy"
                 unoptimized
               />
@@ -104,20 +104,20 @@ export const ChatMessage = memo(function ChatMessage({
               href={message.content}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2.5 p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] transition-colors group"
+              className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] transition-colors group"
             >
-              <span className="text-xl shrink-0">📄</span>
+              <span className="text-2xl shrink-0">📄</span>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">
+                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                   {message.fileName ?? '文件'}
                 </p>
                 {message.fileSize != null && (
-                  <p className="text-[10px] text-[var(--color-text-placeholder)]">
+                  <p className="text-xs text-[var(--color-text-placeholder)]">
                     {formatFileSize(message.fileSize)}
                   </p>
                 )}
               </div>
-              <svg className="w-4 h-4 text-[var(--color-text-placeholder)] group-hover:text-[var(--color-primary-light)] shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-5 h-5 text-[var(--color-text-placeholder)] group-hover:text-[var(--color-primary-light)] shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
             </a>
@@ -125,7 +125,7 @@ export const ChatMessage = memo(function ChatMessage({
         </div>
 
         {/* 时间 */}
-        <span className="text-[10px] text-[var(--color-text-placeholder)] px-1">
+        <span className="text-[11px] text-[var(--color-text-placeholder)] px-1">
           {formatMessageTime(message.createdAt)}
         </span>
       </div>

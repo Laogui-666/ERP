@@ -103,10 +103,10 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve()
           } else {
-            reject(new Error(`OSS upload failed: ${xhr.status}`))
+            reject(new Error(`OSS上传失败: HTTP ${xhr.status} ${xhr.statusText}`))
           }
         }
-        xhr.onerror = () => reject(new Error('网络错误'))
+        xhr.onerror = () => reject(new Error('网络错误，无法连接OSS'))
         xhr.send(file)
       })
 
@@ -130,8 +130,9 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
         toast('error', confirmJson.error?.message ?? '确认失败')
         return false
       }
-    } catch {
-      toast('error', '上传失败')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '上传失败'
+      toast('error', msg)
       return false
     } finally {
       setUploadingId(null)

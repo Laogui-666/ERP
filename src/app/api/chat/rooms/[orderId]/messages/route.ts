@@ -197,6 +197,7 @@ export async function POST(
       senderId: user.userId,
       senderName: user.realName,
       senderAvatar: user.avatar,
+      senderRole: user.role,
       type: message.type,
       content: message.content,
       fileName: message.fileName ?? null,

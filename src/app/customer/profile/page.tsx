@@ -7,6 +7,7 @@ import { GlassCard } from '@shared/ui/glass-card'
 import { useToast } from '@shared/ui/toast'
 import { apiFetch } from '@shared/lib/api-client'
 import { USER_ROLE_LABELS } from '@shared/types/user'
+import { formatDate } from '@shared/lib/utils'
 
 export default function CustomerProfilePage() {
   const { user, logout } = useAuth()
@@ -102,70 +103,166 @@ export default function CustomerProfilePage() {
   if (!user) return null
 
   return (
-    <div className="space-y-4 pb-20">
-      <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">我的</h2>
-
-      {/* 用户信息卡 */}
-      <GlassCard className="p-5 animate-fade-in-up">
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]/15 text-xl font-bold text-[var(--color-primary)]">
-            {user.realName?.[0] ?? user.username[0]}
+    <div className="space-y-5 pb-20">
+      {/* ===== 个人信息头部 ===== */}
+      <GlassCard className="overflow-hidden animate-fade-in-up">
+        {/* 背景装饰 */}
+        <div className="relative h-20 bg-gradient-to-br from-[var(--color-primary)]/20 via-[var(--color-accent)]/10 to-transparent">
+          <div className="absolute -bottom-8 left-5">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] text-2xl font-bold text-white shadow-lg shadow-[var(--color-primary)]/20 border-2 border-white/10">
+              {user.realName?.[0] ?? user.username[0]}
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-              {user.realName ?? user.username}
-            </p>
-            <p className="mt-0.5 text-xs text-[var(--color-text-placeholder)]">
-              {user.phone}
-            </p>
-            {user.email && (
-              <p className="text-xs text-[var(--color-text-placeholder)]">{user.email}</p>
-            )}
-            <p className="mt-1 text-[10px] text-[var(--color-accent)]">
+        </div>
+        {/* 用户信息 */}
+        <div className="px-5 pt-10 pb-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-base font-bold text-[var(--color-text-primary)]">
+                {user.realName ?? user.username}
+              </h2>
+              <p className="mt-1 text-xs text-[var(--color-text-placeholder)]">
+                用户名：{user.username}
+              </p>
+            </div>
+            <span className="rounded-full bg-[var(--color-accent)]/15 px-2.5 py-1 text-[10px] font-medium text-[var(--color-accent)]">
               {USER_ROLE_LABELS[user.role]}
-              {user.department?.name && ` · ${user.department.name}`}
-            </p>
+            </span>
           </div>
         </div>
       </GlassCard>
 
-      {/* 菜单 */}
-      <GlassCard className="animate-fade-in-up divide-y divide-white/[0.06]" style={{ animationDelay: '50ms' }}>
-        <Link
-          href="/customer/orders"
-          className="flex items-center justify-between px-5 py-4 transition-colors hover:bg-white/[0.03]"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-lg">📋</span>
-            <span className="text-sm text-[var(--color-text-primary)]">我的订单</span>
+      {/* ===== 联系方式 ===== */}
+      <div className="animate-fade-in-up" style={{ animationDelay: '50ms' }}>
+        <p className="mb-2 text-xs font-medium text-[var(--color-text-placeholder)] uppercase tracking-wider px-1">
+          联系方式
+        </p>
+        <GlassCard className="divide-y divide-white/[0.04]">
+          <div className="flex items-center gap-3 px-5 py-3.5">
+            <span className="text-base">📱</span>
+            <div className="flex-1">
+              <p className="text-[10px] text-[var(--color-text-placeholder)]">手机号</p>
+              <p className="text-sm text-[var(--color-text-primary)]">{user.phone}</p>
+            </div>
           </div>
-          <svg className="h-4 w-4 text-[var(--color-text-placeholder)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
-        <button
-          onClick={() => setShowPwForm(!showPwForm)}
-          className="flex w-full items-center justify-between px-5 py-4 transition-colors hover:bg-white/[0.03]"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-lg">🔒</span>
-            <span className="text-sm text-[var(--color-text-primary)]">修改密码</span>
+          <div className="flex items-center gap-3 px-5 py-3.5">
+            <span className="text-base">📧</span>
+            <div className="flex-1">
+              <p className="text-[10px] text-[var(--color-text-placeholder)]">邮箱</p>
+              <p className="text-sm text-[var(--color-text-primary)]">
+                {user.email || '未绑定'}
+              </p>
+            </div>
           </div>
-          <svg
-            className={`h-4 w-4 text-[var(--color-text-placeholder)] transition-transform ${showPwForm ? 'rotate-90' : ''}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </GlassCard>
+        </GlassCard>
+      </div>
 
-      {/* 修改密码表单 */}
+      {/* ===== 账号信息 ===== */}
+      <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+        <p className="mb-2 text-xs font-medium text-[var(--color-text-placeholder)] uppercase tracking-wider px-1">
+          账号信息
+        </p>
+        <GlassCard className="divide-y divide-white/[0.04]">
+          <div className="flex items-center gap-3 px-5 py-3.5">
+            <span className="text-base">🆔</span>
+            <div className="flex-1">
+              <p className="text-[10px] text-[var(--color-text-placeholder)]">用户ID</p>
+              <p className="text-xs text-[var(--color-text-secondary)] font-mono">{user.id}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 px-5 py-3.5">
+            <span className="text-base">📅</span>
+            <div className="flex-1">
+              <p className="text-[10px] text-[var(--color-text-placeholder)]">注册时间</p>
+              <p className="text-sm text-[var(--color-text-primary)]">
+                {user.createdAt ? formatDate(user.createdAt) : '—'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 px-5 py-3.5">
+            <span className="text-base">🟢</span>
+            <div className="flex-1">
+              <p className="text-[10px] text-[var(--color-text-placeholder)]">账号状态</p>
+              <p className="text-sm text-[var(--color-success)]">
+                {user.status === 'ACTIVE' ? '正常' : user.status === 'LOCKED' ? '已锁定' : '未激活'}
+              </p>
+            </div>
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* ===== 功能菜单 ===== */}
+      <div className="animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+        <p className="mb-2 text-xs font-medium text-[var(--color-text-placeholder)] uppercase tracking-wider px-1">
+          功能
+        </p>
+        <GlassCard className="divide-y divide-white/[0.04]">
+          <Link
+            href="/customer/orders"
+            className="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-white/[0.03] active:bg-white/[0.05]"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-base">📋</span>
+              <span className="text-sm text-[var(--color-text-primary)]">我的订单</span>
+            </div>
+            <svg className="h-4 w-4 text-[var(--color-text-placeholder)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+          <Link
+            href="/customer/notifications"
+            className="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-white/[0.03] active:bg-white/[0.05]"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-base">🔔</span>
+              <span className="text-sm text-[var(--color-text-primary)]">站内通知</span>
+            </div>
+            <svg className="h-4 w-4 text-[var(--color-text-placeholder)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+          <Link
+            href="/customer/chat"
+            className="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-white/[0.03] active:bg-white/[0.05]"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-base">💬</span>
+              <span className="text-sm text-[var(--color-text-primary)]">消息</span>
+            </div>
+            <svg className="h-4 w-4 text-[var(--color-text-placeholder)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </GlassCard>
+      </div>
+
+      {/* ===== 安全设置 ===== */}
+      <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+        <p className="mb-2 text-xs font-medium text-[var(--color-text-placeholder)] uppercase tracking-wider px-1">
+          安全设置
+        </p>
+        <GlassCard>
+          <button
+            onClick={() => setShowPwForm(!showPwForm)}
+            className="flex w-full items-center justify-between px-5 py-3.5 transition-colors hover:bg-white/[0.03] active:bg-white/[0.05]"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-base">🔒</span>
+              <span className="text-sm text-[var(--color-text-primary)]">修改密码</span>
+            </div>
+            <svg
+              className={`h-4 w-4 text-[var(--color-text-placeholder)] transition-transform ${showPwForm ? 'rotate-90' : ''}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </GlassCard>
+      </div>
+
+      {/* ===== 修改密码表单 ===== */}
       {showPwForm && (
-        <GlassCard className="animate-fade-in-up space-y-3 p-5" style={{ animationDelay: '100ms' }}>
+        <GlassCard className="animate-fade-in-up space-y-3 p-5">
           <PasswordInput
             label="当前密码"
             value={oldPassword}
@@ -206,13 +303,19 @@ export default function CustomerProfilePage() {
         </GlassCard>
       )}
 
-      {/* 退出登录 */}
+      {/* ===== 退出登录 ===== */}
       <button
         onClick={handleLogout}
-        className="w-full rounded-xl border border-[var(--color-error)]/30 py-3 text-sm font-medium text-[var(--color-error)] transition-colors hover:bg-[var(--color-error)]/10"
+        className="w-full rounded-xl border border-[var(--color-error)]/30 py-3 text-sm font-medium text-[var(--color-error)] transition-colors hover:bg-[var(--color-error)]/10 active:scale-[0.98] animate-fade-in-up"
+        style={{ animationDelay: '250ms' }}
       >
         退出登录
       </button>
+
+      {/* 版本号 */}
+      <p className="text-center text-[10px] text-[var(--color-text-placeholder)]/50 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+        华夏签证 v0.1.0
+      </p>
     </div>
   )
 }

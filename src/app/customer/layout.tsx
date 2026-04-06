@@ -14,7 +14,7 @@ const TABS = [
   { href: '/customer/orders', label: '订单', icon: '📋' },
   { href: '/customer/notifications', label: '通知', icon: '🔔' },
   { href: '/customer/chat', label: '消息', icon: '💬' },
-  { href: '/customer/profile', label: '我的', icon: '👤' },
+  { href: '/portal/profile', label: '我的', icon: '👤' },
 ]
 
 export default function CustomerLayout({

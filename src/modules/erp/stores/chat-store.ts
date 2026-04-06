@@ -119,7 +119,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (!json.success) {
         throw new Error(json.error?.message ?? '发送失败')
       }
-      // 不在这里 addMessage，等 Socket 推送 chat:message 事件统一添加
+      // 乐观更新：API 成功后立即添加消息到本地（不等 Socket 事件）
+      // Socket 事件到达时 addMessage 会做幂等检查，不会重复添加
+      const msg = json.data
+      if (msg && msg.id) {
+        get().addMessage(orderId, {
+          id: msg.id,
+          roomId: msg.roomId ?? '',
+          orderId,
+          senderId: msg.senderId ?? '',
+          senderName: msg.senderName ?? '',
+          senderAvatar: msg.senderAvatar ?? null,
+          senderRole: msg.senderRole ?? null,
+          type: msg.type ?? payload.type,
+          content: msg.content ?? payload.content,
+          fileName: msg.fileName ?? payload.fileName ?? null,
+          fileSize: msg.fileSize ?? payload.fileSize ?? null,
+          createdAt: msg.createdAt ?? new Date().toISOString(),
+        })
+      }
     } catch (err) {
       throw err
     } finally {

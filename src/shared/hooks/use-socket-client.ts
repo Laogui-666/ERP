@@ -147,6 +147,7 @@ export function useSocketClient(options: UseSocketOptions = {}) {
     const socket = io({
       // 不传 auth.token，依赖 HttpOnly Cookie 自动携带
       transports: ['websocket', 'polling'],
+      withCredentials: true,
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,

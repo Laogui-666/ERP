@@ -1489,7 +1489,7 @@ function ChatFloatingButton({ orderId }: { orderId: string }) {
   return (
     <div className="fixed bottom-6 right-6 z-40">
       {isOpen && (
-        <div className="w-96 h-[520px] mb-3 rounded-2xl overflow-hidden shadow-2xl border border-white/[0.08] animate-fade-in-up"
+        <div className="w-[420px] h-[580px] mb-3 rounded-2xl overflow-hidden shadow-2xl border border-white/[0.08] animate-fade-in-up"
           style={{ animationDuration: '200ms' }}
         >
           <ChatPanel orderId={orderId} onClose={() => setIsOpen(false)} />

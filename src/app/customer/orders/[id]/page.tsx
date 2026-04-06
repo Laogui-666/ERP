@@ -479,7 +479,7 @@ function CustomerChatButton({ orderId }: { orderId: string }) {
         <div className={`
           fixed z-50
           max-sm:inset-0 max-sm:rounded-none
-          sm:bottom-28 sm:right-4 sm:w-80 sm:h-96 sm:rounded-2xl
+          sm:bottom-20 sm:right-4 sm:w-96 sm:h-[500px] sm:rounded-2xl
           overflow-hidden shadow-2xl border border-white/[0.08] animate-fade-in-up
         `} style={{ animationDuration: '200ms' }}>
           <ChatPanel orderId={orderId} compact onClose={() => setIsOpen(false)} />

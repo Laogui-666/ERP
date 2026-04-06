@@ -258,6 +258,16 @@ export async function POST(
 
     return NextResponse.json(createSuccessResponse({
       id: message.id,
+      roomId: room.id,
+      orderId,
+      senderId: user.userId,
+      senderName: user.realName,
+      senderAvatar: user.avatar,
+      senderRole: user.role,
+      type: message.type,
+      content: message.content,
+      fileName: message.fileName,
+      fileSize: message.fileSize,
       createdAt: message.createdAt.toISOString(),
     }), { status: 201 })
   } catch (error) {

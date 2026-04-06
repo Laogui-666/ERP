@@ -9,7 +9,7 @@ import { CustomerUpload } from '@erp/components/documents/customer-upload'
 import { MaterialChecklist } from '@erp/components/orders/material-checklist'
 import { ChatPanel } from '@erp/components/chat/chat-panel'
 import { useChatStore } from '@erp/stores/chat-store'
-import { registerNotificationHandler } from '@shared/hooks/use-socket-client'
+import { registerNotificationHandler, registerChatMessageHandler } from '@shared/hooks/use-socket-client'
 import { GlassCard } from '@shared/ui/glass-card'
 import { useToast } from '@shared/ui/toast'
 import { formatDateTime, formatDate } from '@shared/lib/utils'
@@ -450,6 +450,17 @@ function CustomerChatButton({ orderId }: { orderId: string }) {
   useEffect(() => {
     fetchRooms()
   }, [fetchRooms])
+
+  // 收到新消息时刷新会话列表（更新未读角标）
+  useEffect(() => {
+    const handlerId = `chat-badge-${orderId}`
+    const unregister = registerChatMessageHandler(handlerId, (data) => {
+      if (data.orderId === orderId) {
+        fetchRooms()
+      }
+    })
+    return unregister
+  }, [orderId, fetchRooms])
 
   return (
     <>

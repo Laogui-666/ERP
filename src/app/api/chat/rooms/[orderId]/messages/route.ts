@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@shared/lib/prisma'
 import { getCurrentUser } from '@shared/lib/auth'
 import { AppError, createSuccessResponse } from '@shared/types/api'
-import { emitToRoom, emitToUser } from '@shared/lib/socket'
-import { logApiError } from '@shared/lib/logger'
+import { emitToRoom } from '@shared/lib/socket'
 import { z } from 'zod'
 import type { ChatMessageItem } from '@erp/types/chat'
 
@@ -205,56 +204,7 @@ export async function POST(
       createdAt: message.createdAt.toISOString(),
     })
 
-    // 离线消息通知：给订单相关用户创建 Notification（5 分钟去重）
-    try {
-      const orderDetail = await prisma.order.findUnique({
-        where: { id: orderId },
-        select: { customerId: true, collectorId: true, operatorId: true, createdBy: true, orderNo: true },
-      })
-      if (orderDetail) {
-        const relatedUserIds = [
-          orderDetail.customerId,
-          orderDetail.collectorId,
-          orderDetail.operatorId,
-          orderDetail.createdBy,
-        ].filter((id): id is string => !!id && id !== user.userId)
-
-        const notificationContent = data.type === 'TEXT'
-          ? `${user.realName}: ${data.content.slice(0, 80)}`
-          : `${user.realName}: 发送了${data.type === 'IMAGE' ? '图片' : '文件'}`
-
-        for (const targetUserId of relatedUserIds) {
-          const recent = await prisma.notification.findFirst({
-            where: {
-              userId: targetUserId,
-              orderId,
-              type: 'CHAT_MESSAGE',
-              createdAt: { gte: new Date(Date.now() - 5 * 60 * 1000) },
-            },
-          })
-          if (!recent) {
-            await prisma.notification.create({
-              data: {
-                companyId: user.companyId,
-                userId: targetUserId,
-                orderId,
-                type: 'CHAT_MESSAGE',
-                title: `订单 ${orderDetail.orderNo} 有新消息`,
-                content: notificationContent,
-              },
-            })
-            emitToUser(targetUserId, 'notification', {
-              type: 'CHAT_MESSAGE',
-              title: '有新消息',
-              orderId,
-              orderNo: orderDetail.orderNo,
-            })
-          }
-        }
-      }
-    } catch (err) {
-      logApiError('chat-offline-notification', err, { orderId })
-    }
+    // 聊天消息不创建 Notification — 有独立的聊天系统处理未读计数
 
     return NextResponse.json(createSuccessResponse({
       id: message.id,

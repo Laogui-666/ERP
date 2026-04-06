@@ -10,8 +10,10 @@ import { useSocketClient, registerChatMessageHandler } from '@shared/hooks/use-s
 import { cn } from '@shared/lib/utils'
 
 const TABS = [
+  { href: '/portal', label: '首页', icon: '🏠' },
   { href: '/customer/orders', label: '订单', icon: '📋' },
-  { href: '/customer/notifications', label: '消息', icon: '💬' },
+  { href: '/customer/notifications', label: '通知', icon: '🔔' },
+  { href: '/customer/chat', label: '消息', icon: '💬' },
   { href: '/customer/profile', label: '我的', icon: '👤' },
 ]
 
@@ -118,7 +120,15 @@ export default function CustomerLayout({
         <div className="mx-auto flex max-w-lg justify-around py-2">
           {TABS.map((tab) => {
             const isActive = pathname === tab.href || pathname.startsWith(tab.href + '/')
-            const showBadge = tab.href === '/customer/notifications' && (unreadCount + chatUnread) > 0
+            let showBadge = false
+            let badgeCount = 0
+            if (tab.href === '/customer/notifications' && unreadCount > 0) {
+              showBadge = true
+              badgeCount = unreadCount
+            } else if (tab.href === '/customer/chat' && chatUnread > 0) {
+              showBadge = true
+              badgeCount = chatUnread
+            }
 
             return (
               <Link
@@ -135,7 +145,7 @@ export default function CustomerLayout({
                   <span className="text-[18px]">{tab.icon}</span>
                   {showBadge && (
                     <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 rounded-full bg-[var(--color-error)] text-[10px] text-white flex items-center justify-center px-1 font-medium shadow-sm shadow-[var(--color-error)]/30">
-                      {unreadCount + chatUnread > 9 ? '9+' : unreadCount + chatUnread}
+                      {badgeCount > 9 ? '9+' : badgeCount}
                     </span>
                   )}
                 </span>

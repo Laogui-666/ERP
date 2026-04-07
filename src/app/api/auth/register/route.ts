@@ -13,7 +13,10 @@ const registerSchema = z.object({
   }),
   user: z.object({
     username: z.string().min(3).max(50),
-    password: z.string().min(8).max(50),
+    password: z.string()
+      .min(8, '密码至少8位')
+      .max(50, '密码最多50位')
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, '密码需包含大小写字母和数字'),
     realName: z.string().min(1).max(50),
     phone: z.string().regex(/^1[3-9]\d{9}$/, '请输入有效的手机号'),
     email: z.string().email().optional(),

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import DOMPurify from 'dompurify'
 
 interface ExcelPreviewProps {
   url: string
@@ -55,9 +56,13 @@ export function ExcelPreview({ url }: ExcelPreviewProps) {
           const rows = range.e.r - range.s.r + 1
           const cols = range.e.c - range.s.c + 1
 
-          // 转换为 HTML 表格
-          const html = XLSX.utils.sheet_to_html(sheet, {
+          // 转换为 HTML 表格并消毒（防 XSS）
+          const rawHtml = XLSX.utils.sheet_to_html(sheet, {
             editable: false,
+          })
+          const html = DOMPurify.sanitize(rawHtml, {
+            ALLOWED_TAGS: ['table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th', 'colgroup', 'col', 'caption', 'b', 'i', 'u', 'br', 'span', 'div', 'p', 'font'],
+            ALLOWED_ATTR: ['style', 'class', 'colspan', 'rowspan', 'bgcolor', 'color', 'width', 'height', 'align', 'valign'],
           })
 
           parsedSheets.push({

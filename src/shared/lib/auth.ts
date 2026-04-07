@@ -15,7 +15,7 @@ function getAccessSecret(): Uint8Array {
       if (process.env.NODE_ENV === 'production') {
         throw new Error('JWT_SECRET environment variable is required in production')
       }
-      process.stderr.write('[SECURITY] Using default JWT_SECRET — NOT SECURE. Set JWT_SECRET in .env.local\n')
+      console.warn('[SECURITY] Using default JWT_SECRET — NOT SECURE. Set JWT_SECRET in .env.local')
       _accessSecret = new TextEncoder().encode('default-access-secret-dev-only')
     } else {
       _accessSecret = new TextEncoder().encode(secret)
@@ -31,7 +31,7 @@ function getRefreshSecret(): Uint8Array {
       if (process.env.NODE_ENV === 'production') {
         throw new Error('JWT_REFRESH_SECRET environment variable is required in production')
       }
-      process.stderr.write('[SECURITY] Using default JWT_REFRESH_SECRET — NOT SECURE. Set JWT_REFRESH_SECRET in .env.local\n')
+      console.warn('[SECURITY] Using default JWT_REFRESH_SECRET — NOT SECURE. Set JWT_REFRESH_SECRET in .env.local')
       _refreshSecret = new TextEncoder().encode('default-refresh-secret-dev-only')
     } else {
       _refreshSecret = new TextEncoder().encode(secret)
@@ -83,14 +83,14 @@ export async function setAuthCookies(accessToken: string, refreshToken: string) 
   const cookieStore = await cookies()
   cookieStore.set('access_token', accessToken, {
     httpOnly: true,
-    secure: process.env.COOKIE_SECURE === 'true',
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
     maxAge: 15 * 60, // 15 minutes
   })
   cookieStore.set('refresh_token', refreshToken, {
     httpOnly: true,
-    secure: process.env.COOKIE_SECURE === 'true',
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
     maxAge: 7 * 24 * 60 * 60, // 7 days

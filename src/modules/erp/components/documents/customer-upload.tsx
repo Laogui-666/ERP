@@ -102,6 +102,8 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve()
+          } else if (xhr.status === 403) {
+            reject(new Error('OSS 上传被拒绝(403)。请检查阿里云 OSS Bucket 的跨域(CORS)设置，允许来源为当前站点域名，允许方法为 PUT/GET/POST'))
           } else {
             reject(new Error(`OSS上传失败: HTTP ${xhr.status} ${xhr.statusText}`))
           }
@@ -267,14 +269,19 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
                   rejectReason={(req.status === 'REJECTED' || req.status === 'SUPPLEMENT') ? req.rejectReason : null}
                   compact
                 />
-                {canOperate && (
+                {canOperate ? (
                   <button
                     onClick={() => handleDelete(file.id)}
-                    className="shrink-0 text-xs text-[#B87C7C] hover:text-[#B87C7C]/80 transition-colors"
+                    className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[#B87C7C] bg-[#B87C7C]/10 hover:bg-[#B87C7C]/20 active:scale-90 transition-all"
+                    title="删除文件"
                   >
-                    删除
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                   </button>
-                )}
+                ) : req.status === 'APPROVED' ? (
+                  <span className="shrink-0 text-[10px] text-[var(--color-success)] px-1.5 py-0.5 rounded bg-[var(--color-success)]/10">✓ 已合格</span>
+                ) : null}
               </div>
             ))}
           </div>

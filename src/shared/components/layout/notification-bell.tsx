@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useNotifications } from '@shared/hooks/use-notifications'
 import { useAuth } from '@shared/hooks/use-auth'
@@ -12,28 +12,33 @@ export function NotificationBell() {
   const { user } = useAuth()
   const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead } = useNotifications()
   const [isOpen, setIsOpen] = useState(false)
-  const panelRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!isOpen) return
-    const handleClick = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [isOpen])
 
   const handleToggle = () => {
-    if (!isOpen) {
-      void fetchNotifications()
-    }
+    if (!isOpen) void fetchNotifications()
     setIsOpen(!isOpen)
   }
 
+  // ESC 关闭
+  useEffect(() => {
+    if (!isOpen) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsOpen(false) }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [isOpen])
+
+  // 打开时禁止背景滚动
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [isOpen])
+
   return (
-    <div className="relative" ref={panelRef}>
+    <>
+      {/* 铃铛按钮 */}
       <button
         onClick={handleToggle}
         className="relative p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-white/[0.04] active:scale-90 transition-all duration-200"
@@ -48,62 +53,103 @@ export function NotificationBell() {
         )}
       </button>
 
+      {/* 弹窗遮罩 + 卡片 */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-[300px] glass-modal p-0 z-50" style={{ animationDuration: '0.3s' }}>
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
-            <span className="text-[13px] font-semibold text-[var(--color-text-primary)] tracking-wide">通知</span>
-            {unreadCount > 0 && (
-              <button
-                onClick={() => { void markAllAsRead() }}
-                className="text-[11px] text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors font-medium"
-              >
-                全部已读
-              </button>
-            )}
-          </div>
-          <div className="max-h-[320px] overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div className="py-10 text-center">
-                <div className="text-[24px] mb-2 opacity-40">🔔</div>
-                <p className="text-[13px] text-[var(--color-text-placeholder)]">暂无通知</p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={() => setIsOpen(false)}>
+          {/* 遮罩 */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" style={{ animationDuration: '200ms' }} />
+          {/* 卡片 */}
+          <div
+            className="relative w-full max-w-md max-h-[80vh] flex flex-col rounded-2xl border border-white/[0.08] shadow-2xl animate-scale-in overflow-hidden"
+            style={{
+              background: 'rgba(32, 38, 54, 0.96)',
+              backdropFilter: 'blur(40px)',
+              animationDuration: '300ms',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 标题栏 */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[15px] font-semibold text-[var(--color-text-primary)]">通知</span>
+                {unreadCount > 0 && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--color-error)] text-white font-medium">{unreadCount}</span>
+                )}
               </div>
-            ) : (
-              notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className={`px-4 py-3 border-b border-white/[0.03] cursor-pointer transition-all duration-200 hover:bg-white/[0.03] active:bg-white/[0.05] ${
-                    !n.isRead ? 'bg-[var(--color-info)]/[0.03]' : ''
-                  }`}
-                  onClick={() => {
-                    void markAsRead(n.id)
-                    const route = getNotificationRoute(n.orderId, user?.role)
-                    if (route) {
-                      setIsOpen(false)
-                      router.push(route)
-                    }
-                  }}
+              <div className="flex items-center gap-3">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={() => { void markAllAsRead() }}
+                    className="text-[11px] text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors font-medium"
+                  >
+                    全部已读
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] hover:bg-white/[0.06] transition-all"
                 >
-                  <div className="flex items-start gap-2.5">
-                    <span className="text-[14px] shrink-0 mt-0.5">
-                      {NOTIFICATION_ICONS[n.type] ?? '🔔'}
-                    </span>
-                    {!n.isRead && (
-                      <span className="w-[6px] h-[6px] bg-[var(--color-info)] rounded-full mt-1.5 shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] text-[var(--color-text-primary)] font-medium leading-snug">{n.title}</p>
-                      {n.content && (
-                        <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5 line-clamp-2 leading-relaxed">{n.content}</p>
-                      )}
-                      <p className="text-[11px] text-[var(--color-text-placeholder)] mt-1">{formatDateTime(n.createdAt)}</p>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* 通知列表 */}
+            <div className="flex-1 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="py-16 text-center">
+                  <div className="text-[36px] mb-3 opacity-40">🔔</div>
+                  <p className="text-[14px] text-[var(--color-text-placeholder)]">暂无通知</p>
+                  <p className="text-[12px] text-[var(--color-text-placeholder)] mt-1 opacity-60">订单状态变更时会通知您</p>
+                </div>
+              ) : (
+                notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    className={`px-5 py-3.5 border-b border-white/[0.03] cursor-pointer transition-all duration-200 hover:bg-white/[0.03] active:bg-white/[0.05] ${
+                      !n.isRead ? 'bg-[var(--color-info)]/[0.03]' : ''
+                    }`}
+                    onClick={() => {
+                      void markAsRead(n.id)
+                      const route = getNotificationRoute(n.orderId, user?.role)
+                      if (route) { setIsOpen(false); router.push(route) }
+                    }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-[16px] shrink-0 mt-0.5">{NOTIFICATION_ICONS[n.type] ?? '🔔'}</span>
+                      {!n.isRead && <span className="w-[6px] h-[6px] bg-[var(--color-info)] rounded-full mt-2 shrink-0" />}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[13px] text-[var(--color-text-primary)] font-medium leading-snug truncate">{n.title}</p>
+                          {!n.isRead && <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] shrink-0" />}
+                        </div>
+                        {n.content && (
+                          <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5 line-clamp-2 leading-relaxed">{n.content}</p>
+                        )}
+                        <p className="text-[11px] text-[var(--color-text-placeholder)] mt-1">{formatDateTime(n.createdAt)}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                ))
+              )}
+            </div>
+
+            {/* 底部：查看全部 */}
+            {notifications.length > 0 && (
+              <div className="shrink-0 px-5 py-3 border-t border-white/[0.06]">
+                <button
+                  onClick={() => { setIsOpen(false); router.push('/customer/notifications') }}
+                  className="w-full py-2.5 rounded-xl text-[12px] text-[var(--color-info)] hover:text-[var(--color-primary-light)] hover:bg-white/[0.04] transition-all font-medium"
+                >
+                  查看全部通知 →
+                </button>
+              </div>
             )}
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

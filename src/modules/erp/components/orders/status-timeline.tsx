@@ -34,7 +34,6 @@ export function StatusTimeline({ currentStatus, orderLogs }: StatusTimelineProps
   const stepTimes: Record<string, string> = {}
   for (const log of orderLogs) {
     if (log.toStatus) {
-      // 取最新的一条（logs 按时间倒序）
       if (!stepTimes[log.toStatus]) {
         stepTimes[log.toStatus] = log.createdAt
       }
@@ -161,6 +160,119 @@ export function StatusTimeline({ currentStatus, orderLogs }: StatusTimelineProps
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// 横向版本 — 客户端使用
+export function StatusTimelineHorizontal({ currentStatus, orderLogs }: StatusTimelineProps) {
+  const isTerminal = TERMINAL_STATUSES.includes(currentStatus)
+
+  const stepTimes: Record<string, string> = {}
+  for (const log of orderLogs) {
+    if (log.toStatus && !stepTimes[log.toStatus]) {
+      stepTimes[log.toStatus] = log.createdAt
+    }
+  }
+
+  const currentIndex = STEPS.findIndex((s) => s.status === currentStatus)
+
+  return (
+    <div className="overflow-x-auto scrollbar-none -mx-1 px-1">
+      <div className="flex items-start min-w-[520px]">
+        {STEPS.map((step, i) => {
+          const isDone = isTerminal || (currentIndex >= 0 && i <= currentIndex)
+          const isCurrent = !isTerminal && i === currentIndex
+          const time = stepTimes[step.status]
+
+          return (
+            <div key={step.key} className="flex items-start flex-1">
+              {/* 节点 + 文字 */}
+              <div className="flex flex-col items-center shrink-0" style={{ minWidth: 72 }}>
+                {/* 圆点 */}
+                <div
+                  className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs transition-all ${
+                    isCurrent
+                      ? 'bg-[var(--color-primary)] text-white ring-4 ring-[var(--color-primary)]/20'
+                      : isDone
+                        ? 'bg-[var(--color-success)]/20 text-[var(--color-success)]'
+                        : 'bg-white/5 text-[var(--color-text-placeholder)]'
+                  }`}
+                >
+                  {isDone && !isCurrent ? (
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <span>{step.icon}</span>
+                  )}
+                </div>
+                {/* 文字 */}
+                <span
+                  className={`text-[10px] mt-1.5 text-center leading-tight ${
+                    isCurrent
+                      ? 'text-[var(--color-text-primary)] font-medium'
+                      : isDone
+                        ? 'text-[var(--color-text-secondary)]'
+                        : 'text-[var(--color-text-placeholder)]'
+                  }`}
+                >
+                  {ORDER_STATUS_LABELS[step.status]}
+                </span>
+                {time && (
+                  <span className="text-[9px] text-[var(--color-text-placeholder)] mt-0.5">
+                    {formatDateTime(time).slice(5, 16)}
+                  </span>
+                )}
+              </div>
+
+              {/* 连接线 */}
+              {i < STEPS.length - 1 && (
+                <div className="flex-1 flex items-center pt-3.5 px-0">
+                  <div
+                    className={`h-px w-full ${
+                      isDone && i < currentIndex
+                        ? 'bg-[var(--color-primary)]'
+                        : 'bg-white/10'
+                    }`}
+                  />
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        {/* 终态节点 */}
+        {isTerminal && (
+          <>
+            <div className="flex-1 flex items-center pt-3.5 px-0">
+              <div className="h-px w-full bg-[var(--color-primary)]" />
+            </div>
+            <div className="flex flex-col items-center shrink-0" style={{ minWidth: 72 }}>
+              <div
+                className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs"
+                style={{
+                  backgroundColor: `${ORDER_STATUS_COLORS[currentStatus]}20`,
+                  color: ORDER_STATUS_COLORS[currentStatus],
+                }}
+              >
+                {currentStatus === 'APPROVED' ? '🎉' : currentStatus === 'REJECTED' ? '😞' : '⚠️'}
+              </div>
+              <span
+                className="text-[10px] mt-1.5 font-medium text-center"
+                style={{ color: ORDER_STATUS_COLORS[currentStatus] }}
+              >
+                {ORDER_STATUS_LABELS[currentStatus]}
+              </span>
+              {stepTimes[currentStatus] && (
+                <span className="text-[9px] text-[var(--color-text-placeholder)] mt-0.5">
+                  {formatDateTime(stepTimes[currentStatus]).slice(5, 16)}
+                </span>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }

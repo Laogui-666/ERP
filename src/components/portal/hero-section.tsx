@@ -128,7 +128,7 @@ export function HeroSection() {
             style={{ transitionDelay: `${200 + TITLE_WORDS.length * 70 + 600}ms` }}>
             <Link href="/register">
               <Button
-                ref={ctaRef as any}
+                ref={ctaRef}
                 onMouseMove={handleCtaMove}
                 onMouseLeave={handleCtaLeave}
                 size="lg"

@@ -1,8 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Sidebar } from '@erp/components/layout/sidebar'
 import { Topbar } from '@erp/components/layout/topbar'
+import { useNotificationStore } from '@shared/stores/notification-store'
+import { useChatStore } from '@erp/stores/chat-store'
+import { useSocketClient, registerChatMessageHandler } from '@shared/hooks/use-socket-client'
 
 export default function AdminLayout({
   children,
@@ -10,6 +13,60 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { fetchUnreadCount } = useNotificationStore()
+  const { fetchRooms } = useChatStore()
+
+  // Socket 连接 + 通知实时刷新
+  const { isConnected } = useSocketClient({
+    onNotification: () => {
+      fetchUnreadCount()
+    },
+  })
+
+  // 聊天消息实时刷新（防抖 2s）
+  const chatThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    const unregister = registerChatMessageHandler('admin-layout-chat', () => {
+      if (chatThrottleRef.current) return
+      chatThrottleRef.current = setTimeout(() => {
+        chatThrottleRef.current = null
+      }, 2000)
+      fetchRooms()
+    })
+    return () => {
+      unregister()
+      if (chatThrottleRef.current) {
+        clearTimeout(chatThrottleRef.current)
+        chatThrottleRef.current = null
+      }
+    }
+  }, [fetchRooms])
+
+  // 初始化 + 轮询兜底
+  useEffect(() => {
+    fetchUnreadCount()
+    fetchRooms()
+  }, [fetchUnreadCount, fetchRooms])
+
+  useEffect(() => {
+    if (isConnected) return
+    let interval: ReturnType<typeof setInterval> | null = null
+    const poll = () => {
+      if (!document.hidden) {
+        fetchUnreadCount()
+        fetchRooms()
+      }
+    }
+    const startPolling = () => { if (!interval) interval = setInterval(poll, 30000) }
+    const stopPolling = () => { if (interval) { clearInterval(interval); interval = null } }
+    const onVisibility = () => {
+      if (document.hidden) stopPolling()
+      else { poll(); startPolling() }
+    }
+    if (!document.hidden) startPolling()
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => { stopPolling(); document.removeEventListener('visibilitychange', onVisibility) }
+  }, [isConnected, fetchUnreadCount, fetchRooms])
 
   return (
     <div className="min-h-screen bg-background">

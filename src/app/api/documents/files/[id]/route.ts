@@ -67,7 +67,7 @@ export async function PATCH(
       await prisma.documentRequirement.update({
         where: { id: docFile.requirementId },
         data: {
-          status: newReqStatus as any,
+          status: newReqStatus as 'APPROVED' | 'REJECTED' | 'SUPPLEMENT' | 'REVIEWING',
           // 审核合格时清空需求级驳回原因
           ...(newReqStatus === 'APPROVED' ? { rejectReason: null } : {}),
         },

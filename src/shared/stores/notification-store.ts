@@ -17,6 +17,8 @@ interface NotificationState {
   unreadCount: number
   meta: ApiMeta | null
   isLoading: boolean
+  /** 上次写操作时间戳，用于防止轮询覆盖本地递减 */
+  _lastMutationAt: number
 
   fetchNotifications: (unreadOnly?: boolean) => Promise<void>
   fetchUnreadCount: () => Promise<void>
@@ -25,11 +27,15 @@ interface NotificationState {
   addNotification: (notification: NotificationItem) => void
 }
 
+/** 防闪回窗口：写操作后 5 秒内忽略轮询拉取的 count */
+const MUTATION_COOLDOWN_MS = 5000
+
 export const useNotificationStore = create<NotificationState>((set, get) => ({
   notifications: [],
   unreadCount: 0,
   meta: null,
   isLoading: false,
+  _lastMutationAt: 0,
 
   fetchNotifications: async (unreadOnly) => {
     set({ isLoading: true })
@@ -41,10 +47,17 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       const json = await res.json()
 
       if (json.success) {
+        const serverCount = json.meta?.unreadCount
+        const { _lastMutationAt, unreadCount } = get()
+        const withinCooldown = Date.now() - _lastMutationAt < MUTATION_COOLDOWN_MS
+
         set({
           notifications: json.data,
           meta: json.meta ?? null,
-          unreadCount: json.meta?.unreadCount ?? get().unreadCount,
+          // 冷却期内：只允许 count 减少（服务端已同步），不允许回弹增加
+          unreadCount: withinCooldown
+            ? Math.min(unreadCount, serverCount ?? unreadCount)
+            : (serverCount ?? unreadCount),
         })
       }
     } finally {
@@ -54,6 +67,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   fetchUnreadCount: async () => {
     try {
+      // 冷却期内跳过轮询拉取，防止覆盖本地递减
+      const { _lastMutationAt } = get()
+      if (Date.now() - _lastMutationAt < MUTATION_COOLDOWN_MS) return
+
       const res = await apiFetch('/api/notifications?unreadOnly=true&pageSize=1')
       const json = await res.json()
       if (json.success) {
@@ -73,6 +90,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
           n.id === id ? { ...n, isRead: true } : n,
         ),
         unreadCount: Math.max(0, state.unreadCount - 1),
+        _lastMutationAt: Date.now(),
       }))
     }
   },
@@ -84,6 +102,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       set((state) => ({
         notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
         unreadCount: 0,
+        _lastMutationAt: Date.now(),
       }))
     }
   },
@@ -92,6 +111,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     set((state) => ({
       notifications: [notification, ...state.notifications],
       unreadCount: state.unreadCount + 1,
+      _lastMutationAt: Date.now(),
     }))
   },
 }))

@@ -166,7 +166,12 @@ export function NotificationBell({ externalOpen, onExternalClose, hideTrigger = 
             {notifications.length > 0 && (
               <div className="shrink-0 px-5 py-3 border-t border-white/[0.06]">
                 <button
-                  onClick={() => { setIsOpen(false); router.push('/customer/notifications') }}
+                  onClick={() => {
+                    setIsOpen(false)
+                    // 根据角色跳转到对应的通知页面
+                    const isCustomer = user?.role === 'CUSTOMER'
+                    router.push(isCustomer ? '/customer/notifications' : '/admin/workspace')
+                  }}
                   className="w-full py-2.5 rounded-xl text-[12px] text-[var(--color-info)] hover:text-[var(--color-primary-light)] hover:bg-white/[0.04] transition-all font-medium"
                 >
                   查看全部通知 →

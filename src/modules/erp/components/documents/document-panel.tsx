@@ -44,13 +44,19 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
 
   // 内部资料列表（支持本地乐观更新）
   const [localReqs, setLocalReqs] = useState<DocumentRequirement[]>(requirements)
-  // 跟踪当前 orderId，仅在 orderId 变化时从 props 同步（避免竞态覆盖）
+  // 跟踪当前 orderId + 防止乐观更新期间被外部 props 覆盖
   const prevOrderIdRef = useRef(orderId)
+  const pendingMutationRef = useRef(false)
 
   useEffect(() => {
     if (prevOrderIdRef.current !== orderId) {
       // 切换了订单 → 用新 props 初始化
       prevOrderIdRef.current = orderId
+      pendingMutationRef.current = false
+      setLocalReqs(requirements)
+    } else if (!pendingMutationRef.current) {
+      // 同一订单，外部 props 更新（如父组件 fetchOrder 刷新）→ 同步到本地
+      // 排除正在做乐观更新的情况，等 mutation 完成后由 fetchRequirements 同步
       setLocalReqs(requirements)
     }
   }, [orderId, requirements])
@@ -196,6 +202,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       return
     }
     setIsApplying(true)
+    pendingMutationRef.current = true
     try {
       const items = chosen.map(item => ({
         name: item.name,
@@ -220,6 +227,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       toast('error', '添加失败')
     } finally {
       setIsApplying(false)
+      pendingMutationRef.current = false
     }
   }
 
@@ -230,6 +238,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       return
     }
     setIsAdding(true)
+    pendingMutationRef.current = true
     try {
       const res = await apiFetch(`/api/orders/${orderId}/documents`, {
         method: 'POST',
@@ -256,6 +265,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       toast('error', '添加失败')
     } finally {
       setIsAdding(false)
+      pendingMutationRef.current = false
     }
   }
 
@@ -309,6 +319,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
   const handleDeleteReq = async (reqId: string) => {
     if (!confirm('确定删除该资料需求？已上传的文件也会被删除。')) return
     // 乐观更新：立即移除
+    pendingMutationRef.current = true
     setLocalReqs(prev => prev.filter(r => r.id !== reqId))
     try {
       const res = await apiFetch(`/api/documents/${reqId}`, { method: 'DELETE' })
@@ -323,6 +334,8 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     } catch {
       toast('error', '删除失败')
       fetchRequirements().catch(() => {})
+    } finally {
+      pendingMutationRef.current = false
     }
   }
 

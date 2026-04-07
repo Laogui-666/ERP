@@ -2,17 +2,18 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@shared/hooks/use-auth'
 import { useNotificationStore } from '@shared/stores/notification-store'
 import { useChatStore } from '@erp/stores/chat-store'
 import { useSocketClient, registerChatMessageHandler } from '@shared/hooks/use-socket-client'
+import { NotificationBell } from '@shared/components/layout/notification-bell'
 import { cn } from '@shared/lib/utils'
 
 const TABS = [
   { href: '/portal', label: '首页', icon: '🏠' },
   { href: '/customer/orders', label: '订单', icon: '📋' },
-  { href: '/customer/notifications', label: '通知', icon: '🔔' },
+  { href: '/customer/notifications', label: '通知', icon: '🔔', isNotification: true },
   { href: '/customer/chat', label: '消息', icon: '💬' },
   { href: '/portal/profile', label: '我的', icon: '👤' },
 ]
@@ -26,6 +27,7 @@ export default function CustomerLayout({
   const pathname = usePathname()
   const { unreadCount, fetchUnreadCount } = useNotificationStore()
   const { totalUnread: chatUnread, fetchRooms } = useChatStore()
+  const [showNotificationPopup, setShowNotificationPopup] = useState(false)
 
   const { isConnected } = useSocketClient({
     onNotification: () => {
@@ -122,12 +124,46 @@ export default function CustomerLayout({
             const isActive = pathname === tab.href || pathname.startsWith(tab.href + '/')
             let showBadge = false
             let badgeCount = 0
-            if (tab.href === '/customer/notifications' && unreadCount > 0) {
+            if (tab.isNotification && unreadCount > 0) {
               showBadge = true
               badgeCount = unreadCount
             } else if (tab.href === '/customer/chat' && chatUnread > 0) {
               showBadge = true
               badgeCount = chatUnread
+            }
+
+            // 通知 Tab：点击弹出卡片窗口，不跳转
+            if (tab.isNotification) {
+              return (
+                <button
+                  key={tab.href}
+                  onClick={() => setShowNotificationPopup(true)}
+                  className={cn(
+                    'relative flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-xl transition-all duration-200 active:scale-90',
+                    isActive
+                      ? 'text-[var(--color-primary-light)]'
+                      : 'text-[var(--color-text-placeholder)]',
+                  )}
+                >
+                  <span className="relative">
+                    <span className="text-[18px]">{tab.icon}</span>
+                    {showBadge && (
+                      <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 rounded-full bg-[var(--color-error)] text-[10px] text-white flex items-center justify-center px-1 font-medium shadow-sm shadow-[var(--color-error)]/30">
+                        {badgeCount > 9 ? '9+' : badgeCount}
+                      </span>
+                    )}
+                  </span>
+                  <span className={cn(
+                    'text-[11px] font-medium transition-colors',
+                    isActive ? 'text-[var(--color-primary-light)]' : 'text-[var(--color-text-placeholder)]'
+                  )}>
+                    {tab.label}
+                  </span>
+                  {isActive && (
+                    <span className="absolute -bottom-0.5 w-5 h-[2px] rounded-full bg-[var(--color-primary)]" />
+                  )}
+                </button>
+              )
             }
 
             return (
@@ -163,6 +199,13 @@ export default function CustomerLayout({
           })}
         </div>
       </nav>
+
+      {/* 通知弹窗（底部 Tab 触发） */}
+      <NotificationBell
+        hideTrigger
+        externalOpen={showNotificationPopup}
+        onExternalClose={() => setShowNotificationPopup(false)}
+      />
     </div>
   )
 }

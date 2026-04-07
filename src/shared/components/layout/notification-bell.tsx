@@ -1,22 +1,46 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useNotifications } from '@shared/hooks/use-notifications'
 import { useAuth } from '@shared/hooks/use-auth'
 import { formatDateTime } from '@shared/lib/utils'
 import { NOTIFICATION_ICONS, getNotificationRoute } from '@shared/lib/notification-icons'
 
-export function NotificationBell() {
+interface NotificationBellProps {
+  /** 外部控制弹窗开关（用于底部 Tab 等场景） */
+  externalOpen?: boolean
+  /** 外部关闭回调 */
+  onExternalClose?: () => void
+  /** 隐藏默认铃铛按钮（仅渲染弹窗，由外部触发器控制） */
+  hideTrigger?: boolean
+}
+
+export function NotificationBell({ externalOpen, onExternalClose, hideTrigger = false }: NotificationBellProps = {}) {
   const router = useRouter()
   const { user } = useAuth()
   const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead } = useNotifications()
-  const [isOpen, setIsOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+
+  // 弹窗是否打开：外部控制优先，否则内部状态
+  const isOpen = externalOpen !== undefined ? externalOpen : internalOpen
+  const setIsOpen = useCallback((open: boolean) => {
+    if (externalOpen !== undefined) {
+      if (!open) onExternalClose?.()
+    } else {
+      setInternalOpen(open)
+    }
+  }, [externalOpen, onExternalClose])
 
   const handleToggle = () => {
-    if (!isOpen) void fetchNotifications()
-    setIsOpen(!isOpen)
+    if (!internalOpen) void fetchNotifications()
+    setInternalOpen(!internalOpen)
   }
+
+  // 打开时拉取通知
+  useEffect(() => {
+    if (isOpen) void fetchNotifications()
+  }, [isOpen, fetchNotifications])
 
   // ESC 关闭
   useEffect(() => {
@@ -24,7 +48,7 @@ export function NotificationBell() {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsOpen(false) }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [isOpen])
+  }, [isOpen, setIsOpen])
 
   // 打开时禁止背景滚动
   useEffect(() => {
@@ -38,20 +62,22 @@ export function NotificationBell() {
 
   return (
     <>
-      {/* 铃铛按钮 */}
-      <button
-        onClick={handleToggle}
-        className="relative p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-white/[0.04] active:scale-90 transition-all duration-200"
-      >
-        <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-        </svg>
-        {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-[var(--color-error)] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 shadow-sm shadow-[var(--color-error)]/30">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
-        )}
-      </button>
+      {/* 铃铛按钮（可隐藏） */}
+      {!hideTrigger && (
+        <button
+          onClick={handleToggle}
+          className="relative p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-white/[0.04] active:scale-90 transition-all duration-200"
+        >
+          <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-[var(--color-error)] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 shadow-sm shadow-[var(--color-error)]/30">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </button>
+      )}
 
       {/* 弹窗遮罩 + 卡片 */}
       {isOpen && (

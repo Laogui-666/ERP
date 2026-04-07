@@ -7,6 +7,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiFetch } from '@shared/lib/api-client'
+import { useNotificationStore } from '@shared/stores/notification-store'
 import { GlassCard } from '@shared/ui/glass-card'
 import { useToast } from '@shared/ui/toast'
 import { formatDateTime } from '@shared/lib/utils'
@@ -111,6 +112,13 @@ export default function CustomerNotificationsPage() {
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
       )
       setUnreadCount((prev) => Math.max(0, prev - 1))
+      // 同步更新全局 store，让底部 Tab 角标同步减少
+      useNotificationStore.setState((state) => ({
+        notifications: state.notifications.map((n) =>
+          n.id === id ? { ...n, isRead: true } : n,
+        ),
+        unreadCount: Math.max(0, state.unreadCount - 1),
+      }))
     }
   }
 
@@ -120,6 +128,11 @@ export default function CustomerNotificationsPage() {
     if (json.success) {
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
       setUnreadCount(0)
+      // 同步更新全局 store
+      useNotificationStore.setState((state) => ({
+        notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
+        unreadCount: 0,
+      }))
       toast('success', '已全部标记为已读')
     }
   }

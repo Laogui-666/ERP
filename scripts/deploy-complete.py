@@ -30,7 +30,7 @@ PASS = "Laogui@900327"
 PROJECT_DIR = "/www/wwwroot/ERP"
 SERVICE_PORT = 3002
 PM2_NAME = "erp"
-LOCAL_PROJECT = os.path.dirname(os.path.abspath(__file__))
+LOCAL_PROJECT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # 排除的文件/目录（不上传）
 EXCLUDE_DIRS = {

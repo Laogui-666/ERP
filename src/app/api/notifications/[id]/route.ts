@@ -21,12 +21,19 @@ export async function PATCH(
       throw new AppError('NOT_FOUND', '通知不存在', 404)
     }
 
-    const updated = await prisma.notification.update({
-      where: { id: id },
-      data: { isRead: true },
+    if (!notification.isRead) {
+      await prisma.notification.update({
+        where: { id: id },
+        data: { isRead: true },
+      })
+    }
+
+    // 返回最新未读数，前端直接使用，避免轮询覆盖
+    const unreadCount = await prisma.notification.count({
+      where: { userId: user.userId, companyId: user.companyId, isRead: false },
     })
 
-    return NextResponse.json(createSuccessResponse(updated))
+    return NextResponse.json(createSuccessResponse({ id, isRead: true, unreadCount }))
   } catch (error) {
     if (error instanceof AppError) {
       return NextResponse.json(error.toJSON(), { status: error.statusCode })

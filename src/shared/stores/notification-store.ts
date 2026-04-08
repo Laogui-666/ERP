@@ -85,11 +85,13 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     const res = await apiFetch(`/api/notifications/${id}`, { method: 'PATCH' })
     const json = await res.json()
     if (json.success) {
+      // 服务端返回权威 unreadCount，直接使用
+      const serverCount = json.data?.unreadCount
       set((state) => ({
         notifications: state.notifications.map((n) =>
           n.id === id ? { ...n, isRead: true } : n,
         ),
-        unreadCount: Math.max(0, state.unreadCount - 1),
+        unreadCount: serverCount ?? Math.max(0, state.unreadCount - 1),
         _lastMutationAt: Date.now(),
       }))
     }
@@ -99,11 +101,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     const res = await apiFetch('/api/notifications/mark-all-read', { method: 'POST' })
     const json = await res.json()
     if (json.success) {
-      set((state) => ({
-        notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
+      set({
+        notifications: [],
         unreadCount: 0,
         _lastMutationAt: Date.now(),
-      }))
+      })
     }
   },
 

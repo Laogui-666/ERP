@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       data: { isRead: true },
     })
 
-    return NextResponse.json(createSuccessResponse({ message: '已全部标记为已读' }))
+    return NextResponse.json(createSuccessResponse({ message: '已全部标记为已读', unreadCount: 0 }))
   } catch (error) {
     if (error instanceof AppError) {
       return NextResponse.json(error.toJSON(), { status: error.statusCode })

@@ -2,8 +2,11 @@
 import { apiFetch } from '@shared/lib/api-client'
 
 import { useEffect, useState, useCallback } from 'react'
-import Link from 'next/link'
-import { StatCard } from '@erp/components/analytics/stat-card'
+import { motion } from 'framer-motion'
+import { LiquidStatCard } from '@design-system/components/liquid-stat-card'
+import { LiquidQuickAction } from '@design-system/components/liquid-quick-action'
+import { LiquidCard, LiquidCardContent } from '@design-system/components/liquid-card'
+import { staggerContainer, staggerItem, liquidSpringConfig } from '@design-system/theme/animations'
 
 interface OverviewData {
   month: string
@@ -42,25 +45,51 @@ export default function DashboardPage() {
   const inProgress = data ? String(data.inProgress) : '--'
   const approvalRate = data ? data.approvalRate : '--'
 
+  const quickActions = [
+    { href: '/admin/orders', label: '订单管理', icon: '📋', description: '查看和管理所有订单' },
+    { href: '/admin/pool', label: '公共池', icon: '🏊', description: '抢单和分配订单' },
+    { href: '/admin/team', label: '团队管理', icon: '👥', description: '管理团队成员' },
+    { href: '/admin/analytics', label: '数据统计', icon: '📊', description: '查看详细报表' },
+  ]
+
+  const workflowSteps = [
+    { label: '客服录单', color: 'bg-blue-500/15 text-blue-600 border-blue-500/20' },
+    { label: '资料员接单', color: 'bg-liquid-ocean/15 text-liquid-ocean border-liquid-ocean/20' },
+    { label: '资料收集', color: 'bg-amber-500/15 text-amber-600 border-amber-500/20' },
+    { label: '操作员审核', color: 'bg-violet-500/15 text-violet-600 border-violet-500/20' },
+    { label: '材料制作', color: 'bg-slate-500/15 text-slate-600 border-slate-500/20' },
+    { label: '交付客户', color: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/20' },
+    { label: '出签/拒签', color: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/20' },
+  ]
+
   return (
     <div className="space-y-6">
-      {/* 欢迎 */}
-      <div className="anim-initial animate-fade-in-up">
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">
+      {/* 欢迎区域 */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={liquidSpringConfig.gentle}
+      >
+        <h1 className="text-2xl font-bold text-liquid-deep tracking-tight">
           经营驾驶舱
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-liquid-mist">
           {data ? `${data.month} 实时数据` : '实时掌握业务运营状况'}
         </p>
-      </div>
+      </motion.div>
 
-      {/* 核心指标卡片 - 交错入场 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="anim-initial animate-fade-in-up delay-50">
-          <StatCard
+      {/* 核心指标卡片 */}
+      <motion.div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+      >
+        <motion.div variants={staggerItem}>
+          <LiquidStatCard
             label="总营收"
             value={revenue}
-            {...(data ? { sub: `毛利 ¥${data.totalProfit.toLocaleString()} (${data.profitRate})` } : {})}
+            sub={data ? `毛利 ¥${data.totalProfit.toLocaleString()} (${data.profitRate})` : undefined}
             color="primary"
             icon={
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -68,12 +97,12 @@ export default function DashboardPage() {
               </svg>
             }
           />
-        </div>
-        <div className="anim-initial animate-fade-in-up delay-100">
-          <StatCard
+        </motion.div>
+        <motion.div variants={staggerItem}>
+          <LiquidStatCard
             label="总订单"
             value={orders}
-            {...(data ? { sub: `${data.totalApplicants} 位申请人` } : {})}
+            sub={data ? `${data.totalApplicants} 位申请人` : undefined}
             color="info"
             icon={
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -81,12 +110,12 @@ export default function DashboardPage() {
               </svg>
             }
           />
-        </div>
-        <div className="anim-initial animate-fade-in-up delay-150">
-          <StatCard
+        </motion.div>
+        <motion.div variants={staggerItem}>
+          <LiquidStatCard
             label="进行中"
             value={inProgress}
-            {...(data ? { sub: `已出签 ${data.approved} / 拒签 ${data.rejected}` } : {})}
+            sub={data ? `已出签 ${data.approved} / 拒签 ${data.rejected}` : undefined}
             color="warning"
             icon={
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -94,9 +123,9 @@ export default function DashboardPage() {
               </svg>
             }
           />
-        </div>
-        <div className="anim-initial animate-fade-in-up delay-200">
-          <StatCard
+        </motion.div>
+        <motion.div variants={staggerItem}>
+          <LiquidStatCard
             label="出签率"
             value={approvalRate}
             color="success"
@@ -106,61 +135,64 @@ export default function DashboardPage() {
               </svg>
             }
           />
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* 快捷操作 */}
-      <div className="bg-card rounded-xl border border-border p-5 anim-initial animate-fade-in-up delay-250">
-        <h2 className="text-sm font-semibold text-foreground mb-4 tracking-wide">快捷操作</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <QuickAction href="/admin/orders" label="订单管理" icon="📋" delay={0} />
-          <QuickAction href="/admin/pool" label="公共池" icon="🏊" delay={50} />
-          <QuickAction href="/admin/team" label="团队管理" icon="👥" delay={100} />
-          <QuickAction href="/admin/analytics" label="数据统计" icon="📊" delay={150} />
-        </div>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...liquidSpringConfig.gentle, delay: 0.3 }}
+      >
+        <LiquidCard padding="lg" variant="liquid">
+          <LiquidCardContent>
+            <h2 className="text-sm font-semibold text-liquid-deep mb-4 tracking-wide">快捷操作</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {quickActions.map((action, index) => (
+                <LiquidQuickAction
+                  key={action.href}
+                  href={action.href}
+                  label={action.label}
+                  icon={action.icon}
+                  description={action.description}
+                  delay={index}
+                />
+              ))}
+            </div>
+          </LiquidCardContent>
+        </LiquidCard>
+      </motion.div>
 
       {/* 工作流说明 */}
-      <div className="bg-card rounded-xl border border-border p-5 anim-initial animate-fade-in-up delay-300">
-        <h2 className="text-sm font-semibold text-foreground mb-4 tracking-wide">核心工作流</h2>
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          {
-            [
-              { label: '客服录单', color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' },
-              { label: '资料员接单', color: 'bg-primary/10 text-primary' },
-              { label: '资料收集', color: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400' },
-              { label: '操作员审核', color: 'bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400' },
-              { label: '材料制作', color: 'bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400' },
-              { label: '交付客户', color: 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400' },
-              { label: '出签/拒签', color: 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400' },
-            ].map((step, i, arr) => (
-              <div key={step.label} className="flex items-center gap-2">
-                <span className={`px-3 py-1.5 rounded-lg text-xs font-medium ${step.color} transition-transform duration-200 hover:scale-105`}>
-                  {step.label}
-                </span>
-                {i < arr.length - 1 && (
-                  <svg className="w-3.5 h-3.5 text-muted-foreground opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                )}
-              </div>
-            ))
-          }
-        </div>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...liquidSpringConfig.gentle, delay: 0.4 }}
+      >
+        <LiquidCard padding="lg" variant="liquid">
+          <LiquidCardContent>
+            <h2 className="text-sm font-semibold text-liquid-deep mb-4 tracking-wide">核心工作流</h2>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              {workflowSteps.map((step, i, arr) => (
+                <div key={step.label} className="flex items-center gap-2">
+                  <motion.span
+                    className={`px-3 py-1.5 rounded-xl text-xs font-medium border ${step.color} bg-white/30 backdrop-blur-sm`}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    transition={liquidSpringConfig.snappy}
+                  >
+                    {step.label}
+                  </motion.span>
+                  {i < arr.length - 1 && (
+                    <svg className="w-3.5 h-3.5 text-liquid-mist opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </div>
+              ))}
+            </div>
+          </LiquidCardContent>
+        </LiquidCard>
+      </motion.div>
     </div>
-  )
-}
-
-function QuickAction({ href, label, icon, delay = 0 }: { href: string; label: string; icon: string; delay?: number }) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center gap-3 px-4 py-3.5 rounded-lg bg-card border border-border transition-all duration-300 group active:scale-95 hover:bg-accent hover:border-border hover:shadow-sm"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      <span className="text-lg transition-transform duration-300 group-hover:scale-110 group-active:scale-95">{icon}</span>
-      <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
-    </Link>
   )
 }

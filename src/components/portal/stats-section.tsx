@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { liquidSpringConfig } from '@design-system/theme/animations'
 
 const STATS = [
   { value: 50000, suffix: '+', label: '服务用户' },
@@ -9,11 +11,13 @@ const STATS = [
   { value: 1, suffix: '天', label: '最快出签' },
 ]
 
-function AnimatedNumber({ value, suffix, visible }: { value: number; suffix: string; visible: boolean }) {
+function AnimatedNumber({ value, suffix }: { value: number; suffix: string }) {
   const [display, setDisplay] = useState(0)
+  const [hasAnimated, setHasAnimated] = useState(false)
 
   useEffect(() => {
-    if (!visible) return
+    if (hasAnimated) return
+    setHasAnimated(true)
     const duration = 1500
     const start = Date.now()
     const isFloat = !Number.isInteger(value)
@@ -27,41 +31,39 @@ function AnimatedNumber({ value, suffix, visible }: { value: number; suffix: str
       if (progress < 1) requestAnimationFrame(tick)
     }
     requestAnimationFrame(tick)
-  }, [visible, value])
+  }, [hasAnimated, value])
 
   return (
-    <span className="text-[32px] md:text-[40px] font-bold text-[var(--color-primary)] tabular-nums">
+    <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-liquid-ocean tabular-nums">
       {typeof display === 'number' && display % 1 !== 0 ? display.toFixed(1) : display.toLocaleString()}
-      <span className="text-[18px] md:text-[22px] ml-0.5">{suffix}</span>
+      <span className="text-lg md:text-xl ml-0.5">{suffix}</span>
     </span>
   )
 }
 
 export function StatsSection() {
-  const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true) }, { threshold: 0.3 })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [])
-
   return (
-    <section ref={ref} className="py-16 md:py-20">
-      <div className="mx-auto max-w-4xl px-6">
-        <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+    <section className="py-16 md:py-24 bg-gradient-to-b from-slate-50/50 to-white relative overflow-hidden">
+      {/* 背景装饰 */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-liquid-ocean/5 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-tl from-liquid-sand/5 to-transparent rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-5xl px-4 md:px-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           {STATS.map((stat, i) => (
-            <div
+            <motion.div
               key={stat.label}
-              className={`text-center transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
-              style={{ transitionDelay: `${i * 120}ms` }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ ...liquidSpringConfig.gentle, delay: i * 0.1 }}
+              className="text-center"
             >
-              <AnimatedNumber value={stat.value} suffix={stat.suffix} visible={visible} />
-              <p className="mt-1 text-[13px] text-[var(--color-text-secondary)]">{stat.label}</p>
-            </div>
+              <AnimatedNumber value={stat.value} suffix={stat.suffix} />
+              <p className="mt-2 text-sm text-liquid-mist">{stat.label}</p>
+            </motion.div>
           ))}
         </div>
       </div>

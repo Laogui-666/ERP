@@ -17,7 +17,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "@shared/*": ["./src/shared/*"],
-      "@erp/*": ["./src/modules/erp/*"]
+      "@erp/*": ["./src/modules/erp/*"],
+      "@design-system/*": ["./src/design-system/*"]
     },
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,

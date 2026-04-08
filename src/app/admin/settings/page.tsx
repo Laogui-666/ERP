@@ -1,7 +1,7 @@
 'use client'
 import { apiFetch } from '@shared/lib/api-client'
 import { useEffect, useState, useCallback } from 'react'
-import { GlassCard } from '@shared/ui/glass-card'
+import { LiquidCard } from '@design-system/components/liquid-card'
 import { PageHeader } from '@shared/components/layout/page-header'
 import { useToast } from '@shared/ui/toast'
 import { useAuth } from '@shared/hooks/use-auth'
@@ -70,11 +70,11 @@ export default function SettingsPage() {
       <PageHeader title="系统设置" description="公司配置与系统管理" />
 
       {/* 公司信息 */}
-      <GlassCard className="p-6 animate-fade-in-up space-y-4">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">公司信息</h3>
+      <LiquidCard className="p-6 space-y-4">
+        <h3 className="text-sm font-semibold text-liquid-deep">公司信息</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">公司名称</label>
+            <label className="text-xs text-liquid-mist mb-1 block">公司名称</label>
             <input
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
@@ -83,7 +83,7 @@ export default function SettingsPage() {
             />
           </div>
           <div>
-            <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">联系电话</label>
+            <label className="text-xs text-liquid-mist mb-1 block">联系电话</label>
             <input
               value={companyPhone}
               onChange={(e) => setCompanyPhone(e.target.value)}
@@ -92,7 +92,7 @@ export default function SettingsPage() {
             />
           </div>
           <div>
-            <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">邮箱</label>
+            <label className="text-xs text-liquid-mist mb-1 block">邮箱</label>
             <input
               value={companyEmail}
               onChange={(e) => setCompanyEmail(e.target.value)}
@@ -101,7 +101,7 @@ export default function SettingsPage() {
             />
           </div>
           <div>
-            <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">地址</label>
+            <label className="text-xs text-liquid-mist mb-1 block">地址</label>
             <input
               value={companyAddress}
               onChange={(e) => setCompanyAddress(e.target.value)}
@@ -117,30 +117,30 @@ export default function SettingsPage() {
             </button>
           </div>
         )}
-      </GlassCard>
+      </LiquidCard>
 
       {/* 系统信息 */}
-      <GlassCard className="p-6 animate-fade-in-up space-y-3">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">系统信息</h3>
+      <LiquidCard className="p-6 space-y-3">
+        <h3 className="text-sm font-semibold text-liquid-deep">系统信息</h3>
         <div className="space-y-2 text-sm">
           <InfoRow label="当前用户" value={user?.realName ?? '-'} />
           <InfoRow label="角色" value={user?.role ?? '-'} />
           <InfoRow label="系统版本" value="V25.0" />
           <InfoRow label="技术栈" value="Next.js 15.5 + React 19 + Prisma + MySQL" />
         </div>
-      </GlassCard>
+      </LiquidCard>
 
       {/* 超管专属：数据库信息 */}
       {isSuperAdmin && (
-        <GlassCard className="p-6 animate-fade-in-up space-y-3">
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">数据库信息（仅超管可见）</h3>
+        <LiquidCard className="p-6 space-y-3">
+          <h3 className="text-sm font-semibold text-liquid-deep">数据库信息（仅超管可见）</h3>
           <div className="space-y-2 text-sm">
             <InfoRow label="数据库" value="阿里云 RDS MySQL 8.0" />
             <InfoRow label="数据表" value="14 张（erp_ 前缀）" />
             <InfoRow label="文件存储" value="阿里云 OSS (oss-cn-beijing)" />
             <InfoRow label="实时通信" value="Socket.io 4.8" />
           </div>
-        </GlassCard>
+        </LiquidCard>
       )}
     </div>
   )
@@ -148,9 +148,9 @@ export default function SettingsPage() {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
-      <span className="text-[var(--color-text-secondary)]">{label}</span>
-      <span className="text-[var(--color-text-primary)] font-medium">{value}</span>
+    <div className="flex items-center justify-between py-1.5 border-b border-liquid-ocean/10 last:border-0">
+      <span className="text-liquid-mist">{label}</span>
+      <span className="text-liquid-deep font-medium">{value}</span>
     </div>
   )
 }

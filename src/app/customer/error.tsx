@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { GlassCard } from '@shared/ui/glass-card'
+import { LiquidCard } from '@design-system/components/liquid-card'
 
 export default function CustomerError({
   error,
@@ -20,14 +20,14 @@ export default function CustomerError({
 
   return (
     <div className="flex items-center justify-center min-h-[60vh] px-4">
-      <GlassCard className="p-6 max-w-sm text-center animate-fade-in-up">
-        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--color-error)]/15 flex items-center justify-center text-xl">
+      <LiquidCard className="p-6 max-w-sm text-center">
+        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-liquid-ruby/15 flex items-center justify-center text-xl">
           ⚠️
         </div>
-        <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-2">
+        <h2 className="text-base font-semibold text-liquid-deep mb-2">
           加载失败
         </h2>
-        <p className="text-xs text-[var(--color-text-secondary)] mb-4">
+        <p className="text-xs text-liquid-mist mb-4">
           页面遇到了问题，请重试
         </p>
         <button
@@ -36,7 +36,7 @@ export default function CustomerError({
         >
           重新加载
         </button>
-      </GlassCard>
+      </LiquidCard>
     </div>
   )
 }

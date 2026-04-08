@@ -58,10 +58,10 @@ export default function DocumentsPage() {
         />
       ) : result ? (
         <div>
-          <button onClick={() => { setResult(null); setSelected(null) }} className="mb-4 text-[13px] text-[var(--color-primary)] hover:underline">← 返回</button>
+          <button onClick={() => { setResult(null); setSelected(null) }} className="mb-4 text-[13px] text-liquid-ocean hover:underline">← 返回</button>
           <GlassCard intensity="medium" className="p-5">
-            <h2 className="mb-4 text-[16px] font-semibold text-[var(--color-text-primary)]">生成结果</h2>
-            <div className="whitespace-pre-wrap rounded-lg bg-white/5 p-4 text-[14px] leading-relaxed text-[var(--color-text-primary)]">{result}</div>
+            <h2 className="mb-4 text-[16px] font-semibold text-liquid-deep">生成结果</h2>
+            <div className="whitespace-pre-wrap rounded-lg bg-liquid-ocean/5 p-4 text-[14px] leading-relaxed text-liquid-deep">{result}</div>
             <div className="mt-4 flex justify-end gap-3">
               <Button variant="secondary" onClick={() => { setResult(null); setSelected(null) }}>重新生成</Button>
               <Button variant="primary" onClick={() => { navigator.clipboard.writeText(result); toast('success', '已复制到剪贴板') }}>复制内容</Button>
@@ -70,10 +70,10 @@ export default function DocumentsPage() {
         </div>
       ) : selected ? (
         <div>
-          <button onClick={() => setSelected(null)} className="mb-4 text-[13px] text-[var(--color-primary)] hover:underline">← 返回列表</button>
+          <button onClick={() => setSelected(null)} className="mb-4 text-[13px] text-liquid-ocean hover:underline">← 返回列表</button>
           <GlassCard intensity="medium" className="p-5">
-            <h2 className="mb-1 text-[16px] font-semibold text-[var(--color-text-primary)]">{selected.name}</h2>
-            <p className="mb-4 text-[12px] text-[var(--color-text-placeholder)]">{TYPE_LABELS[selected.type] || selected.type} · {selected.language === 'zh' ? '中文' : '英文'}</p>
+            <h2 className="mb-1 text-[16px] font-semibold text-liquid-deep">{selected.name}</h2>
+            <p className="mb-4 text-[12px] text-liquid-mist/60">{TYPE_LABELS[selected.type] || selected.type} · {selected.language === 'zh' ? '中文' : '英文'}</p>
             <div className="space-y-4">
               {selected.fields.map(field => (
                 <Input key={field.key} label={field.label + (field.required ? ' *' : '')} placeholder={`请输入${field.label}`} value={formData[field.key] || ''} onChange={e => setFormData({ ...formData, [field.key]: e.target.value })} />
@@ -94,13 +94,13 @@ export default function DocumentsPage() {
         <div className="space-y-4">
           {Object.entries(grouped).map(([type, temps]) => (
             <div key={type}>
-              <h3 className="mb-2 text-[14px] font-semibold text-[var(--color-text-primary)]">{TYPE_LABELS[type] || type}</h3>
+              <h3 className="mb-2 text-[14px] font-semibold text-liquid-deep">{TYPE_LABELS[type] || type}</h3>
               <div className="space-y-2">
                 {temps.map(t => (
                   <GlassCard key={t.id} intensity="light" hover className="cursor-pointer p-4" onClick={() => { setSelected(t); setFormData({}); setResult(null) }}>
                     <div className="flex items-center justify-between">
-                      <div><p className="text-[14px] font-medium text-[var(--color-text-primary)]">{t.name}</p><p className="text-[11px] text-[var(--color-text-placeholder)]">{t.language === 'zh' ? '中文' : '英文'} · {t.fields.length} 个字段</p></div>
-                      <span className="text-[13px] text-[var(--color-primary)]">生成 →</span>
+                      <div><p className="text-[14px] font-medium text-liquid-deep">{t.name}</p><p className="text-[11px] text-liquid-mist/60">{t.language === 'zh' ? '中文' : '英文'} · {t.fields.length} 个字段</p></div>
+                      <span className="text-[13px] text-liquid-ocean">生成 →</span>
                     </div>
                   </GlassCard>
                 ))}

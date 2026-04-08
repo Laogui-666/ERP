@@ -65,7 +65,7 @@ export function FilePreview({ fileName, fileType, ossUrl, fileSize, fileId, comp
           {canPreview ? (
             <button
               onClick={() => setShowLightbox(true)}
-              className="text-[var(--color-info)] hover:text-[var(--color-primary-light)] truncate max-w-[200px] text-left transition-colors"
+              className="text-liquid-ocean hover:text-liquid-oceanLight truncate max-w-[200px] text-left transition-colors"
             >
               {fileName}
             </button>
@@ -74,19 +74,19 @@ export function FilePreview({ fileName, fileType, ossUrl, fileSize, fileId, comp
               href={ossUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[var(--color-info)] hover:text-[var(--color-primary-light)] truncate max-w-[200px] transition-colors"
+              className="text-liquid-ocean hover:text-liquid-oceanLight truncate max-w-[200px] transition-colors"
             >
               {fileName}
             </a>
           )}
-          <span className="text-[var(--color-text-placeholder)] shrink-0">
+          <span className="text-liquid-mist/60 shrink-0">
             ({formatSize(fileSize)})
           </span>
           {/* 驳回原因指示 */}
           {rejectReason && (
             <button
               onClick={() => setShowRejectPopup(!showRejectPopup)}
-              className="text-[var(--color-error)] shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-error)]/10 hover:bg-[var(--color-error)]/20 transition-all"
+              className="text-liquid-ruby shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-liquid-ruby/10 hover:bg-liquid-ruby/20 transition-all"
               title="查看驳回原因"
             >
               驳回原因
@@ -95,7 +95,7 @@ export function FilePreview({ fileName, fileType, ossUrl, fileSize, fileId, comp
           {onDelete && (
             <button
               onClick={onDelete}
-              className="text-[var(--color-error)]/60 hover:text-[var(--color-error)] shrink-0 transition-colors"
+              className="text-liquid-ruby/60 hover:text-liquid-ruby shrink-0 transition-colors"
               title="删除文件"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -107,12 +107,12 @@ export function FilePreview({ fileName, fileType, ossUrl, fileSize, fileId, comp
 
         {/* 驳回原因弹出 */}
         {showRejectPopup && rejectReason && (
-          <div className="mt-1 ml-6 p-2.5 rounded-lg bg-[var(--color-error)]/8 border border-[var(--color-error)]/15 text-xs">
+          <div className="mt-1 ml-6 p-2.5 rounded-lg bg-liquid-ruby/8 border border-liquid-ruby/15 text-xs">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[var(--color-error)] font-medium">❌ 驳回原因</span>
-              <button onClick={() => setShowRejectPopup(false)} className="text-[var(--color-text-placeholder)] hover:text-white">✕</button>
+              <span className="text-liquid-ruby font-medium">❌ 驳回原因</span>
+              <button onClick={() => setShowRejectPopup(false)} className="text-liquid-mist/60 hover:text-liquid-deep">✕</button>
             </div>
-            <p className="text-[var(--color-text-primary)] leading-relaxed">{rejectReason}</p>
+            <p className="text-liquid-deep leading-relaxed">{rejectReason}</p>
           </div>
         )}
 
@@ -133,14 +133,14 @@ export function FilePreview({ fileName, fileType, ossUrl, fileSize, fileId, comp
   // 卡片模式
   return (
     <>
-      <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all group">
+      <div className="p-3 rounded-xl bg-liquid-ocean/5 border border-liquid-ocean/10 hover:border-liquid-ocean/20 transition-all group">
         {/* 图片缩略图 */}
         {isImage ? (
           <button
             onClick={() => setShowLightbox(true)}
             className="w-full"
           >
-            <div className="relative aspect-video rounded-lg overflow-hidden bg-white/5 mb-2">
+            <div className="relative aspect-video rounded-lg overflow-hidden bg-liquid-ocean/5 mb-2">
               <Image
                 src={ossUrl}
                 alt={fileName}
@@ -160,7 +160,7 @@ export function FilePreview({ fileName, fileType, ossUrl, fileSize, fileId, comp
             onClick={() => canPreview && setShowLightbox(true)}
             className={cn(
               'w-full aspect-video rounded-lg flex items-center justify-center mb-2',
-              'bg-white/5 hover:bg-white/[0.08] transition-colors',
+              'bg-liquid-ocean/5 hover:bg-liquid-ocean/10 transition-colors',
               !canPreview && 'cursor-default',
             )}
           >
@@ -174,7 +174,7 @@ export function FilePreview({ fileName, fileType, ossUrl, fileSize, fileId, comp
             {canPreview ? (
               <button
                 onClick={() => setShowLightbox(true)}
-                className="text-sm text-[var(--color-text-primary)] hover:text-[var(--color-info)] truncate block w-full text-left transition-colors"
+                className="text-sm text-liquid-deep hover:text-liquid-ocean truncate block w-full text-left transition-colors"
               >
                 {fileName}
               </button>
@@ -183,18 +183,18 @@ export function FilePreview({ fileName, fileType, ossUrl, fileSize, fileId, comp
                 href={ossUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-[var(--color-text-primary)] hover:text-[var(--color-info)] truncate block transition-colors"
+                className="text-sm text-liquid-deep hover:text-liquid-ocean truncate block transition-colors"
               >
                 {fileName}
               </a>
             )}
-            <span className="text-xs text-[var(--color-text-placeholder)]">{formatSize(fileSize)}</span>
+            <span className="text-xs text-liquid-mist/60">{formatSize(fileSize)}</span>
           </div>
           <a
             href={ossUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-1.5 rounded-lg hover:bg-white/10 text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] transition-all shrink-0"
+            className="p-1.5 rounded-lg hover:bg-liquid-ocean/10 text-liquid-mist/60 hover:text-liquid-mist transition-all shrink-0"
             title="下载"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -204,7 +204,7 @@ export function FilePreview({ fileName, fileType, ossUrl, fileSize, fileId, comp
           {onDelete && (
             <button
               onClick={onDelete}
-              className="p-1.5 rounded-lg hover:bg-[var(--color-error)]/10 text-[var(--color-text-placeholder)] hover:text-[var(--color-error)] transition-all shrink-0"
+              className="p-1.5 rounded-lg hover:bg-liquid-ruby/10 text-liquid-mist/60 hover:text-liquid-ruby transition-all shrink-0"
               title="删除文件"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -321,19 +321,19 @@ function FileLightbox({
 
         {/* 驳回原因提示条 */}
         {rejectReason && (
-          <div className="mb-3 p-3 rounded-xl bg-[var(--color-error)]/10 border border-[var(--color-error)]/20">
+          <div className="mb-3 p-3 rounded-xl bg-liquid-ruby/10 border border-liquid-ruby/20">
             <div className="flex items-start gap-2">
               <span className="text-sm shrink-0">❌</span>
               <div>
-                <span className="text-xs font-medium text-[var(--color-error)]">驳回原因</span>
-                <p className="text-xs text-[var(--color-text-primary)] mt-0.5 leading-relaxed">{rejectReason}</p>
+                <span className="text-xs font-medium text-liquid-ruby">驳回原因</span>
+                <p className="text-xs text-white mt-0.5 leading-relaxed">{rejectReason}</p>
               </div>
             </div>
           </div>
         )}
 
         {/* 预览内容 */}
-        <div className="flex-1 rounded-2xl overflow-hidden bg-[#1a1f2e] border border-white/10 shadow-2xl min-h-[300px]">
+        <div className="flex-1 rounded-2xl overflow-hidden bg-liquid-deep border border-white/10 shadow-2xl min-h-[300px]">
           {loading ? (
             <div className="w-full h-[400px] flex items-center justify-center">
               <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />

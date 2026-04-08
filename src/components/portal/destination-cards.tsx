@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
+import { liquidSpringConfig } from '@design-system/theme/animations'
 
 const DESTINATIONS = [
   { flag: '🇯🇵', country: '日本', type: '单次旅游', days: '5-7工作日', price: 599, gradient: 'from-pink-500/20 via-rose-400/10 to-transparent' },
@@ -14,17 +15,6 @@ const DESTINATIONS = [
 ]
 
 export function DestinationCards() {
-  const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true) }, { threshold: 0.1 })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [])
-
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const x = ((e.clientX - rect.left) / rect.width - 0.5) * 8
@@ -37,62 +27,85 @@ export function DestinationCards() {
   }
 
   return (
-    <section ref={ref} className="py-16 md:py-24">
-      <div className="mx-auto max-w-5xl px-6">
-        <div className={`text-center transition-all duration-600 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <h2 className="text-[22px] md:text-[28px] font-bold text-[var(--color-text-primary)] tracking-tight">
+    <section className="py-16 md:py-24 bg-white relative overflow-hidden">
+      {/* 背景装饰 */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-liquid-ocean/5 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-liquid-sand/5 to-transparent rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-6xl px-4 md:px-8">
+        <motion.div 
+          className="text-center mb-10 md:mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={liquidSpringConfig.gentle}
+        >
+          <span className="inline-block px-4 py-1.5 rounded-full bg-liquid-ocean/5 border border-liquid-ocean/10 text-sm font-medium text-liquid-ocean mb-4">
+            全球覆盖
+          </span>
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-liquid-deep tracking-tight mb-3">
             热门目的地
           </h2>
-          <p className="mt-2 text-[13px] text-[var(--color-text-secondary)]">
+          <p className="text-base text-liquid-mist">
             覆盖 50+ 国家，专业签证服务
           </p>
-        </div>
+        </motion.div>
 
         {/* 横向滚动 */}
-        <div className="mt-8 -mx-6 px-6 overflow-x-auto scrollbar-none snap-x snap-mandatory">
-          <div className="flex gap-4 pb-2">
+        <div className="-mx-4 px-4 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-4">
+          <div className="flex gap-4 md:gap-6">
             {DESTINATIONS.map((d, i) => (
-              <div
+              <motion.div
                 key={d.country}
-                className={`flex-shrink-0 snap-start w-[180px] md:w-[210px] transition-all duration-500 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}
-                style={{ transitionDelay: `${i * 80}ms` }}
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ ...liquidSpringConfig.gentle, delay: i * 0.08 }}
+                className="flex-shrink-0 snap-start w-[180px] md:w-[220px]"
               >
                 <div
-                  className={`group h-[240px] md:h-[260px] rounded-2xl bg-gradient-to-br ${d.gradient} border border-white/[0.06] p-4 flex flex-col cursor-pointer transition-shadow duration-300 hover:shadow-lg`}
+                  className={`group h-[260px] md:h-[300px] rounded-3xl bg-gradient-to-br ${d.gradient} border border-liquid-ocean/10 p-5 flex flex-col cursor-pointer transition-all duration-500 hover:shadow-xl hover:shadow-liquid-ocean/10 hover:border-liquid-ocean/20`}
                   onMouseMove={handleMouseMove}
                   onMouseLeave={handleMouseLeave}
-                  style={{ transition: 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s' }}
+                  style={{ transition: 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s, border-color 0.3s' }}
                 >
                   {/* 国旗 */}
                   <div className="flex-1 flex items-center justify-center">
-                    <span className="text-[48px]">{d.flag}</span>
+                    <span className="text-5xl md:text-6xl transition-transform duration-500 group-hover:scale-110">{d.flag}</span>
                   </div>
 
                   {/* 分隔线 */}
-                  <div className="h-px bg-white/[0.06] my-2" />
+                  <div className="h-px bg-liquid-ocean/10 my-3" />
 
                   {/* 信息 */}
                   <div>
-                    <p className="text-[14px] font-semibold text-[var(--color-text-primary)]">
-                      {d.country} <span className="font-normal text-[var(--color-text-secondary)]">{d.type}</span>
+                    <p className="text-base font-semibold text-liquid-deep">
+                      {d.country} <span className="font-normal text-liquid-mist">{d.type}</span>
                     </p>
-                    <div className="mt-1 flex items-center gap-1 text-[11px] text-[var(--color-text-secondary)]">
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <div className="mt-1.5 flex items-center gap-1.5 text-xs text-liquid-mist">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       {d.days}
                     </div>
-                    <p className="mt-1.5 text-[17px] font-bold text-[var(--color-primary)]">
-                      ¥{d.price} <span className="text-[11px] font-normal text-[var(--color-text-secondary)]">起</span>
+                    <p className="mt-2 text-xl font-bold text-liquid-ocean">
+                      ¥{d.price} <span className="text-xs font-normal text-liquid-mist">起</span>
                     </p>
                   </div>
 
                   {/* Hover CTA */}
-                  <div className="mt-2 opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
-                    <span className="text-[11px] text-[var(--color-primary)] font-medium">立即办理 →</span>
+                  <div className="mt-3 opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+                    <span className="text-sm text-liquid-ocean font-medium flex items-center gap-1">
+                      立即办理 
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </span>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>

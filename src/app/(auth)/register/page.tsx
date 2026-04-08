@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { LiquidCard, LiquidCardContent } from '@design-system/components/liquid-card'
+import { LiquidInput } from '@design-system/components/liquid-input'
+import { LiquidButton } from '@design-system/components/liquid-button'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -60,49 +63,44 @@ export default function RegisterPage() {
   ]
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center px-4 bg-gradient-liquid">
       <div className="w-full max-w-[420px]">
         {/* 标题 */}
-        <div className="mb-8 text-center anim-initial animate-spring-in">
-          <h1 className="text-[24px] font-bold text-[var(--color-text-primary)] tracking-tight">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-liquid-deep tracking-tight">
             公司入驻
           </h1>
-          <p className="mt-2 text-[var(--color-text-secondary)] text-[13px]">
+          <p className="mt-2 text-liquid-mist text-sm">
             注册账号，开启便捷签证之旅
           </p>
         </div>
 
         {/* 注册表单 */}
-        <div className="glass-card p-7 md:p-8 anim-initial animate-fade-in-up delay-100">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <LiquidCard padding="lg" variant="liquid-elevated">
+          <LiquidCardContent className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
             {fields.map((field) => (
-              <div key={field.key}>
-                <label className="mb-1.5 block text-[12px] font-medium text-[var(--color-text-secondary)] tracking-wide uppercase">
-                  {field.label}
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <svg className="w-[16px] h-[16px] text-[var(--color-text-placeholder)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={field.icon} />
-                    </svg>
-                  </div>
-                  <input
-                    type={field.type}
-                    value={form[field.key as keyof typeof form]}
-                    onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-                    className="glass-input w-full pl-10"
-                    placeholder={field.placeholder}
-                    required
-                    minLength={field.key === 'username' ? 3 : field.key === 'password' ? 8 : undefined}
-                    pattern={field.pattern}
-                    maxLength={field.key === 'phone' ? 11 : undefined}
-                  />
-                </div>
-              </div>
+              <LiquidInput
+                key={field.key}
+                label={field.label}
+                type={field.type}
+                value={form[field.key as keyof typeof form]}
+                onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
+                placeholder={field.placeholder}
+                required
+                minLength={field.key === 'username' ? 3 : field.key === 'password' ? 8 : undefined}
+                pattern={field.pattern}
+                maxLength={field.key === 'phone' ? 11 : undefined}
+                leftIcon={
+                  <svg className="w-4 h-4 text-liquid-mist" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={field.icon} />
+                  </svg>
+                }
+              />
             ))}
 
             {error && (
-              <div className="rounded-xl bg-[var(--color-error)]/10 border border-[var(--color-error)]/15 px-4 py-3 text-[13px] text-[var(--color-error)] animate-shake">
+              <div className="rounded-2xl bg-red-500/10 border border-red-400/30 px-4 py-3 text-sm text-red-500 animate-shake">
                 <div className="flex items-center gap-2.5">
                   <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -112,32 +110,29 @@ export default function RegisterPage() {
               </div>
             )}
 
-            <button
+            <LiquidButton
               type="submit"
               disabled={loading}
-              className="glass-btn-primary w-full py-3 text-center text-[14px] font-semibold tracking-wide disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+              isLoading={loading}
+              width="full"
+              size="lg"
+              variant="primary"
+              className="mt-2"
             >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2.5">
-                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  注册中...
-                </span>
-              ) : '立即入驻'}
-            </button>
+              {loading ? '注册中...' : '立即入驻'}
+            </LiquidButton>
           </form>
 
-          <p className="mt-6 text-center text-[13px] text-[var(--color-text-placeholder)]">
+          <p className="mt-6 text-center text-sm text-liquid-mist">
             已有账号？
-            <Link href="/login" className="ml-1.5 text-[var(--color-primary)] hover:text-[var(--color-primary-light)] transition-colors duration-200 font-medium">
+            <Link href="/login" className="ml-1.5 text-liquid-ocean hover:text-liquid-oceanLight transition-colors duration-200 font-medium">
               直接登录
             </Link>
           </p>
-        </div>
+          </LiquidCardContent>
+        </LiquidCard>
 
-        <p className="mt-8 text-center text-[11px] text-[var(--color-text-placeholder)] opacity-50 anim-initial animate-fade-in delay-250 tracking-wide">
+        <p className="mt-8 text-center text-xs text-liquid-mist opacity-60 tracking-wide">
           华夏签证 v0.1.0 · 华夏签证 © 2026
         </p>
       </div>

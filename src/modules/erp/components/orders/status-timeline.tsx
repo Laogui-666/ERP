@@ -59,8 +59,8 @@ export function StatusTimeline({ currentStatus, orderLogs }: StatusTimelineProps
                 <div
                   className={`w-px flex-1 ${
                     isDone || (currentIndex >= 0 && i - 1 < currentIndex)
-                      ? 'bg-[var(--color-primary)]'
-                      : 'bg-white/10'
+                      ? 'bg-liquid-ocean'
+                      : 'bg-liquid-ocean/10'
                   }`}
                 />
               )}
@@ -70,10 +70,10 @@ export function StatusTimeline({ currentStatus, orderLogs }: StatusTimelineProps
               <div
                 className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs transition-all ${
                   isCurrent
-                    ? 'bg-[var(--color-primary)] text-white ring-4 ring-[var(--color-primary)]/20'
+                    ? 'bg-liquid-ocean text-white ring-4 ring-liquid-ocean/20'
                     : isDone
-                      ? 'bg-[var(--color-success)]/20 text-[var(--color-success)]'
-                      : 'bg-white/5 text-[var(--color-text-placeholder)]'
+                      ? 'bg-liquid-emerald/20 text-liquid-emerald'
+                      : 'bg-liquid-ocean/5 text-liquid-mist/60'
                 }`}
               >
                 {isDone && !isCurrent ? (
@@ -90,8 +90,8 @@ export function StatusTimeline({ currentStatus, orderLogs }: StatusTimelineProps
                 <div
                   className={`w-px flex-1 ${
                     isDone && i < currentIndex
-                      ? 'bg-[var(--color-primary)]'
-                      : 'bg-white/10'
+                      ? 'bg-liquid-ocean'
+                      : 'bg-liquid-ocean/10'
                   }`}
                 />
               )}
@@ -104,10 +104,10 @@ export function StatusTimeline({ currentStatus, orderLogs }: StatusTimelineProps
                 <span
                   className={`text-sm font-medium ${
                     isCurrent
-                      ? 'text-[var(--color-text-primary)]'
+                      ? 'text-liquid-deep'
                       : isDone
-                        ? 'text-[var(--color-text-secondary)]'
-                        : 'text-[var(--color-text-placeholder)]'
+                        ? 'text-liquid-mist'
+                        : 'text-liquid-mist/60'
                   }`}
                 >
                   {ORDER_STATUS_LABELS[step.status]}
@@ -120,7 +120,7 @@ export function StatusTimeline({ currentStatus, orderLogs }: StatusTimelineProps
                 )}
               </div>
               {time && (
-                <span className="text-[10px] text-[var(--color-text-placeholder)]">
+                <span className="text-[10px] text-liquid-mist/60">
                   {formatDateTime(time)}
                 </span>
               )}
@@ -133,7 +133,7 @@ export function StatusTimeline({ currentStatus, orderLogs }: StatusTimelineProps
       {isTerminal && (
         <div className="flex gap-3">
           <div className="flex flex-col items-center">
-            <div className="w-px flex-1 bg-[var(--color-primary)]" />
+            <div className="w-px flex-1 bg-liquid-ocean" />
             <div
               className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs"
               style={{
@@ -153,7 +153,7 @@ export function StatusTimeline({ currentStatus, orderLogs }: StatusTimelineProps
               {ORDER_STATUS_LABELS[currentStatus]}
             </span>
             {stepTimes[currentStatus] && (
-              <span className="block text-[10px] text-[var(--color-text-placeholder)]">
+              <span className="block text-[10px] text-liquid-mist/60">
                 {formatDateTime(stepTimes[currentStatus])}
               </span>
             )}
@@ -193,10 +193,10 @@ export function StatusTimelineHorizontal({ currentStatus, orderLogs }: StatusTim
                 <div
                   className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs transition-all ${
                     isCurrent
-                      ? 'bg-[var(--color-primary)] text-white ring-4 ring-[var(--color-primary)]/20'
+                      ? 'bg-liquid-ocean text-white ring-4 ring-liquid-ocean/20'
                       : isDone
-                        ? 'bg-[var(--color-success)]/20 text-[var(--color-success)]'
-                        : 'bg-white/5 text-[var(--color-text-placeholder)]'
+                        ? 'bg-liquid-emerald/20 text-liquid-emerald'
+                        : 'bg-liquid-ocean/5 text-liquid-mist/60'
                   }`}
                 >
                   {isDone && !isCurrent ? (
@@ -211,16 +211,16 @@ export function StatusTimelineHorizontal({ currentStatus, orderLogs }: StatusTim
                 <span
                   className={`text-[10px] mt-1.5 text-center leading-tight ${
                     isCurrent
-                      ? 'text-[var(--color-text-primary)] font-medium'
+                      ? 'text-liquid-deep font-medium'
                       : isDone
-                        ? 'text-[var(--color-text-secondary)]'
-                        : 'text-[var(--color-text-placeholder)]'
+                        ? 'text-liquid-mist'
+                        : 'text-liquid-mist/60'
                   }`}
                 >
                   {ORDER_STATUS_LABELS[step.status]}
                 </span>
                 {time && (
-                  <span className="text-[9px] text-[var(--color-text-placeholder)] mt-0.5">
+                  <span className="text-[9px] text-liquid-mist/60 mt-0.5">
                     {formatDateTime(time).slice(5, 16)}
                   </span>
                 )}
@@ -232,8 +232,8 @@ export function StatusTimelineHorizontal({ currentStatus, orderLogs }: StatusTim
                   <div
                     className={`h-px w-full ${
                       isDone && i < currentIndex
-                        ? 'bg-[var(--color-primary)]'
-                        : 'bg-white/10'
+                        ? 'bg-liquid-ocean'
+                        : 'bg-liquid-ocean/10'
                     }`}
                   />
                 </div>
@@ -246,7 +246,7 @@ export function StatusTimelineHorizontal({ currentStatus, orderLogs }: StatusTim
         {isTerminal && (
           <>
             <div className="flex-1 flex items-center pt-3.5 px-0">
-              <div className="h-px w-full bg-[var(--color-primary)]" />
+              <div className="h-px w-full bg-liquid-ocean" />
             </div>
             <div className="flex flex-col items-center shrink-0" style={{ minWidth: 72 }}>
               <div
@@ -265,7 +265,7 @@ export function StatusTimelineHorizontal({ currentStatus, orderLogs }: StatusTim
                 {ORDER_STATUS_LABELS[currentStatus]}
               </span>
               {stepTimes[currentStatus] && (
-                <span className="text-[9px] text-[var(--color-text-placeholder)] mt-0.5">
+                <span className="text-[9px] text-liquid-mist/60 mt-0.5">
                   {formatDateTime(stepTimes[currentStatus]).slice(5, 16)}
                 </span>
               )}

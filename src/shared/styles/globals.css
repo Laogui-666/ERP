@@ -7,38 +7,44 @@
    ============================================================ */
 
 :root {
-  /* 主色调 - 现代简约 */
-  --color-primary: #3B82F6;
-  --color-primary-dark: #2563EB;
-  --color-primary-light: #60A5FA;
-  --color-primary-glow: rgba(59, 130, 246, 0.15);
-  --color-secondary: #10B981;
-  --color-accent: #8B5CF6;
-  --color-accent-glow: rgba(139, 92, 246, 0.15);
+  /* ============================================================
+     液态玻璃设计系统 - CSS变量映射
+     注意：新项目请直接使用 Tailwind 类名 liquid-*
+     以下变量仅用于向后兼容和CSS自定义属性场景
+     ============================================================ */
 
-  /* 状态色 - 清晰明确 */
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
-  --color-info: #3B82F6;
+  /* 液态海洋色系 - 主色调 */
+  --color-primary: #7C8DA6;
+  --color-primary-dark: #5A6A7D;
+  --color-primary-light: #9BAEC4;
+  --color-primary-glow: rgba(124, 141, 166, 0.15);
+  --color-secondary: #7FA87A;
+  --color-accent: #9B8EC4;
+  --color-accent-glow: rgba(155, 142, 196, 0.15);
 
-  /* 背景 - 干净清爽 */
-  --color-bg-primary: #FFFFFF;
-  --color-bg-secondary: #F9FAFB;
-  --color-bg-tertiary: #F3F4F6;
-  --color-bg-overlay: rgba(0, 0, 0, 0.5);
+  /* 液态状态色 */
+  --color-success: #7FA87A;
+  --color-warning: #C4A97D;
+  --color-error: #B87C7C;
+  --color-info: #7C8DA6;
 
-  /* 文字层级 */
-  --color-text-primary: #111827;
-  --color-text-secondary: #4B5563;
-  --color-text-tertiary: #9CA3AF;
-  --color-text-placeholder: #D1D5DB;
-  --color-text-inverse: #FFFFFF;
+  /* 液态背景 - 深色玻璃态 */
+  --color-bg-primary: #0B0E14;
+  --color-bg-secondary: #161B29;
+  --color-bg-tertiary: #202636;
+  --color-bg-overlay: rgba(0, 0, 0, 0.7);
 
-  /* 边框 */
-  --color-border: #E5E7EB;
-  --color-border-light: #F3F4F6;
-  --color-border-dark: #D1D5DB;
+  /* 液态文字层级 */
+  --color-text-primary: #F0F4F8;
+  --color-text-secondary: #A0AEC0;
+  --color-text-tertiary: #64748B;
+  --color-text-placeholder: #475569;
+  --color-text-inverse: #0B0E14;
+
+  /* 液态边框 */
+  --color-border: rgba(124, 141, 166, 0.12);
+  --color-border-light: rgba(124, 141, 166, 0.08);
+  --color-border-dark: rgba(124, 141, 166, 0.2);
 
   /* 阴影 */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -98,39 +104,20 @@
   --font-bold: 700;
 }
 
-/* 深色模式 */
+/* 深色模式 - 液态玻璃默认就是深色主题 */
 @media (prefers-color-scheme: dark) {
   :root {
-    /* 背景 - 深色模式 */
-    --color-bg-primary: #111827;
-    --color-bg-secondary: #1F2937;
-    --color-bg-tertiary: #374151;
-    --color-bg-overlay: rgba(0, 0, 0, 0.8);
-
-    /* 文字层级 - 深色模式 */
-    --color-text-primary: #F9FAFB;
-    --color-text-secondary: #E5E7EB;
-    --color-text-tertiary: #9CA3AF;
-    --color-text-placeholder: #6B7280;
-
-    /* 边框 - 深色模式 */
-    --color-border: #374151;
-    --color-border-light: #4B5563;
-    --color-border-dark: #6B7280;
-
-    /* 阴影 - 深色模式 */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+    /* 液态玻璃设计系统已经是深色主题，保持与主定义一致 */
+    /* 这些变量确保在系统深色模式下保持一致性 */
   }
 }
 
 /* ==================== 全局基础 ==================== */
 
 body {
-  background-color: var(--color-bg-primary);
-  color: var(--color-text-primary);
+  background: linear-gradient(135deg, #0B0E14 0%, #161B29 50%, #0B0E14 100%);
+  background-attachment: fixed;
+  color: #F0F4F8;
   font-family: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -245,7 +232,7 @@ body {
   }
 }
 
-/* ==================== 滚动条 ==================== */
+/* ==================== 滚动条 - 液态玻璃风格 ==================== */
 
 ::-webkit-scrollbar {
   width: 6px;
@@ -253,43 +240,24 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-tertiary);
+  background: rgba(124, 141, 166, 0.05);
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border-dark);
+  background: rgba(124, 141, 166, 0.2);
   border-radius: var(--radius-full);
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-tertiary);
+  background: rgba(124, 141, 166, 0.35);
 }
 
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-border-dark) var(--color-bg-tertiary);
-}
-
-/* 深色模式滚动条 */
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-track {
-    background: var(--color-bg-tertiary);
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-border-dark);
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text-tertiary);
-  }
-  
-  * {
-    scrollbar-color: var(--color-border-dark) var(--color-bg-tertiary);
-  }
+  scrollbar-color: rgba(124, 141, 166, 0.2) rgba(124, 141, 166, 0.05);
 }
 
 /* ==================== 入场动效 ==================== */
@@ -452,12 +420,12 @@ body {
 
 /* ==================== M8 工具类 ==================== */
 
-/* 文字扫光效果 */
+/* 文字扫光效果 - 液态玻璃风格 */
 .shimmer-text {
   background: linear-gradient(120deg,
-    var(--color-text-primary) 0%, var(--color-text-primary) 40%,
-    var(--color-primary-light) 50%,
-    var(--color-text-primary) 60%, var(--color-text-primary) 100%);
+    #F0F4F8 0%, #F0F4F8 40%,
+    #9BAEC4 50%,
+    #F0F4F8 60%, #F0F4F8 100%);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

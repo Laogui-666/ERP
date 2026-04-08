@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, createContext, useContext, type ReactNode } from 'react'
+import { useState, useCallback, createContext, useContext, type ReactNode, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@shared/lib/utils'
 
@@ -48,14 +48,19 @@ const iconMap: Record<ToastType, ReactNode> = {
 }
 
 const colorMap: Record<ToastType, string> = {
-  success: 'bg-[rgba(127,168,122,0.15)] border-[var(--color-success)]/20 text-[var(--color-success)]',
-  error: 'bg-[rgba(184,124,124,0.15)] border-[var(--color-error)]/20 text-[var(--color-error)]',
-  warning: 'bg-[rgba(196,169,125,0.15)] border-[var(--color-warning)]/20 text-[var(--color-warning)]',
-  info: 'bg-[rgba(124,168,184,0.15)] border-[var(--color-info)]/20 text-[var(--color-info)]',
+  success: 'bg-liquid-emerald/15 border-liquid-emerald/20 text-liquid-emerald',
+  error: 'bg-liquid-ruby/15 border-liquid-ruby/20 text-liquid-ruby',
+  warning: 'bg-liquid-amber/15 border-liquid-amber/20 text-liquid-amber',
+  info: 'bg-liquid-ocean/15 border-liquid-ocean/20 text-liquid-ocean',
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const toast = useCallback((type: ToastType, message: string) => {
     const id = Math.random().toString(36).slice(2)
@@ -68,7 +73,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      {typeof document !== 'undefined' &&
+      {isClient &&
         createPortal(
           <div className="fixed bottom-5 right-5 z-[100] flex flex-col gap-2.5 max-w-[340px]">
             {toasts.map((t) => (

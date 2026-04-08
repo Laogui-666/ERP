@@ -1,60 +1,152 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { liquidSpringConfig } from '@design-system/theme/animations'
 
-const TOOLS = [
-  { name: '签证资讯', desc: '各国签证政策实时更新', href: '/portal/tools/news', color: 'from-blue-400/20 to-cyan-400/10', icon: '📰' },
-  { name: '行程助手', desc: 'AI 智能规划旅行路线', href: '/portal/tools/itinerary', color: 'from-green-400/20 to-emerald-400/10', icon: '🗺️' },
-  { name: '申请表助手', desc: '各国签证表智能填写', href: '/portal/tools/form-helper', color: 'from-amber-400/20 to-orange-400/10', icon: '📝' },
-  { name: '签证评估', desc: 'AI 评估通过率与风险', href: '/portal/tools/assessment', color: 'from-purple-400/20 to-violet-400/10', icon: '🔍' },
-  { name: '翻译助手', desc: '多语言即时翻译', href: '/portal/tools/translator', color: 'from-pink-400/20 to-rose-400/10', icon: '🌐' },
-  { name: '证明文件', desc: '在职证明等文件生成', href: '/portal/tools/documents', color: 'from-indigo-400/20 to-blue-400/10', icon: '📄' },
+const tools = [
+  {
+    icon: '📷',
+    title: '证件照制作',
+    desc: '一键生成各国签证标准证件照',
+    href: '/portal/tools/photo',
+    color: 'from-liquid-ocean/20 to-liquid-oceanLight/10',
+    iconBg: 'bg-liquid-ocean/10',
+  },
+  {
+    icon: '📄',
+    title: '表格填写助手',
+    desc: '智能填写签证申请表格',
+    href: '/portal/tools/form',
+    color: 'from-liquid-sand/20 to-liquid-sand/10',
+    iconBg: 'bg-liquid-sand/20',
+  },
+  {
+    icon: '💱',
+    title: '汇率换算',
+    desc: '实时汇率查询与换算',
+    href: '/portal/tools/exchange',
+    color: 'from-liquid-emerald/20 to-liquid-emerald/10',
+    iconBg: 'bg-liquid-emerald/10',
+  },
+  {
+    icon: '📅',
+    title: '行程规划',
+    desc: '智能生成签证行程单',
+    href: '/portal/tools/itinerary',
+    color: 'from-liquid-amber/20 to-liquid-amber/10',
+    iconBg: 'bg-liquid-amber/10',
+  },
 ]
 
 export function ToolShowcase() {
-  const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true) }, { threshold: 0.15 })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [])
-
   return (
-    <section ref={ref} className="py-16 md:py-24">
-      <div className="mx-auto max-w-4xl px-6">
-        <div className={`text-center transition-all duration-600 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <h2 className="text-[22px] md:text-[28px] font-bold text-[var(--color-text-primary)] tracking-tight">
-            智能工具箱
-          </h2>
-          <p className="mt-2 text-[13px] text-[var(--color-text-secondary)]">
-            6 大工具，让签证办理更简单
-          </p>
+    <section className="py-20 md:py-32 bg-white relative overflow-hidden">
+      {/* 背景装饰 */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-liquid-ocean/5 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-tl from-liquid-sand/5 to-transparent rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 md:px-8 lg:px-12">
+        {/* 标题区域 */}
+        <div className="text-center mb-16 md:mb-20">
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ ...liquidSpringConfig.gentle }}
+            className="inline-block px-4 py-1.5 rounded-full bg-liquid-ocean/5 border border-liquid-ocean/10 text-sm font-medium text-liquid-ocean mb-4"
+          >
+            实用工具
+          </motion.span>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ ...liquidSpringConfig.gentle, delay: 0.1 }}
+            className="text-3xl md:text-4xl lg:text-5xl font-bold text-liquid-deep mb-4"
+          >
+            签证工具箱
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ ...liquidSpringConfig.gentle, delay: 0.2 }}
+            className="text-lg text-liquid-mist max-w-2xl mx-auto"
+          >
+            我们提供一系列实用工具，帮助您轻松准备签证材料
+          </motion.p>
         </div>
 
-        <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-3">
-          {TOOLS.map((tool, i) => (
-            <Link
-              key={tool.name}
-              href={tool.href}
-              className={`glass-card group p-5 transition-all duration-500 hover:-translate-y-1 hover:shadow-lg active:scale-[0.97] ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
-              style={{ transitionDelay: `${i * 100}ms` }}
+        {/* 工具卡片网格 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          {tools.map((tool, index) => (
+            <motion.div
+              key={tool.href}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ ...liquidSpringConfig.gentle, delay: index * 0.1 }}
             >
-              <div className={`mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${tool.color} transition-transform duration-300 group-hover:scale-110`}>
-                <span className="text-[18px]">{tool.icon}</span>
-              </div>
-              <h3 className="text-[14px] font-semibold text-[var(--color-text-primary)]">{tool.name}</h3>
-              <p className="mt-1 text-[12px] text-[var(--color-text-secondary)] leading-relaxed">{tool.desc}</p>
-              <div className="mt-3 flex items-center gap-1 text-[11px] text-[var(--color-primary)] opacity-0 translate-x-[-8px] transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0">
-                使用 →
-              </div>
-            </Link>
+              <Link
+                href={tool.href}
+                className="group block h-full"
+              >
+                <div className="relative h-full p-6 md:p-8 rounded-3xl bg-white border border-liquid-ocean/10 shadow-lg shadow-liquid-ocean/5 transition-all duration-500 hover:shadow-xl hover:shadow-liquid-ocean/10 hover:-translate-y-2 hover:border-liquid-ocean/20 overflow-hidden">
+                  {/* 渐变背景 */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${tool.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                  
+                  {/* 内容 */}
+                  <div className="relative z-10">
+                    {/* 图标 */}
+                    <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl ${tool.iconBg} flex items-center justify-center mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3`}>
+                      <span className="text-2xl md:text-3xl">{tool.icon}</span>
+                    </div>
+
+                    {/* 标题 */}
+                    <h3 className="text-xl font-bold text-liquid-deep mb-2 transition-colors group-hover:text-liquid-ocean">
+                      {tool.title}
+                    </h3>
+
+                    {/* 描述 */}
+                    <p className="text-sm text-liquid-mist leading-relaxed">
+                      {tool.desc}
+                    </p>
+
+                    {/* 箭头 */}
+                    <div className="mt-6 flex items-center gap-2 text-sm font-medium text-liquid-ocean opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-[-10px] group-hover:translate-x-0">
+                      <span>立即使用</span>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
           ))}
         </div>
+
+        {/* 查看更多 */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ ...liquidSpringConfig.gentle, delay: 0.5 }}
+          className="text-center mt-12 md:mt-16"
+        >
+          <Link
+            href="/portal/tools"
+            className="inline-flex items-center gap-2 px-8 py-4 text-base font-semibold text-liquid-ocean bg-liquid-ocean/5 border border-liquid-ocean/10 rounded-2xl hover:bg-liquid-ocean/10 hover:border-liquid-ocean/20 transition-all duration-300"
+          >
+            查看全部工具
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </Link>
+        </motion.div>
       </div>
     </section>
   )

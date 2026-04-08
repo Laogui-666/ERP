@@ -95,21 +95,21 @@ export function ChatPanel({ orderId, compact = false, onClose }: ChatPanelProps)
 
   return (
     <div className={cn(
-      'flex flex-col h-full bg-[rgba(22,27,42,0.98)]',
+      'flex flex-col h-full bg-liquid-cream',
       compact ? 'rounded-xl' : 'rounded-2xl'
     )}>
       {/* 头部 */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-liquid-ocean/10">
         <div className="flex items-center gap-2">
           <span className="text-base">💬</span>
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+          <h3 className="text-sm font-semibold text-liquid-deep">
             订单沟通
           </h3>
         </div>
         {onClose && (
           <button
             onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] hover:bg-white/[0.06] transition-colors"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-liquid-mist/60 hover:text-liquid-mist hover:bg-liquid-ocean/5 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -140,7 +140,7 @@ export function ChatPanel({ orderId, compact = false, onClose }: ChatPanelProps)
       {/* 图片灯箱 */}
       {lightboxUrl && (
         <div
-          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 animate-fade-in-up cursor-pointer"
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 cursor-pointer"
           onClick={() => setLightboxUrl(null)}
         >
           <Image

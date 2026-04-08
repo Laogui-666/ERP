@@ -1,6 +1,7 @@
 'use client'
 
-import { GlassCard } from '@shared/ui/glass-card'
+import { motion } from 'framer-motion'
+import { liquidSpringConfig } from '@design-system/theme/animations'
 
 interface ToolEmptyStateProps {
   icon: string
@@ -11,11 +12,26 @@ interface ToolEmptyStateProps {
 
 export function ToolEmptyState({ icon, title, description, action }: ToolEmptyStateProps) {
   return (
-    <GlassCard intensity="medium" className="flex flex-col items-center gap-3 p-10">
-      <span className="text-4xl">{icon}</span>
-      <p className="text-[14px] font-semibold text-[var(--color-text-primary)]">{title}</p>
-      <p className="text-[13px] text-[var(--color-text-secondary)] text-center">{description}</p>
-      {action}
-    </GlassCard>
+    <motion.div 
+      className="flex flex-col items-center gap-4 p-12 rounded-3xl bg-gradient-to-br from-liquid-card/80 to-liquid-card/40 backdrop-blur-xl border border-liquid-ocean/10 shadow-lg shadow-liquid-ocean/5"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={liquidSpringConfig.gentle}
+    >
+      <motion.span 
+        className="text-5xl"
+        animate={{ y: [0, -5, 0] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      >
+        {icon}
+      </motion.span>
+      <p className="text-lg font-semibold text-liquid-deep">{title}</p>
+      <p className="text-sm text-liquid-mist text-center max-w-sm">{description}</p>
+      {action && (
+        <div className="mt-2">
+          {action}
+        </div>
+      )}
+    </motion.div>
   )
 }

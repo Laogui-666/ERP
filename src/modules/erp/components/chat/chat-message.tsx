@@ -23,7 +23,7 @@ export const ChatMessage = memo(function ChatMessage({
   if (message.type === 'SYSTEM') {
     return (
       <div className="flex justify-center py-2">
-        <span className="text-[11px] text-[var(--color-text-placeholder)] bg-white/[0.03] px-3 py-1 rounded-full">
+        <span className="text-[11px] text-liquid-mist/60 bg-liquid-ocean/5 px-3 py-1 rounded-full">
           {message.content}
         </span>
       </div>
@@ -33,10 +33,9 @@ export const ChatMessage = memo(function ChatMessage({
   return (
     <div
       className={cn(
-        'flex gap-2.5 max-w-[90%] animate-fade-in-up',
+        'flex gap-2.5 max-w-[90%]',
         isOwn ? 'ml-auto flex-row-reverse' : 'mr-auto'
       )}
-      style={{ animationDuration: '200ms' }}
     >
       {/* 头像 */}
       {showAvatar ? (
@@ -44,8 +43,8 @@ export const ChatMessage = memo(function ChatMessage({
           className={cn(
             'w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-sm font-medium',
             isOwn
-              ? 'bg-[var(--color-primary)]/20 text-[var(--color-primary-light)]'
-              : 'bg-white/10 text-[var(--color-text-secondary)]'
+              ? 'bg-liquid-ocean/20 text-liquid-oceanLight'
+              : 'bg-liquid-ocean/10 text-liquid-mist'
           )}
         >
           {message.senderName?.[0] ?? '?'}
@@ -58,10 +57,10 @@ export const ChatMessage = memo(function ChatMessage({
         {/* 发送者名称 + 时间 */}
         {showAvatar && (
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-xs text-[var(--color-text-placeholder)]">
+            <span className="text-xs text-liquid-mist/60">
               {message.senderName}
               {message.senderRole && message.senderRole !== 'CUSTOMER' && (
-                <span className="ml-1 text-[var(--color-accent)]">
+                <span className="ml-1 text-liquid-sand">
                   ({getRoleShortLabel(message.senderRole)})
                 </span>
               )}
@@ -74,8 +73,8 @@ export const ChatMessage = memo(function ChatMessage({
           className={cn(
             'rounded-2xl px-4 py-2.5 text-[14px] max-w-full break-words',
             isOwn
-              ? 'bg-[var(--color-primary)]/15 border border-[var(--color-primary)]/10 text-[var(--color-text-primary)]'
-              : 'bg-white/[0.06] border border-white/[0.06] text-[var(--color-text-primary)]'
+              ? 'bg-liquid-ocean/15 border border-liquid-ocean/10 text-liquid-deep'
+              : 'bg-liquid-ocean/5 border border-liquid-ocean/5 text-liquid-deep'
           )}
         >
           {message.type === 'TEXT' && (
@@ -104,20 +103,20 @@ export const ChatMessage = memo(function ChatMessage({
               href={message.content}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] transition-colors group"
+              className="flex items-center gap-3 p-3 rounded-xl bg-liquid-ocean/5 hover:bg-liquid-ocean/10 transition-colors group"
             >
               <span className="text-2xl shrink-0">📄</span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                <p className="text-sm font-medium text-liquid-deep truncate">
                   {message.fileName ?? '文件'}
                 </p>
                 {message.fileSize != null && (
-                  <p className="text-xs text-[var(--color-text-placeholder)]">
+                  <p className="text-xs text-liquid-mist/60">
                     {formatFileSize(message.fileSize)}
                   </p>
                 )}
               </div>
-              <svg className="w-5 h-5 text-[var(--color-text-placeholder)] group-hover:text-[var(--color-primary-light)] shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-5 h-5 text-liquid-mist/60 group-hover:text-liquid-oceanLight shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
             </a>
@@ -125,7 +124,7 @@ export const ChatMessage = memo(function ChatMessage({
         </div>
 
         {/* 时间 */}
-        <span className="text-[11px] text-[var(--color-text-placeholder)] px-1">
+        <span className="text-[11px] text-liquid-mist/60 px-1">
           {formatMessageTime(message.createdAt)}
         </span>
       </div>

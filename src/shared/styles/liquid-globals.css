@@ -1,0 +1,276 @@
+/* 华夏签证 ERP - 液态玻璃设计系统全局样式 */
+
+:root {
+  /* 莫兰迪冷色调 */
+  --liquid-ocean: #5B7B7A;
+  --liquid-ocean-light: #7FA0A0;
+  --liquid-sand: #A8B8B8;
+  --liquid-mist: #6A7A7A;
+  --liquid-clay: #6A6D6D;
+  --liquid-blush: #C4CCD6;
+  --liquid-deep: #1A262E;
+  --liquid-light: #F0F4F7;
+  --liquid-cream: #E5EBEF;
+  --liquid-steel: #4A5A63;
+  --liquid-silver: #8A9AA7;
+
+  /* 液态玻璃专用色 */
+  --liquid-primary: rgba(255, 255, 255, 0.72);
+  --liquid-secondary: rgba(255, 255, 255, 0.56);
+  --liquid-tertiary: rgba(255, 255, 255, 0.40);
+  --liquid-border-primary: rgba(255, 255, 255, 0.5);
+  --liquid-border-secondary: rgba(255, 255, 255, 0.35);
+  --liquid-gloss: rgba(255, 255, 255, 0.25);
+  --liquid-shadow-soft: rgba(0, 0, 0, 0.04);
+  --liquid-shadow-medium: rgba(0, 0, 0, 0.08);
+  --liquid-shadow-strong: rgba(0, 0, 0, 0.12);
+
+  /* 功能色 */
+  --liquid-success: #078a52;
+  --liquid-warning: #fbbd41;
+  --liquid-error: #ff385c;
+  --liquid-info: #3bd3fd;
+
+  /* 间距系统 - 8pt grid */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* 圆角 */
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-xl: 1.75rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 2.5rem;
+  --radius-full: 9999px;
+
+  /* 字体大小 */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 36px;
+
+  /* 行高 */
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* 字重 */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+}
+
+/* 全局基础 */
+body {
+  background-color: var(--liquid-light);
+  color: var(--liquid-deep);
+  font-family: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: var(--leading-normal);
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--liquid-cream);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--liquid-silver);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--liquid-cream);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--liquid-mist);
+}
+
+/* 文字选择 */
+::selection {
+  background: var(--liquid-ocean);
+  color: white;
+}
+
+/* 液态玻璃基础类 */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset,
+    0 8px 32px rgba(0, 0, 0, 0.10),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.liquid-glass-light {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.liquid-glass-strong {
+  background: rgba(255, 255, 255, 0.80);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.60);
+}
+
+/* 光泽效果 */
+.liquid-gloss::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.3),
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* 动画关键帧 */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(91, 123, 122, 0.3); }
+  50% { box-shadow: 0 0 0 12px rgba(91, 123, 122, 0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* 动画工具类 */
+.animate-float {
+  animation: float 8s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.07) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* 响应式工具类 */
+@media (max-width: 640px) {
+  .mobile-full {
+    width: 100%;
+  }
+  
+  .mobile-center {
+    text-align: center;
+  }
+  
+  .mobile-p-4 {
+    padding: 1rem;
+  }
+}
+
+/* 辅助类 */
+.text-gradient {
+  background: linear-gradient(135deg, var(--liquid-ocean), var(--liquid-ocean-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bg-gradient-liquid {
+  background: linear-gradient(135deg, var(--liquid-light), var(--liquid-cream));
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* 过渡效果 */
+.transition-liquid {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 焦点样式 */
+.focus-liquid:focus {
+  outline: 2px solid var(--liquid-ocean);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(91, 123, 122, 0.1);
+}
+
+/* 无障碍支持 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  :root {
+    --liquid-ocean: #4A6A69;
+    --liquid-deep: #0F1A20;
+    --liquid-silver: #5A6A77;
+  }
+  
+  .liquid-glass {
+    border: 2px solid rgba(255, 255, 255, 0.8);
+  }
+}

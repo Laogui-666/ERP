@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@shared/lib/utils'
+import { motion } from 'framer-motion'
 
 const TABS = [
   { href: '/', label: '首页', icon: HomeIcon },
@@ -16,7 +17,7 @@ export function AppBottomTab() {
   const pathname = usePathname()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.06] bg-[rgba(22,27,41,0.92)] backdrop-blur-xl safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-liquid-ocean/10 bg-white/80 backdrop-blur-xl safe-area-bottom md:hidden">
       <div className="mx-auto flex max-w-lg items-center justify-around py-2">
         {TABS.map((tab) => {
           const isActive =
@@ -29,16 +30,20 @@ export function AppBottomTab() {
               key={tab.href}
               href={tab.href}
               className={cn(
-                'flex flex-col items-center gap-0.5 px-4 py-1 transition-colors duration-200',
+                'relative flex flex-col items-center gap-0.5 px-4 py-1 transition-colors duration-200',
                 isActive
-                  ? 'text-[var(--color-primary)]'
-                  : 'text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]'
+                  ? 'text-liquid-ocean'
+                  : 'text-liquid-mist hover:text-liquid-deep'
               )}
             >
               <tab.icon active={isActive} />
               <span className="text-[11px] font-medium">{tab.label}</span>
               {isActive && (
-                <div className="h-[2px] w-5 rounded-full bg-[var(--color-primary)]" />
+                <motion.div 
+                  layoutId="bottomTab"
+                  className="absolute -bottom-0.5 h-[2px] w-5 rounded-full bg-liquid-ocean"
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                />
               )}
             </Link>
           )

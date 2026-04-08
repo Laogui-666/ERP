@@ -156,7 +156,7 @@ export function ChatInput({ orderId, isSending, onSend, onTyping }: ChatInputPro
   const isNearLimit = charCount > WARN_LENGTH
 
   return (
-    <div className="shrink-0 border-t border-white/[0.06] bg-[rgba(26,31,46,0.9)] backdrop-blur-xl">
+    <div className="shrink-0 border-t border-liquid-ocean/10 bg-liquid-cream/90 backdrop-blur-xl">
       <div className="flex items-end gap-2 p-3">
         {/* 文件按钮 */}
         <button
@@ -167,11 +167,11 @@ export function ChatInput({ orderId, isSending, onSend, onTyping }: ChatInputPro
             }
           }}
           disabled={isSending || isUploading}
-          className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] hover:bg-white/[0.06] transition-colors disabled:opacity-40"
+          className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl text-liquid-mist/60 hover:text-liquid-mist hover:bg-liquid-ocean/5 transition-colors disabled:opacity-40"
           title="发送文件"
         >
           {isUploading ? (
-            <span className="w-4 h-4 border-2 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] rounded-full animate-spin" />
+            <span className="w-4 h-4 border-2 border-liquid-ocean/20 border-t-liquid-ocean rounded-full animate-spin" />
           ) : (
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
@@ -189,7 +189,7 @@ export function ChatInput({ orderId, isSending, onSend, onTyping }: ChatInputPro
             }
           }}
           disabled={isSending || isUploading}
-          className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] hover:bg-white/[0.06] transition-colors disabled:opacity-40"
+          className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl text-liquid-mist/60 hover:text-liquid-mist hover:bg-liquid-ocean/5 transition-colors disabled:opacity-40"
           title="发送图片"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -208,13 +208,13 @@ export function ChatInput({ orderId, isSending, onSend, onTyping }: ChatInputPro
             rows={1}
             className={cn(
               'w-full resize-none rounded-xl px-3.5 py-2.5 text-sm',
-              'bg-white/[0.05] border border-white/[0.08]',
-              'text-[var(--color-text-primary)] placeholder:text-[var(--color-text-placeholder)]',
-              'focus:outline-none focus:border-[var(--color-primary)]/40 focus:bg-white/[0.07]',
+              'bg-liquid-ocean/5 border border-liquid-ocean/10',
+              'text-liquid-deep placeholder:text-liquid-mist/60',
+              'focus:outline-none focus:border-liquid-ocean/40 focus:bg-liquid-ocean/10',
               'transition-all duration-200',
               'scrollbar-thin',
-              isNearLimit && !isOverLimit && 'border-[var(--color-warning)]/30',
-              isOverLimit && 'border-[var(--color-error)]/40'
+              isNearLimit && !isOverLimit && 'border-liquid-amber/30',
+              isOverLimit && 'border-liquid-ruby/40'
             )}
             style={{ minHeight: '40px', maxHeight: '120px' }}
           />
@@ -223,7 +223,7 @@ export function ChatInput({ orderId, isSending, onSend, onTyping }: ChatInputPro
             <span
               className={cn(
                 'absolute right-2 bottom-1.5 text-[10px]',
-                isOverLimit ? 'text-[var(--color-error)]' : 'text-[var(--color-warning)]'
+                isOverLimit ? 'text-liquid-ruby' : 'text-liquid-amber'
               )}
             >
               {charCount}/{MAX_LENGTH}
@@ -238,8 +238,8 @@ export function ChatInput({ orderId, isSending, onSend, onTyping }: ChatInputPro
           className={cn(
             'shrink-0 w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-200',
             text.trim() && !isOverLimit
-              ? 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary)]/90 shadow-lg shadow-[var(--color-primary)]/20'
-              : 'bg-white/[0.05] text-[var(--color-text-placeholder)]'
+              ? 'bg-liquid-ocean text-white hover:bg-liquid-oceanLight shadow-lg shadow-liquid-ocean/20'
+              : 'bg-liquid-ocean/5 text-liquid-mist/60'
           )}
           title="发送"
         >

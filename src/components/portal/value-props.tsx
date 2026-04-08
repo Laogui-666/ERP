@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
+import { liquidSpringConfig } from '@design-system/theme/animations'
 
 const PROPS = [
   { icon: '⚡', title: '极速出签', value: '1天', desc: '最快1个工作日出签，不让等待耽误行程' },
@@ -10,40 +11,48 @@ const PROPS = [
 ]
 
 export function ValueProps() {
-  const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true) }, { threshold: 0.2 })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [])
-
   return (
-    <section ref={ref} className="py-16 md:py-24">
-      <div className="mx-auto max-w-4xl px-6">
-        <div className={`text-center transition-all duration-600 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <h2 className="text-[22px] md:text-[28px] font-bold text-[var(--color-text-primary)] tracking-tight">
+    <section className="py-16 md:py-24 bg-white relative overflow-hidden">
+      {/* 背景装饰 */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-liquid-ocean/5 to-liquid-sand/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-5xl px-4 md:px-8">
+        <motion.div 
+          className="text-center mb-12 md:mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={liquidSpringConfig.gentle}
+        >
+          <span className="inline-block px-4 py-1.5 rounded-full bg-liquid-ocean/5 border border-liquid-ocean/10 text-sm font-medium text-liquid-ocean mb-4">
+            我们的优势
+          </span>
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-liquid-deep tracking-tight">
             为什么选择华夏签证
           </h2>
-        </div>
+        </motion.div>
 
-        <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {PROPS.map((p, i) => (
-            <div
+            <motion.div
               key={p.title}
-              className={`glass-card p-5 text-center transition-all duration-500 hover:-translate-y-1 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-              style={{ transitionDelay: `${i * 150}ms` }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ ...liquidSpringConfig.gentle, delay: i * 0.1 }}
+              className="group"
             >
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--color-primary)]/15 to-[var(--color-accent)]/10">
-                <span className="text-[20px]">{p.icon}</span>
+              <div className="h-full p-6 rounded-3xl bg-white border border-liquid-ocean/10 shadow-lg shadow-liquid-ocean/5 text-center transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-liquid-ocean/10 hover:border-liquid-ocean/20">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-liquid-ocean/15 to-liquid-sand/10 transition-transform duration-500 group-hover:scale-110">
+                  <span className="text-2xl">{p.icon}</span>
+                </div>
+                <h3 className="text-base font-semibold text-liquid-deep mb-1">{p.title}</h3>
+                <p className="text-2xl md:text-3xl font-bold text-liquid-ocean mb-2">{p.value}</p>
+                <p className="text-xs text-liquid-mist leading-relaxed">{p.desc}</p>
               </div>
-              <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">{p.title}</h3>
-              <p className="mt-1 text-[28px] font-bold text-[var(--color-primary)]">{p.value}</p>
-              <p className="mt-1 text-[12px] text-[var(--color-text-secondary)] leading-relaxed">{p.desc}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

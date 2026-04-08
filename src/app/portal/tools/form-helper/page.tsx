@@ -68,15 +68,15 @@ export default function FormHelperPage() {
 
       {selected ? (
         <div>
-          <button onClick={() => setSelected(null)} className="mb-4 text-[13px] text-[var(--color-primary)] hover:underline">← 返回列表</button>
+          <button onClick={() => setSelected(null)} className="mb-4 text-[13px] text-liquid-ocean hover:underline">← 返回列表</button>
           <GlassCard intensity="medium" className="p-5">
-            <h2 className="mb-1 text-[16px] font-semibold text-[var(--color-text-primary)]">{selected.name}</h2>
-            <p className="mb-4 text-[12px] text-[var(--color-text-placeholder)]">{selected.country} · {selected.visaType}</p>
+            <h2 className="mb-1 text-[16px] font-semibold text-liquid-deep">{selected.name}</h2>
+            <p className="mb-4 text-[12px] text-liquid-mist/60">{selected.country} · {selected.visaType}</p>
             <div className="space-y-4">
               {selected.fields.map(field => (
                 <div key={field.key}>
-                  <label className="mb-1 block text-[13px] text-[var(--color-text-secondary)]">
-                    {field.label} {field.required && <span className="text-[var(--color-error)]">*</span>}
+                  <label className="mb-1 block text-[13px] text-liquid-mist">
+                    {field.label} {field.required && <span className="text-liquid-ruby">*</span>}
                   </label>
                   {field.type === 'textarea' ? (
                     <textarea className="glass-input w-full resize-none" rows={3} placeholder={field.hint || ''} value={formData[field.key] || ''} onChange={e => setFormData({ ...formData, [field.key]: e.target.value })} />
@@ -103,16 +103,16 @@ export default function FormHelperPage() {
         <div className="space-y-4">
           {Object.entries(grouped).map(([country, temps]) => (
             <div key={country}>
-              <h3 className="mb-2 text-[14px] font-semibold text-[var(--color-text-primary)]">🌍 {country}</h3>
+              <h3 className="mb-2 text-[14px] font-semibold text-liquid-deep">🌍 {country}</h3>
               <div className="space-y-2">
                 {temps.map(t => (
                   <GlassCard key={t.id} intensity="light" hover className="cursor-pointer p-4" onClick={() => { setSelected(t); setFormData({}) }}>
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[14px] font-medium text-[var(--color-text-primary)]">{t.name}</p>
-                        <p className="text-[11px] text-[var(--color-text-placeholder)]">{t.fields.length} 个字段</p>
+                        <p className="text-[14px] font-medium text-liquid-deep">{t.name}</p>
+                        <p className="text-[11px] text-liquid-mist/60">{t.fields.length} 个字段</p>
                       </div>
-                      <span className="text-[13px] text-[var(--color-primary)]">填写 →</span>
+                      <span className="text-[13px] text-liquid-ocean">填写 →</span>
                     </div>
                   </GlassCard>
                 ))}

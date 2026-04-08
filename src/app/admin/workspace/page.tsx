@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@shared/hooks/use-auth'
 import { StatusBadge } from '@erp/components/orders/status-badge'
-import { GlassCard } from '@shared/ui/glass-card'
+import { LiquidCard } from '@design-system/components/liquid-card'
 import { PageHeader } from '@shared/components/layout/page-header'
 import { formatDateTime } from '@shared/lib/utils'
 import { USER_ROLE_LABELS } from '@shared/types/user'
@@ -65,110 +65,109 @@ export default function WorkspacePage() {
       />
 
       {/* 快捷统计 */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in-up">
-        <GlassCard className="p-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <LiquidCard className="p-5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-[var(--color-text-secondary)]">今日录入/接单</span>
-            <div className="w-10 h-10 rounded-xl bg-[var(--color-info)]/15 flex items-center justify-center">
-              <svg className="w-5 h-5 text-[var(--color-info)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <span className="text-sm text-liquid-mist">今日录入/接单</span>
+            <div className="w-10 h-10 rounded-xl bg-liquid-ocean/15 flex items-center justify-center">
+              <svg className="w-5 h-5 text-liquid-ocean" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </div>
           </div>
-          <div className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.todayCount}</div>
-        </GlassCard>
+          <div className="text-2xl font-bold text-liquid-deep">{stats.todayCount}</div>
+        </LiquidCard>
 
-        <GlassCard className="p-5">
+        <LiquidCard className="p-5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-[var(--color-text-secondary)]">待处理</span>
-            <div className="w-10 h-10 rounded-xl bg-[var(--color-warning)]/15 flex items-center justify-center">
-              <svg className="w-5 h-5 text-[var(--color-warning)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <span className="text-sm text-liquid-mist">待处理</span>
+            <div className="w-10 h-10 rounded-xl bg-liquid-amber/15 flex items-center justify-center">
+              <svg className="w-5 h-5 text-liquid-amber" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
-          <div className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.pending}</div>
-        </GlassCard>
+          <div className="text-2xl font-bold text-liquid-deep">{stats.pending}</div>
+        </LiquidCard>
 
-        <GlassCard className="p-5">
+        <LiquidCard className="p-5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-[var(--color-text-secondary)]">处理中</span>
-            <div className="w-10 h-10 rounded-xl bg-[var(--color-accent)]/15 flex items-center justify-center">
-              <svg className="w-5 h-5 text-[var(--color-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <span className="text-sm text-liquid-mist">处理中</span>
+            <div className="w-10 h-10 rounded-xl bg-liquid-sand/15 flex items-center justify-center">
+              <svg className="w-5 h-5 text-liquid-sand" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </div>
           </div>
-          <div className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.inProgress}</div>
-        </GlassCard>
+          <div className="text-2xl font-bold text-liquid-deep">{stats.inProgress}</div>
+        </LiquidCard>
       </div>
 
       {/* 我的订单列表 */}
-      <GlassCard className="overflow-hidden animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-        <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
+      <LiquidCard className="overflow-hidden">
+        <div className="px-5 py-4 border-b border-liquid-ocean/10 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-liquid-deep">
             我的订单 {meta ? `(${meta.total})` : ''}
           </h2>
         </div>
 
         {isLoading ? (
           <div className="p-12 text-center">
-            <div className="inline-block w-6 h-6 border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin" />
+            <div className="inline-block w-6 h-6 border-2 border-liquid-ocean/30 border-t-liquid-ocean rounded-full animate-spin" />
           </div>
         ) : orders.length === 0 ? (
           <div className="p-12 text-center">
-            <p className="text-sm text-[var(--color-text-secondary)]">暂无订单</p>
+            <p className="text-sm text-liquid-mist">暂无订单</p>
           </div>
         ) : (
-          <div className="divide-y divide-white/5">
-            {orders.map((order, i) => (
+          <div className="divide-y divide-liquid-ocean/5">
+            {orders.map((order) => (
               <Link
                 key={order.id}
                 href={`/admin/orders/${order.id}`}
-                className="flex items-center gap-4 px-5 py-4 hover:bg-white/[0.02] transition-colors animate-fade-in-up"
-                style={{ animationDelay: `${i * 30}ms` }}
+                className="flex items-center gap-4 px-5 py-4 hover:bg-liquid-ocean/5 transition-colors"
               >
                 {/* 状态指示点 */}
                 <div
                   className="w-3 h-3 rounded-full shrink-0"
                   style={{
                     backgroundColor: order.status === 'APPROVED' || order.status === 'DELIVERED'
-                      ? 'var(--color-success)'
+                      ? '#078a52'
                       : order.status === 'REJECTED'
-                        ? 'var(--color-error)'
-                        : 'var(--color-primary)',
+                        ? '#ff385c'
+                        : '#5B7B7A',
                   }}
                 />
 
                 {/* 订单信息 */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono text-[var(--color-primary-light)]">{order.orderNo}</span>
+                    <span className="text-sm font-mono text-liquid-oceanLight">{order.orderNo}</span>
                     <StatusBadge status={order.status} />
                   </div>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-[var(--color-text-secondary)]">
+                  <div className="flex items-center gap-3 mt-1 text-xs text-liquid-mist">
                     <span>{order.customerName}</span>
-                    <span className="text-[var(--color-text-placeholder)]">·</span>
+                    <span className="text-liquid-mist/40">·</span>
                     <span>{order.targetCountry} {order.visaType}</span>
-                    <span className="text-[var(--color-text-placeholder)]">·</span>
+                    <span className="text-liquid-mist/40">·</span>
                     <span>¥{Number(order.amount).toLocaleString()}</span>
                   </div>
                 </div>
 
                 {/* 时间 */}
-                <span className="text-xs text-[var(--color-text-placeholder)] shrink-0">
+                <span className="text-xs text-liquid-mist/60 shrink-0">
                   {formatDateTime(order.updatedAt)}
                 </span>
 
                 {/* 箭头 */}
-                <svg className="w-4 h-4 text-[var(--color-text-placeholder)] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 text-liquid-mist/40 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </Link>
             ))}
           </div>
         )}
-      </GlassCard>
+      </LiquidCard>
     </div>
   )
 }

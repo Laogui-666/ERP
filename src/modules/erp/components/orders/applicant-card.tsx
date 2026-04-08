@@ -97,9 +97,9 @@ export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, canEdit, 
   // 编辑模式
   if (isEditing && editValues && onEditChange) {
     return (
-      <div className="relative flex items-center justify-between p-3 rounded-xl bg-[var(--color-primary)]/[0.04] border border-[var(--color-primary)]/20 transition-all">
+      <div className="relative flex items-center justify-between p-3 rounded-xl bg-liquid-ocean/5 border border-liquid-ocean/20 transition-all">
         <div className="flex items-center gap-3 flex-1">
-          <div className="w-8 h-8 rounded-full bg-[var(--color-primary)]/15 flex items-center justify-center text-xs font-medium text-[var(--color-primary-light)] shrink-0">
+          <div className="w-8 h-8 rounded-full bg-liquid-ocean/15 flex items-center justify-center text-xs font-medium text-liquid-oceanLight shrink-0">
             {editValues.name[0] || '?'}
           </div>
           <div className="grid grid-cols-3 gap-2 flex-1">
@@ -127,14 +127,14 @@ export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, canEdit, 
         <div className="flex items-center gap-2 shrink-0 ml-2">
           <button
             onClick={onCancelEdit}
-            className="text-[10px] px-2 py-1 rounded bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all"
+            className="text-[10px] px-2 py-1 rounded bg-liquid-ocean/5 text-liquid-mist hover:bg-liquid-ocean/10 transition-all"
           >
             取消
           </button>
           <button
             onClick={onSaveEdit}
             disabled={isSaving}
-            className="text-[10px] px-2 py-1 rounded bg-[var(--color-primary)]/15 text-[var(--color-primary-light)] hover:bg-[var(--color-primary)]/25 transition-all disabled:opacity-50"
+            className="text-[10px] px-2 py-1 rounded bg-liquid-ocean/15 text-liquid-oceanLight hover:bg-liquid-ocean/25 transition-all disabled:opacity-50"
           >
             {isSaving ? '保存中...' : '保存'}
           </button>
@@ -145,20 +145,20 @@ export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, canEdit, 
 
   // 正常模式
   return (
-    <div className="relative flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-all">
+    <div className="relative flex items-center justify-between p-3 rounded-xl bg-liquid-ocean/5 border border-liquid-ocean/10 hover:bg-liquid-ocean/10 transition-all">
       <div className="flex items-center gap-3 min-w-0">
         {/* 头像 */}
-        <div className="w-8 h-8 rounded-full bg-[var(--color-primary)]/15 flex items-center justify-center text-xs font-medium text-[var(--color-primary-light)] shrink-0">
+        <div className="w-8 h-8 rounded-full bg-liquid-ocean/15 flex items-center justify-center text-xs font-medium text-liquid-oceanLight shrink-0">
           {applicant.name[0]}
         </div>
         <div className="min-w-0">
-          <div className="text-sm font-medium text-[var(--color-text-primary)] truncate">{applicant.name}</div>
-          <div className="text-xs text-[var(--color-text-placeholder)] truncate">
+          <div className="text-sm font-medium text-liquid-deep truncate">{applicant.name}</div>
+          <div className="text-xs text-liquid-mist/60 truncate">
             {applicant.phone ?? '无手机号'}
             {applicant.passportNo && ` · ${applicant.passportNo}`}
           </div>
           {applicant.visaResultNote && (
-            <div className="text-xs text-[var(--color-error)] mt-0.5 truncate">备注: {applicant.visaResultNote}</div>
+            <div className="text-xs text-liquid-ruby mt-0.5 truncate">备注: {applicant.visaResultNote}</div>
           )}
         </div>
       </div>
@@ -168,7 +168,7 @@ export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, canEdit, 
         {canEdit && !applicant.visaResult && (
           <button
             onClick={onEdit}
-            className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all"
+            className="text-[10px] px-1.5 py-0.5 rounded bg-liquid-ocean/5 text-liquid-mist hover:bg-liquid-ocean/10 transition-all"
           >
             编辑
           </button>
@@ -184,7 +184,7 @@ export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, canEdit, 
           <button
             onClick={() => handleDocsComplete(!applicant.documentsComplete)}
             disabled={isUpdating}
-            className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all disabled:opacity-50"
+            className="text-[10px] px-1.5 py-0.5 rounded bg-liquid-ocean/5 text-liquid-mist hover:bg-liquid-ocean/10 transition-all disabled:opacity-50"
           >
             {applicant.documentsComplete ? '撤销' : '标记齐全'}
           </button>
@@ -199,14 +199,14 @@ export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, canEdit, 
             <button
               onClick={() => handleResult('APPROVED')}
               disabled={isUpdating}
-              className="text-[10px] px-2 py-1 rounded bg-[var(--color-success)]/15 text-[var(--color-success)] hover:bg-[var(--color-success)]/25 transition-all disabled:opacity-50"
+              className="text-[10px] px-2 py-1 rounded bg-liquid-emerald/15 text-liquid-emerald hover:bg-liquid-emerald/25 transition-all disabled:opacity-50"
             >
               出签
             </button>
             <button
               onClick={() => handleResult('REJECTED')}
               disabled={isUpdating}
-              className="text-[10px] px-2 py-1 rounded bg-[var(--color-error)]/15 text-[var(--color-error)] hover:bg-[var(--color-error)]/25 transition-all disabled:opacity-50"
+              className="text-[10px] px-2 py-1 rounded bg-liquid-ruby/15 text-liquid-ruby hover:bg-liquid-ruby/25 transition-all disabled:opacity-50"
             >
               拒签
             </button>
@@ -216,8 +216,8 @@ export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, canEdit, 
 
       {/* 拒签备注弹出 */}
       {showRejectNote && (
-        <div className="absolute mt-1 right-0 w-64 p-3 rounded-xl bg-[#1A1F2E] border border-white/10 shadow-xl z-10">
-          <label className="block text-xs text-[var(--color-text-secondary)] mb-1.5">拒签原因（可选）</label>
+        <div className="absolute mt-1 right-0 w-64 p-3 rounded-xl bg-liquid-cream border border-liquid-ocean/10 shadow-xl z-10">
+          <label className="block text-xs text-liquid-mist mb-1.5">拒签原因（可选）</label>
           <textarea
             className="glass-input w-full text-xs resize-none"
             rows={2}
@@ -229,14 +229,14 @@ export function ApplicantCard({ applicant, canMarkResult, canMarkDocs, canEdit, 
           <div className="flex gap-2 mt-2">
             <button
               onClick={() => { setShowRejectNote(false); setRejectNote('') }}
-              className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10"
+              className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-liquid-ocean/5 text-liquid-mist hover:bg-liquid-ocean/10"
             >
               取消
             </button>
             <button
               onClick={() => handleResult('REJECTED')}
               disabled={isUpdating}
-              className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-[var(--color-error)]/20 text-[var(--color-error)] hover:bg-[var(--color-error)]/30 disabled:opacity-50"
+              className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-liquid-ruby/20 text-liquid-ruby hover:bg-liquid-ruby/30 disabled:opacity-50"
             >
               {isUpdating ? '处理中...' : '确认拒签'}
             </button>

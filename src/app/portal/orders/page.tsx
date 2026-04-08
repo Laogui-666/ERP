@@ -24,7 +24,7 @@ export default function PortalOrdersPage() {
 
   return (
     <div className="flex items-center justify-center py-20">
-      <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)]" />
+      <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-liquid-ocean/30 border-t-liquid-ocean" />
     </div>
   )
 }

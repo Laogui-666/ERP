@@ -93,16 +93,16 @@ export default function CustomerLayout({
       {/* 顶部导航 */}
       <header className="glass-topbar sticky top-0 z-50 px-4 py-3.5">
         <div className="mx-auto flex max-w-lg items-center justify-between">
-          <h1 className="text-[15px] font-bold text-[var(--color-text-primary)] tracking-tight">
+          <h1 className="text-[15px] font-bold text-liquid-deep tracking-tight">
             华夏签证
           </h1>
           <div className="flex items-center gap-3">
-            <span className="text-[12px] text-[var(--color-text-secondary)] font-medium">
+            <span className="text-[12px] text-liquid-mist font-medium">
               {user?.realName ?? ''}
             </span>
             <button
               onClick={() => { void logout() }}
-              className="text-[11px] text-[var(--color-text-placeholder)] active:text-[var(--color-error)] transition-colors px-2 py-1 rounded-lg active:bg-[var(--color-error)]/10"
+              className="text-[11px] text-liquid-mist/60 active:text-liquid-ruby transition-colors px-2 py-1 rounded-lg active:bg-liquid-ruby/10"
             >
               退出
             </button>
@@ -141,26 +141,26 @@ export default function CustomerLayout({
                   className={cn(
                     'relative flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-xl transition-all duration-200 active:scale-90',
                     isActive
-                      ? 'text-[var(--color-primary-light)]'
-                      : 'text-[var(--color-text-placeholder)]',
+                      ? 'text-liquid-oceanLight'
+                      : 'text-liquid-mist/60',
                   )}
                 >
                   <span className="relative">
                     <span className="text-[18px]">{tab.icon}</span>
                     {showBadge && (
-                      <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 rounded-full bg-[var(--color-error)] text-[10px] text-white flex items-center justify-center px-1 font-medium shadow-sm shadow-[var(--color-error)]/30">
+                      <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 rounded-full bg-liquid-ruby text-[10px] text-white flex items-center justify-center px-1 font-medium shadow-sm shadow-liquid-ruby/30">
                         {badgeCount > 9 ? '9+' : badgeCount}
                       </span>
                     )}
                   </span>
                   <span className={cn(
                     'text-[11px] font-medium transition-colors',
-                    isActive ? 'text-[var(--color-primary-light)]' : 'text-[var(--color-text-placeholder)]'
+                    isActive ? 'text-liquid-oceanLight' : 'text-liquid-mist/60'
                   )}>
                     {tab.label}
                   </span>
                   {isActive && (
-                    <span className="absolute -bottom-0.5 w-5 h-[2px] rounded-full bg-[var(--color-primary)]" />
+                    <span className="absolute -bottom-0.5 w-5 h-[2px] rounded-full bg-liquid-ocean" />
                   )}
                 </button>
               )
@@ -173,26 +173,26 @@ export default function CustomerLayout({
                 className={cn(
                   'relative flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-xl transition-all duration-200 active:scale-90',
                   isActive
-                    ? 'text-[var(--color-primary-light)]'
-                    : 'text-[var(--color-text-placeholder)]',
+                    ? 'text-liquid-oceanLight'
+                    : 'text-liquid-mist/60',
                 )}
               >
                 <span className="relative">
                   <span className="text-[18px]">{tab.icon}</span>
                   {showBadge && (
-                    <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 rounded-full bg-[var(--color-error)] text-[10px] text-white flex items-center justify-center px-1 font-medium shadow-sm shadow-[var(--color-error)]/30">
+                    <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 rounded-full bg-liquid-ruby text-[10px] text-white flex items-center justify-center px-1 font-medium shadow-sm shadow-liquid-ruby/30">
                       {badgeCount > 9 ? '9+' : badgeCount}
                     </span>
                   )}
                 </span>
                 <span className={cn(
                   'text-[11px] font-medium transition-colors',
-                  isActive ? 'text-[var(--color-primary-light)]' : 'text-[var(--color-text-placeholder)]'
+                  isActive ? 'text-liquid-oceanLight' : 'text-liquid-mist/60'
                 )}>
                   {tab.label}
                 </span>
                 {isActive && (
-                  <span className="absolute -bottom-0.5 w-5 h-[2px] rounded-full bg-[var(--color-primary)]" />
+                  <span className="absolute -bottom-0.5 w-5 h-[2px] rounded-full bg-liquid-ocean" />
                 )}
               </Link>
             )

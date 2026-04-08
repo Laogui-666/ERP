@@ -561,25 +561,25 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       {/* 触发按钮 — 资料清单摘要 */}
       <button
         onClick={() => setShowModal(true)}
-        className="w-full p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:border-[var(--color-primary)]/20 hover:bg-white/[0.05] transition-all group text-left"
+        className="w-full p-4 rounded-xl bg-liquid-ocean/3 border border-liquid-ocean/10 hover:border-liquid-ocean/20 hover:bg-liquid-ocean/5 transition-all group text-left"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[var(--color-secondary)]/15 flex items-center justify-center">
-              <svg className="w-5 h-5 text-[var(--color-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-10 h-10 rounded-xl bg-liquid-emerald/15 flex items-center justify-center">
+              <svg className="w-5 h-5 text-liquid-emerald" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">资料清单</h3>
-              <p className="text-xs text-[var(--color-text-placeholder)] mt-0.5">
+              <h3 className="text-sm font-semibold text-liquid-deep">资料清单</h3>
+              <p className="text-xs text-liquid-mist mt-0.5">
                 {total > 0 ? `${total} 项资料` : '暂无资料需求'}
 
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-[var(--color-text-placeholder)] group-hover:text-[var(--color-primary-light)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5 text-liquid-mist group-hover:text-liquid-oceanLight transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </div>
@@ -596,14 +596,14 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
             onClick={(e) => e.stopPropagation()}
           >
             {/* 弹窗头部 */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">📋 资料清单</h2>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-liquid-ocean/10">
+              <h2 className="text-base font-semibold text-liquid-deep">📋 资料清单</h2>
               <div className="flex items-center gap-2">
                 {canEdit && (
                   <div className="relative" ref={addMenuRef}>
                     <button
                       onClick={() => setShowAddMenu(!showAddMenu)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-primary)]/15 text-[var(--color-primary-light)] hover:bg-[var(--color-primary)]/25 transition-colors flex items-center gap-1.5"
+                      className="text-xs px-3 py-1.5 rounded-lg bg-liquid-ocean/15 text-liquid-oceanLight hover:bg-liquid-ocean/25 transition-colors flex items-center gap-1.5"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -611,17 +611,17 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                       添加资料
                     </button>
                     {showAddMenu && (
-                      <div className="absolute right-0 top-full mt-1 w-44 rounded-xl overflow-hidden z-50 shadow-xl border border-white/10"
+                      <div className="absolute right-0 top-full mt-1 w-44 rounded-xl overflow-hidden z-50 shadow-xl border border-liquid-ocean/10"
                         style={{ background: 'rgba(32, 38, 54, 0.96)', backdropFilter: 'blur(20px)' }}>
                         <button onClick={() => { setShowAddMenu(false); setShowManualForm(true) }}
-                          className="w-full px-4 py-2.5 text-left text-sm text-[var(--color-text-primary)] hover:bg-white/5 transition-colors flex items-center gap-2">
-                          <svg className="w-4 h-4 text-[var(--color-info)]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                          className="w-full px-4 py-2.5 text-left text-sm text-liquid-deep hover:bg-liquid-ocean/5 transition-colors flex items-center gap-2">
+                          <svg className="w-4 h-4 text-liquid-ocean" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                           手动添加
                         </button>
-                        <div className="border-t border-white/5" />
+                        <div className="border-t border-liquid-ocean/10" />
                         <button onClick={openTemplateModal}
-                          className="w-full px-4 py-2.5 text-left text-sm text-[var(--color-text-primary)] hover:bg-white/5 transition-colors flex items-center gap-2">
-                          <svg className="w-4 h-4 text-[var(--color-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                          className="w-full px-4 py-2.5 text-left text-sm text-liquid-deep hover:bg-liquid-ocean/5 transition-colors flex items-center gap-2">
+                          <svg className="w-4 h-4 text-liquid-ocean" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                           从模板添加
                         </button>
                       </div>
@@ -629,7 +629,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                   </div>
                 )}
                 <button onClick={() => setShowModal(false)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] hover:bg-white/5 transition-colors">
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-liquid-mist hover:text-liquid-mist hover:bg-liquid-ocean/5 transition-colors">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -639,21 +639,21 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
             <div className="flex-1 overflow-y-auto p-5">
               {/* 手动添加表单 */}
               {showManualForm && (
-                <div className="mb-4 p-3 rounded-xl bg-white/[0.03] border border-white/5 space-y-2">
+                <div className="mb-4 p-3 rounded-xl bg-liquid-ocean/3 border border-liquid-ocean/10 space-y-2">
                   <input className="glass-input w-full text-sm" placeholder="资料名称（如：护照、照片）"
                     value={newItemName} onChange={(e) => setNewItemName(e.target.value)} />
                   <input className="glass-input w-full text-sm" placeholder="说明（可选，如：有效期6个月以上）"
                     value={newItemDesc} onChange={(e) => setNewItemDesc(e.target.value)} />
                   <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
+                    <label className="flex items-center gap-2 text-xs text-liquid-mist">
                       <input type="checkbox" checked={newItemRequired}
                         onChange={(e) => setNewItemRequired(e.target.checked)}
-                        className="accent-[var(--color-primary)]" />
+                        className="accent-liquid-ocean" />
                       必填项
                     </label>
                     <div className="flex items-center gap-2">
                       <button onClick={() => setShowManualForm(false)}
-                        className="text-xs px-3 py-1.5 text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]">取消</button>
+                        className="text-xs px-3 py-1.5 text-liquid-mist hover:text-liquid-deep">取消</button>
                       <button onClick={handleAddItem} disabled={isAdding}
                         className="glass-btn-primary px-3 py-1.5 text-xs font-medium disabled:opacity-50">
                         {isAdding ? '添加中...' : '确定'}
@@ -667,9 +667,9 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
               {localReqs.length === 0 ? (
                 <div className="text-center py-12">
                   <span className="text-4xl block mb-3">📄</span>
-                  <p className="text-sm text-[var(--color-text-placeholder)]">暂无资料需求</p>
+                  <p className="text-sm text-liquid-mist">暂无资料需求</p>
                   {canEdit && (
-                    <p className="text-xs text-[var(--color-text-placeholder)] mt-1">点击上方「添加资料」开始</p>
+                    <p className="text-xs text-liquid-mist mt-1">点击上方「添加资料」开始</p>
                   )}
                 </div>
               ) : (
@@ -679,8 +679,8 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                       <div key={gi}>
                         {showGrouped && (
                           <div className="flex items-center mb-2">
-                            <span className="text-xs font-medium text-[var(--color-text-primary)] flex items-center gap-2">
-                              <span className="w-6 h-6 rounded-full bg-[var(--color-primary)]/15 flex items-center justify-center text-[10px] font-bold text-[var(--color-primary-light)]">
+                            <span className="text-xs font-medium text-liquid-deep flex items-center gap-2">
+                              <span className="w-6 h-6 rounded-full bg-liquid-ocean/15 flex items-center justify-center text-[10px] font-bold text-liquid-oceanLight">
                                 {group.name[0]}
                               </span>
                               {group.name}
@@ -791,8 +791,8 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
             style={{ background: 'rgba(28, 33, 48, 0.97)', backdropFilter: 'blur(40px)' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
-              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-liquid-ocean/10">
+              <h2 className="text-base font-semibold text-liquid-deep">
                 {selectedTemplate ? `📄 ${selectedTemplate.name}` : '选择模板'}
               </h2>
               <button
@@ -800,7 +800,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                   if (selectedTemplate) { setSelectedTemplate(null); setSelectableItems([]) }
                   else setShowTemplateModal(false)
                 }}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] hover:bg-white/5 transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-liquid-mist hover:text-liquid-deep hover:bg-liquid-ocean/5 transition-colors"
               >
                 {selectedTemplate ? (
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -814,33 +814,33 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                 <>
                   {loadingTemplates ? (
                     <div className="flex items-center justify-center py-12">
-                      <div className="w-6 h-6 border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin" />
-                      <span className="ml-3 text-sm text-[var(--color-text-secondary)]">加载中...</span>
+                      <div className="w-6 h-6 border-2 border-liquid-ocean/30 border-t-liquid-ocean rounded-full animate-spin" />
+                      <span className="ml-3 text-sm text-liquid-mist">加载中...</span>
                     </div>
                   ) : templates.length === 0 ? (
                     <div className="text-center py-12 space-y-3">
-                      <p className="text-sm text-[var(--color-text-placeholder)]">暂无可用模板</p>
-                      <a href="/admin/templates" target="_blank" rel="noopener noreferrer" className="inline-block text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] underline underline-offset-2">前往模板库创建 →</a>
+                      <p className="text-sm text-liquid-mist">暂无可用模板</p>
+                      <a href="/admin/templates" target="_blank" rel="noopener noreferrer" className="inline-block text-xs text-liquid-ocean hover:text-liquid-oceanLight underline underline-offset-2">前往模板库创建 →</a>
                     </div>
                   ) : (
                     <>
                       {/* 模板库入口 */}
                       <a href="/admin/templates" target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-white/10 hover:border-[var(--color-primary)]/30 hover:bg-white/[0.02] transition-all mb-3 group">
-                        <svg className="w-4 h-4 text-[var(--color-text-placeholder)] group-hover:text-[var(--color-primary-light)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-liquid-ocean/10 hover:border-liquid-ocean/30 hover:bg-liquid-ocean/2 transition-all mb-3 group">
+                        <svg className="w-4 h-4 text-liquid-mist group-hover:text-liquid-oceanLight transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        <span className="text-xs text-[var(--color-text-placeholder)] group-hover:text-[var(--color-primary-light)] transition-colors">管理模板库（创建/编辑/删除模板）</span>
+                        <span className="text-xs text-liquid-mist group-hover:text-liquid-oceanLight transition-colors">管理模板库（创建/编辑/删除模板）</span>
                       </a>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {templates.map((tpl) => (
                         <button key={tpl.id} onClick={() => handleSelectTemplate(tpl)}
-                          className="text-left p-4 rounded-xl border border-white/5 hover:border-[var(--color-primary)]/30 hover:bg-white/[0.03] transition-all group">
-                          <h3 className="text-sm font-medium text-[var(--color-text-primary)] truncate group-hover:text-[var(--color-primary-light)]">{tpl.name}</h3>
+                          className="text-left p-4 rounded-xl border border-liquid-ocean/10 hover:border-liquid-ocean/30 hover:bg-liquid-ocean/3 transition-all group">
+                          <h3 className="text-sm font-medium text-liquid-deep truncate group-hover:text-liquid-oceanLight">{tpl.name}</h3>
                           <div className="flex items-center gap-2 mt-1.5">
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-info)]/10 text-[var(--color-info)]">{tpl.country}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">{tpl.visaType}</span>
-                            <span className="text-[11px] text-[var(--color-text-placeholder)]">{tpl.items.length} 项</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-liquid-ocean/10 text-liquid-ocean">{tpl.country}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-liquid-ocean/10 text-liquid-ocean">{tpl.visaType}</span>
+                            <span className="text-[11px] text-liquid-mist">{tpl.items.length} 项</span>
                           </div>
                         </button>
                       ))}
@@ -850,24 +850,24 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                 </>
               ) : (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-white/5">
-                    <label className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] cursor-pointer select-none">
-                      <input type="checkbox" checked={selectableItems.length > 0 && selectableItems.every(i => i.selected)} onChange={toggleSelectAll} className="accent-[var(--color-primary)] w-4 h-4" />
+                  <div className="flex items-center justify-between pb-2 border-b border-liquid-ocean/10">
+                    <label className="flex items-center gap-2 text-sm text-liquid-mist cursor-pointer select-none">
+                      <input type="checkbox" checked={selectableItems.length > 0 && selectableItems.every(i => i.selected)} onChange={toggleSelectAll} className="accent-liquid-ocean w-4 h-4" />
                       全选
                     </label>
-                    <span className="text-xs text-[var(--color-text-placeholder)]">已选 {selectedCount}/{selectableItems.length}</span>
+                    <span className="text-xs text-liquid-mist">已选 {selectedCount}/{selectableItems.length}</span>
                   </div>
                   {selectableItems.map((item, index) => (
-                    <div key={index} className={`flex items-start gap-3 p-3 rounded-xl transition-all ${item.selected ? 'bg-[var(--color-primary)]/8 border border-[var(--color-primary)]/20' : 'bg-white/[0.02] border border-white/5'}`}>
+                    <div key={index} className={`flex items-start gap-3 p-3 rounded-xl transition-all ${item.selected ? 'bg-liquid-ocean/8 border border-liquid-ocean/20' : 'bg-liquid-ocean/2 border border-liquid-ocean/10'}`}>
                       <label className="flex items-center cursor-pointer select-none">
-                        <input type="checkbox" checked={item.selected} onChange={() => toggleItem(index)} className="mt-0.5 accent-[var(--color-primary)] w-4 h-4 shrink-0" />
+                        <input type="checkbox" checked={item.selected} onChange={() => toggleItem(index)} className="mt-0.5 accent-liquid-ocean w-4 h-4 shrink-0" />
                       </label>
                       <div className="flex-1 min-w-0">
-                        <span className="text-sm text-[var(--color-text-primary)]">{item.name}</span>
-                        {item.description && <span className="text-[10px] text-[var(--color-text-placeholder)] ml-2 hidden sm:inline">{item.description}</span>}
+                        <span className="text-sm text-liquid-deep">{item.name}</span>
+                        {item.description && <span className="text-[10px] text-liquid-mist ml-2 hidden sm:inline">{item.description}</span>}
                       </div>
                       <button onClick={(e) => { e.stopPropagation(); toggleRequired(index) }}
-                        className={`text-[10px] px-2 py-0.5 rounded-full transition-colors shrink-0 ${item.required ? 'bg-[var(--color-error)]/15 text-[var(--color-error)]' : 'bg-white/5 text-[var(--color-text-placeholder)]'}`}>
+                        className={`text-[10px] px-2 py-0.5 rounded-full transition-colors shrink-0 ${item.required ? 'bg-liquid-ruby/15 text-liquid-ruby' : 'bg-liquid-ocean/5 text-liquid-mist'}`}>
                         {item.required ? '必填' : '选填'}
                       </button>
                     </div>
@@ -876,9 +876,9 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
               )}
             </div>
             {selectedTemplate && (
-              <div className="flex items-center justify-between px-5 py-4 border-t border-white/5">
+              <div className="flex items-center justify-between px-5 py-4 border-t border-liquid-ocean/10">
                 <button onClick={() => { setSelectedTemplate(null); setSelectableItems([]) }}
-                  className="text-xs px-4 py-2 rounded-lg text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] hover:bg-white/5 transition-colors">返回模板列表</button>
+                  className="text-xs px-4 py-2 rounded-lg text-liquid-mist hover:text-liquid-deep hover:bg-liquid-ocean/5 transition-colors">返回模板列表</button>
                 <button onClick={handleApplySelected} disabled={isApplying || selectedCount === 0}
                   className="glass-btn-primary px-5 py-2 text-sm font-medium disabled:opacity-50">
                   {isApplying ? '添加中...' : `添加选中项 (${selectedCount})`}
@@ -925,26 +925,26 @@ function DocumentItem({
   onReviewFileClick?: (file: DocumentFile) => void
 }) {
   const statusColor: Record<DocReqStatus, string> = {
-    PENDING: 'bg-[var(--color-text-placeholder)]',
-    UPLOADED: 'bg-[var(--color-info)]',
-    REVIEWING: 'bg-[var(--color-accent)]',
-    APPROVED: 'bg-[var(--color-success)]',
-    REJECTED: 'bg-[var(--color-error)]',
-    SUPPLEMENT: 'bg-[var(--color-warning)]',
+    PENDING: 'bg-liquid-mist',
+    UPLOADED: 'bg-liquid-ocean',
+    REVIEWING: 'bg-liquid-ocean',
+    APPROVED: 'bg-liquid-emerald',
+    REJECTED: 'bg-liquid-ruby',
+    SUPPLEMENT: 'bg-liquid-amber',
   }
 
   if (isEditing) {
     return (
-      <div className="p-3 rounded-xl bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/20 space-y-2">
+      <div className="p-3 rounded-xl bg-liquid-ocean/5 border border-liquid-ocean/20 space-y-2">
         <input className="glass-input w-full text-sm" placeholder="资料名称" value={editName} onChange={(e) => onEditNameChange(e.target.value)} />
         <input className="glass-input w-full text-sm" placeholder="说明（可选）" value={editDesc} onChange={(e) => onEditDescChange(e.target.value)} />
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
-            <input type="checkbox" checked={editRequired} onChange={(e) => onEditRequiredChange(e.target.checked)} className="accent-[var(--color-primary)]" />
+          <label className="flex items-center gap-2 text-xs text-liquid-mist">
+            <input type="checkbox" checked={editRequired} onChange={(e) => onEditRequiredChange(e.target.checked)} className="accent-liquid-ocean" />
             必填项
           </label>
           <div className="flex items-center gap-2">
-            <button onClick={onCancelEdit} className="text-xs px-3 py-1.5 text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]">取消</button>
+            <button onClick={onCancelEdit} className="text-xs px-3 py-1.5 text-liquid-mist hover:text-liquid-deep">取消</button>
             <button onClick={onSaveEdit} disabled={isSaving} className="glass-btn-primary px-3 py-1.5 text-xs font-medium disabled:opacity-50">
               {isSaving ? '保存中...' : '保存'}
             </button>
@@ -955,29 +955,29 @@ function DocumentItem({
   }
 
   return (
-    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 group">
+    <div className="p-3 rounded-xl bg-liquid-ocean/3 border border-liquid-ocean/10 group">
       <div className="flex items-start gap-3">
         <span className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${statusColor[req.status]}`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-[var(--color-text-primary)] font-medium">{req.name}</span>
-            {req.isRequired && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-error)]/15 text-[var(--color-error)]">必填</span>}
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[var(--color-text-placeholder)]">
+            <span className="text-sm text-liquid-deep font-medium">{req.name}</span>
+            {req.isRequired && <span className="text-[10px] px-1.5 py-0.5 rounded bg-liquid-ruby/15 text-liquid-ruby">必填</span>}
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-liquid-ocean/5 text-liquid-mist">
               {DOC_REQ_STATUS_LABELS[req.status]}
             </span>
             {canEdit && (
               <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={onStartEdit} className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-placeholder)] hover:text-[var(--color-info)] hover:bg-[var(--color-info)]/10 transition-colors" title="编辑">
+                <button onClick={onStartEdit} className="w-6 h-6 rounded flex items-center justify-center text-liquid-mist hover:text-liquid-ocean hover:bg-liquid-ocean/10 transition-colors" title="编辑">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                 </button>
-                <button onClick={onDeleteReq} className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-placeholder)] hover:text-[var(--color-error)] hover:bg-[var(--color-error)]/10 transition-colors" title="删除">
+                <button onClick={onDeleteReq} className="w-6 h-6 rounded flex items-center justify-center text-liquid-mist hover:text-liquid-ruby hover:bg-liquid-ruby/10 transition-colors" title="删除">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
               </div>
             )}
           </div>
-          {req.description && <p className="text-xs text-[var(--color-text-secondary)] mt-1">{req.description}</p>}
-          {req.rejectReason && (req.status === 'REJECTED' || req.status === 'SUPPLEMENT') && <p className="text-xs text-[var(--color-error)] mt-1">驳回原因：{req.rejectReason}</p>}
+          {req.description && <p className="text-xs text-liquid-mist mt-1">{req.description}</p>}
+          {req.rejectReason && (req.status === 'REJECTED' || req.status === 'SUPPLEMENT') && <p className="text-xs text-liquid-ruby mt-1">驳回原因：{req.rejectReason}</p>}
 
           {/* 文件列表 — 点击打开预览弹窗 */}
           {req.files.length > 0 && (
@@ -1007,11 +1007,11 @@ function DocumentItem({
             {canUpload && (
               <>
                 <button onClick={() => onUpload()} disabled={isUploading}
-                  className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-info)]/15 text-[var(--color-info)] hover:bg-[var(--color-info)]/25 transition-colors disabled:opacity-50">
+                  className="text-xs px-2.5 py-1 rounded-lg bg-liquid-ocean/15 text-liquid-ocean hover:bg-liquid-ocean/25 transition-colors disabled:opacity-50">
                   {isUploading ? (uploadProgress ? `上传中 (${uploadProgress.current}/${uploadProgress.total})...` : '上传中...') : '📁 上传'}
                 </button>
                 <button onClick={onCamera} disabled={isUploading}
-                  className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-accent)]/15 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/25 transition-colors disabled:opacity-50">
+                  className="text-xs px-2.5 py-1 rounded-lg bg-liquid-ocean/15 text-liquid-ocean hover:bg-liquid-ocean/25 transition-colors disabled:opacity-50">
                   📷 拍照
                 </button>
               </>
@@ -1021,7 +1021,7 @@ function DocumentItem({
           {isUploading && uploadProgress && (
             <div className="mt-2">
               <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full rounded-full bg-[var(--color-info)] transition-all duration-300"
+                <div className="h-full rounded-full bg-liquid-ocean transition-all duration-300"
                   style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }} />
               </div>
             </div>
@@ -1066,46 +1066,46 @@ function FileItemCompact({
       <span className="shrink-0">{getFileIcon()}</span>
       <button
         onClick={onClick}
-        className="text-[var(--color-info)] hover:text-[var(--color-primary-light)] truncate max-w-[180px] text-left transition-colors underline-offset-2 hover:underline"
+        className="text-liquid-ocean hover:text-liquid-oceanLight truncate max-w-[180px] text-left transition-colors underline-offset-2 hover:underline"
       >
         {file.fileName}
       </button>
-      <span className="text-[var(--color-text-placeholder)] shrink-0">({formatSize(file.fileSize)})</span>
+      <span className="text-liquid-mist shrink-0">({formatSize(file.fileSize)})</span>
       {/* 文件级审核状态 - 可点击查看审核状态 */}
       {file.reviewStatus === 'APPROVED' && (
         <button onClick={(e) => { e.stopPropagation(); onReviewClick?.(file) }}
-          className="text-[10px] text-[var(--color-success)] shrink-0 px-1.5 py-0.5 rounded bg-[var(--color-success)]/10 hover:bg-[var(--color-success)]/20 transition-colors cursor-pointer">
+          className="text-[10px] text-liquid-emerald shrink-0 px-1.5 py-0.5 rounded bg-liquid-emerald/10 hover:bg-liquid-emerald/20 transition-colors cursor-pointer">
           ✓ 合格
         </button>
       )}
       {file.reviewStatus === 'REJECTED' && (
         <button onClick={(e) => { e.stopPropagation(); onReviewClick?.(file) }}
-          className="text-[10px] text-[var(--color-error)] shrink-0 px-1.5 py-0.5 rounded bg-[var(--color-error)]/10 hover:bg-[var(--color-error)]/20 transition-colors cursor-pointer">
+          className="text-[10px] text-liquid-ruby shrink-0 px-1.5 py-0.5 rounded bg-liquid-ruby/10 hover:bg-liquid-ruby/20 transition-colors cursor-pointer">
           ✗ 驳回
         </button>
       )}
       {file.reviewStatus === 'SUPPLEMENT' && (
         <button onClick={(e) => { e.stopPropagation(); onReviewClick?.(file) }}
-          className="text-[10px] text-[var(--color-warning)] shrink-0 px-1.5 py-0.5 rounded bg-[var(--color-warning)]/10 hover:bg-[var(--color-warning)]/20 transition-colors cursor-pointer">
+          className="text-[10px] text-liquid-amber shrink-0 px-1.5 py-0.5 rounded bg-liquid-amber/10 hover:bg-liquid-amber/20 transition-colors cursor-pointer">
           需补充
         </button>
       )}
       {(!file.reviewStatus || file.reviewStatus === 'PENDING') && (
         <button onClick={(e) => { e.stopPropagation(); onReviewClick?.(file) }}
-          className="text-[10px] text-[var(--color-text-placeholder)] shrink-0 px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+          className="text-[10px] text-liquid-mist shrink-0 px-1.5 py-0.5 rounded bg-liquid-ocean/5 hover:bg-liquid-ocean/10 transition-colors cursor-pointer">
           待审核
         </button>
       )}
       {/* 驳回原因 */}
       {rejectReason && (reqStatus === 'REJECTED' || reqStatus === 'SUPPLEMENT') && (
-        <span className="text-[10px] text-[var(--color-error)] truncate max-w-[120px]" title={rejectReason}>
+        <span className="text-[10px] text-liquid-ruby truncate max-w-[120px]" title={rejectReason}>
           {rejectReason}
         </span>
       )}
       {/* 重新提交按钮 */}
       {onReupload && (
         <button onClick={onReupload}
-          className="text-[var(--color-warning)] hover:text-[var(--color-warning)]/80 shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-warning)]/10 hover:bg-[var(--color-warning)]/20 transition-all"
+          className="text-liquid-amber hover:text-liquid-amber/80 shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-liquid-amber/10 hover:bg-liquid-amber/20 transition-all"
           title="重新上传">
           重新提交
         </button>
@@ -1113,7 +1113,7 @@ function FileItemCompact({
       {/* 删除按钮 */}
       {onDelete && (
         <button onClick={onDelete}
-          className="text-[var(--color-error)]/60 hover:text-[var(--color-error)] shrink-0 opacity-0 group-hover/file:opacity-100 transition-all"
+          className="text-liquid-ruby/60 hover:text-liquid-ruby shrink-0 opacity-0 group-hover/file:opacity-100 transition-all"
           title="删除文件">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
         </button>
@@ -1133,24 +1133,24 @@ function ReviewHistoryCard({
   onClose: () => void
 }) {
   const statusConfig: Record<string, { label: string; color: string; bg: string; border: string; icon: string; desc: string }> = {
-    APPROVED: { label: '合格', color: 'text-[var(--color-success)]', bg: 'bg-[var(--color-success)]/15', border: 'border-[var(--color-success)]/20', icon: '✓', desc: '该资料已通过审核' },
-    REJECTED: { label: '已驳回', color: 'text-[var(--color-error)]', bg: 'bg-[var(--color-error)]/15', border: 'border-[var(--color-error)]/20', icon: '✗', desc: '该资料未通过审核，请根据原因重新提交' },
-    SUPPLEMENT: { label: '需补充', color: 'text-[var(--color-warning)]', bg: 'bg-[var(--color-warning)]/15', border: 'border-[var(--color-warning)]/20', icon: '⚠', desc: '该资料需要补充材料' },
-    PENDING: { label: '待审核', color: 'text-[var(--color-text-placeholder)]', bg: 'bg-white/5', border: 'border-white/10', icon: '⏳', desc: '该资料尚未审核' },
+    APPROVED: { label: '合格', color: 'text-liquid-emerald', bg: 'bg-liquid-emerald/15', border: 'border-liquid-emerald/20', icon: '✓', desc: '该资料已通过审核' },
+    REJECTED: { label: '已驳回', color: 'text-liquid-ruby', bg: 'bg-liquid-ruby/15', border: 'border-liquid-ruby/20', icon: '✗', desc: '该资料未通过审核，请根据原因重新提交' },
+    SUPPLEMENT: { label: '需补充', color: 'text-liquid-amber', bg: 'bg-liquid-amber/15', border: 'border-liquid-amber/20', icon: '⚠', desc: '该资料需要补充材料' },
+    PENDING: { label: '待审核', color: 'text-liquid-mist', bg: 'bg-liquid-ocean/5', border: 'border-liquid-ocean/10', icon: '⏳', desc: '该资料尚未审核' },
   }
   const s = statusConfig[reviewStatus || 'PENDING'] || statusConfig.PENDING
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="relative w-full max-w-sm rounded-2xl border border-white/10 overflow-hidden animate-scale-in"
+      <div className="relative w-full max-w-sm rounded-2xl border border-liquid-ocean/10 overflow-hidden animate-scale-in"
         style={{ background: 'rgba(28, 33, 48, 0.97)', backdropFilter: 'blur(40px)' }}
         onClick={(e) => e.stopPropagation()}>
         {/* 头部 */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">{fileName}</h3>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-liquid-ocean/10">
+          <h3 className="text-sm font-semibold text-liquid-deep truncate">{fileName}</h3>
           <button onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] hover:bg-white/5 transition-colors shrink-0 ml-3">
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-liquid-mist hover:text-liquid-deep hover:bg-liquid-ocean/5 transition-colors shrink-0 ml-3">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -1161,22 +1161,22 @@ function ReviewHistoryCard({
           <div className={`p-4 rounded-xl ${s.bg} border ${s.border} text-center`}>
             <span className={`text-2xl font-bold ${s.color}`}>{s.icon}</span>
             <p className={`text-sm font-semibold ${s.color} mt-1`}>{s.label}</p>
-            <p className="text-xs text-[var(--color-text-secondary)] mt-1">{s.desc}</p>
+            <p className="text-xs text-liquid-mist mt-1">{s.desc}</p>
           </div>
 
           {/* 驳回/补充原因 */}
           {rejectReason && (reviewStatus === 'REJECTED' || reviewStatus === 'SUPPLEMENT') && (
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
-              <span className="text-[10px] uppercase tracking-wide text-[var(--color-text-placeholder)] font-medium">
+            <div className="p-3 rounded-xl bg-liquid-ocean/3 border border-liquid-ocean/10">
+              <span className="text-[10px] uppercase tracking-wide text-liquid-mist font-medium">
                 {reviewStatus === 'REJECTED' ? '驳回原因' : '补充说明'}
               </span>
-              <p className="text-sm text-[var(--color-text-primary)] mt-1.5 leading-relaxed">{rejectReason}</p>
+              <p className="text-sm text-liquid-deep mt-1.5 leading-relaxed">{rejectReason}</p>
             </div>
           )}
 
           {/* 待审核提示 */}
           {(!reviewStatus || reviewStatus === 'PENDING') && (
-            <p className="text-xs text-[var(--color-text-placeholder)] text-center">等待审核员处理</p>
+            <p className="text-xs text-liquid-mist text-center">等待审核员处理</p>
           )}
         </div>
       </div>
@@ -1253,27 +1253,27 @@ function FilePreviewModal({
 
   const statusLabel = DOC_REQ_STATUS_LABELS[reqStatus]
   const statusColorMap: Record<DocReqStatus, string> = {
-    PENDING: 'text-[var(--color-text-placeholder)]',
-    UPLOADED: 'text-[var(--color-info)]',
-    REVIEWING: 'text-[var(--color-accent)]',
-    APPROVED: 'text-[var(--color-success)]',
-    REJECTED: 'text-[var(--color-error)]',
-    SUPPLEMENT: 'text-[var(--color-warning)]',
+    PENDING: 'text-liquid-mist',
+    UPLOADED: 'text-liquid-ocean',
+    REVIEWING: 'text-liquid-ocean',
+    APPROVED: 'text-liquid-emerald',
+    REJECTED: 'text-liquid-ruby',
+    SUPPLEMENT: 'text-liquid-amber',
   }
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl border border-white/10 overflow-hidden animate-scale-in"
+      <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl border border-liquid-ocean/10 overflow-hidden animate-scale-in"
         style={{ background: 'rgba(28, 33, 48, 0.97)', backdropFilter: 'blur(40px)' }}>
 
         {/* 顶栏 */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-liquid-ocean/10">
           <div className="flex items-center gap-3 min-w-0">
-            <span className={`text-xs px-2 py-0.5 rounded-full bg-white/5 ${statusColorMap[reqStatus]}`}>{statusLabel}</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full bg-liquid-ocean/5 ${statusColorMap[reqStatus]}`}>{statusLabel}</span>
             <div className="min-w-0">
-              <h3 className="text-sm font-medium text-[var(--color-text-primary)] truncate">{reqName}</h3>
-              <p className="text-xs text-[var(--color-text-placeholder)] truncate">{fileName} · {formatSize(fileSize)}</p>
+              <h3 className="text-sm font-medium text-liquid-deep truncate">{reqName}</h3>
+              <p className="text-xs text-liquid-mist truncate">{fileName} · {formatSize(fileSize)}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -1291,20 +1291,20 @@ function FilePreviewModal({
 
         {/* 驳回原因提示条（仅已驳回/需补充时显示） */}
         {rejectReason && (
-          <div className={`px-5 py-3 border-b border-white/5 ${
+          <div className={`px-5 py-3 border-b border-liquid-ocean/10 ${
             reqStatus === 'REJECTED'
-              ? 'bg-[var(--color-error)]/8'
-              : 'bg-[var(--color-warning)]/8'
+              ? 'bg-liquid-ruby/8'
+              : 'bg-liquid-amber/8'
           }`}>
             <div className="flex items-start gap-2">
               <span className="text-sm shrink-0">{reqStatus === 'REJECTED' ? '❌' : '⚠️'}</span>
               <div>
                 <span className={`text-xs font-medium ${
-                  reqStatus === 'REJECTED' ? 'text-[var(--color-error)]' : 'text-[var(--color-warning)]'
+                  reqStatus === 'REJECTED' ? 'text-liquid-ruby' : 'text-liquid-amber'
                 }`}>
                   {reqStatus === 'REJECTED' ? '驳回原因' : '补充说明'}
                 </span>
-                <p className="text-xs text-[var(--color-text-primary)] mt-0.5 leading-relaxed">{rejectReason}</p>
+                <p className="text-xs text-liquid-deep mt-0.5 leading-relaxed">{rejectReason}</p>
               </div>
             </div>
           </div>
@@ -1349,39 +1349,39 @@ function FilePreviewModal({
 
           {/* 右侧：审核面板 */}
           {canReview && (
-            <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-white/5 p-5 flex flex-col gap-4 overflow-y-auto">
+            <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-liquid-ocean/10 p-5 flex flex-col gap-4 overflow-y-auto">
               {/* 当前状态 */}
               <div>
-                <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">当前状态</h4>
+                <h4 className="text-sm font-semibold text-liquid-deep mb-2">当前状态</h4>
                 <div className="flex items-center gap-2">
                   {fileReviewStatus === 'APPROVED' && (
-                    <span className="text-xs px-3 py-1.5 rounded-full bg-[var(--color-success)]/15 text-[var(--color-success)] border border-[var(--color-success)]/20 font-medium">✓ 合格</span>
+                    <span className="text-xs px-3 py-1.5 rounded-full bg-liquid-emerald/15 text-liquid-emerald border border-liquid-emerald/20 font-medium">✓ 合格</span>
                   )}
                   {fileReviewStatus === 'REJECTED' && (
-                    <span className="text-xs px-3 py-1.5 rounded-full bg-[var(--color-error)]/15 text-[var(--color-error)] border border-[var(--color-error)]/20 font-medium">✗ 已驳回</span>
+                    <span className="text-xs px-3 py-1.5 rounded-full bg-liquid-ruby/15 text-liquid-ruby border border-liquid-ruby/20 font-medium">✗ 已驳回</span>
                   )}
                   {fileReviewStatus === 'SUPPLEMENT' && (
-                    <span className="text-xs px-3 py-1.5 rounded-full bg-[var(--color-warning)]/15 text-[var(--color-warning)] border border-[var(--color-warning)]/20 font-medium">⚠ 需补充</span>
+                    <span className="text-xs px-3 py-1.5 rounded-full bg-liquid-amber/15 text-liquid-amber border border-liquid-amber/20 font-medium">⚠ 需补充</span>
                   )}
                   {(!fileReviewStatus || fileReviewStatus === 'PENDING') && (
-                    <span className="text-xs px-3 py-1.5 rounded-full bg-white/5 text-[var(--color-text-placeholder)] border border-white/10">⏳ 待审核</span>
+                    <span className="text-xs px-3 py-1.5 rounded-full bg-liquid-ocean/5 text-liquid-mist border border-liquid-ocean/10">⏳ 待审核</span>
                   )}
                 </div>
               </div>
 
               {/* 当前审核原因（仅显示，无历史记录） */}
               {rejectReason && (fileReviewStatus === 'REJECTED' || fileReviewStatus === 'SUPPLEMENT') && (
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
-                  <span className="text-[10px] uppercase tracking-wide text-[var(--color-text-placeholder)] font-medium">
+                <div className="p-3 rounded-xl bg-liquid-ocean/3 border border-liquid-ocean/10">
+                  <span className="text-[10px] uppercase tracking-wide text-liquid-mist font-medium">
                     {fileReviewStatus === 'REJECTED' ? '驳回原因' : '补充说明'}
                   </span>
-                  <p className="text-xs text-[var(--color-text-primary)] mt-1.5 leading-relaxed">{rejectReason}</p>
+                  <p className="text-xs text-liquid-deep mt-1.5 leading-relaxed">{rejectReason}</p>
                 </div>
               )}
 
               {/* 审核操作 */}
-              <div className="border-t border-white/5 pt-4">
-                <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">审核操作</h4>
+              <div className="border-t border-liquid-ocean/10 pt-4">
+                <h4 className="text-sm font-semibold text-liquid-deep mb-2">审核操作</h4>
 
                 {/* 审核备注输入 */}
                 <div className="mb-3">
@@ -1397,15 +1397,15 @@ function FilePreviewModal({
                 {/* 操作按钮 */}
                 <div className="flex gap-2">
                   <button onClick={onApprove} disabled={isReviewing}
-                    className="flex-1 py-2 rounded-lg text-xs font-medium bg-[var(--color-success)]/15 text-[var(--color-success)] border border-[var(--color-success)]/20 hover:bg-[var(--color-success)]/25 transition-all disabled:opacity-50">
+                    className="flex-1 py-2 rounded-lg text-xs font-medium bg-liquid-emerald/15 text-liquid-emerald border border-liquid-emerald/20 hover:bg-liquid-emerald/25 transition-all disabled:opacity-50">
                     {isReviewing ? '...' : '✓ 合格'}
                   </button>
                   <button onClick={onReject} disabled={isReviewing || !reviewReason.trim()}
-                    className="flex-1 py-2 rounded-lg text-xs font-medium bg-[var(--color-error)]/15 text-[var(--color-error)] border border-[var(--color-error)]/20 hover:bg-[var(--color-error)]/25 transition-all disabled:opacity-50">
+                    className="flex-1 py-2 rounded-lg text-xs font-medium bg-liquid-ruby/15 text-liquid-ruby border border-liquid-ruby/20 hover:bg-liquid-ruby/25 transition-all disabled:opacity-50">
                     {isReviewing ? '...' : '✗ 驳回'}
                   </button>
                   <button onClick={onSupplement} disabled={isReviewing || !reviewReason.trim()}
-                    className="flex-1 py-2 rounded-lg text-xs font-medium bg-[var(--color-warning)]/15 text-[var(--color-warning)] border border-[var(--color-warning)]/20 hover:bg-[var(--color-warning)]/25 transition-all disabled:opacity-50">
+                    className="flex-1 py-2 rounded-lg text-xs font-medium bg-liquid-amber/15 text-liquid-amber border border-liquid-amber/20 hover:bg-liquid-amber/25 transition-all disabled:opacity-50">
                     {isReviewing ? '...' : '⚠ 补充'}
                   </button>
                 </div>

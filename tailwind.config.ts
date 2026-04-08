@@ -7,10 +7,12 @@ const config: Config = {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
     './src/shared/**/*.{js,ts,jsx,tsx,mdx}',
     './src/modules/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/design-system/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
       colors: {
+        // 原有颜色系统保留
         primary: {
           50: '#f0f9ff',
           100: '#e0f2fe',
@@ -75,6 +77,20 @@ const config: Config = {
           800: '#1f2937',
           900: '#111827',
           950: '#030712',
+        },
+        // 新增液态玻璃设计系统颜色
+        liquid: {
+          ocean: '#5B7B7A',
+          oceanLight: '#7FA0A0',
+          sand: '#A8B8B8',
+          mist: '#6A7A7A',
+          clay: '#6A6D6D',
+          blush: '#C4CCD6',
+          deep: '#1A262E',
+          light: '#F0F4F7',
+          cream: '#E5EBEF',
+          steel: '#4A5A63',
+          silver: '#8A9AA7',
         },
       },
       fontFamily: {
@@ -141,6 +157,9 @@ const config: Config = {
         '2xl': '1rem',
         '3xl': '1.5rem',
         '4xl': '2rem',
+        'liquid': '1.75rem',
+        'liquid-sm': '1.25rem',
+        'liquid-lg': '2.25rem',
         full: '9999px',
       },
       boxShadow: {
@@ -158,6 +177,25 @@ const config: Config = {
         'elevation-5': '0 24px 48px rgba(0, 0, 0, 0.15), 0 12px 24px rgba(0, 0, 0, 0.04)',
         inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
         none: 'none',
+        // 液态玻璃阴影系统
+        'liquid-soft': '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+        'liquid-medium': '0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04)',
+        'liquid-strong': '0 16px 48px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)',
+        'liquid-glow': '0 0 0 1px rgba(255, 255, 255, 0.5) inset, 0 8px 32px rgba(0, 0, 0, 0.10)',
+      },
+      backdropBlur: {
+        none: '0',
+        sm: '4px',
+        DEFAULT: '8px',
+        md: '12px',
+        lg: '16px',
+        xl: '24px',
+        '2xl': '40px',
+        '3xl': '64px',
+        // 液态玻璃模糊
+        'liquid-sm': '12px',
+        'liquid': '20px',
+        'liquid-lg': '28px',
       },
       scrollbar: {
         none: {
@@ -243,8 +281,8 @@ const config: Config = {
           '100%': { transform: 'scale(1) translateY(0)' },
         },
         pulseGlow: {
-          '0%, 100%': { boxShadow: '0 0 0 0 rgba(124, 141, 166, 0.3)' },
-          '50%': { boxShadow: '0 0 0 8px rgba(124, 141, 166, 0)' },
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(91, 123, 122, 0.3)' },
+          '50%': { boxShadow: '0 0 0 12px rgba(91, 123, 122, 0)' },
         },
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },

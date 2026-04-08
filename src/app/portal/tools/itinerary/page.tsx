@@ -86,9 +86,9 @@ export default function ItineraryPage() {
         <div className="space-y-3">
           {itineraries.map((item, i) => (
             <GlassCard key={item.id} intensity="light" hover className="p-4 animate-fade-in-up" style={{ animationDelay: `${i * 50}ms` } as React.CSSProperties}>
-              <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">{item.title}</h3>
-              <p className="mt-1 text-[13px] text-[var(--color-text-secondary)]">📍 {item.destination}</p>
-              <div className="mt-2 flex items-center gap-3 text-[11px] text-[var(--color-text-placeholder)]">
+              <h3 className="text-[15px] font-semibold text-liquid-deep">{item.title}</h3>
+              <p className="mt-1 text-[13px] text-liquid-mist">📍 {item.destination}</p>
+              <div className="mt-2 flex items-center gap-3 text-[11px] text-liquid-mist/60">
                 {item.startDate && <span>🗓 {new Date(item.startDate).toLocaleDateString('zh-CN')}</span>}
                 {item.budget && <span>💰 ¥{item.budget}</span>}
                 <span>📅 {item.days.length}天</span>

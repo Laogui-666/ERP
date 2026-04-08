@@ -2,12 +2,14 @@
 import { apiFetch } from '@shared/lib/api-client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { useAuth } from '@shared/hooks/use-auth'
 import { StatusBadge } from '@erp/components/orders/status-badge'
-import { GlassCard } from '@shared/ui/glass-card'
-import { PageHeader } from '@shared/components/layout/page-header'
+import { LiquidPoolCard } from '@design-system/components/liquid-pool-card'
+import { LiquidCard } from '@design-system/components/liquid-card'
 import { useToast } from '@shared/ui/toast'
 import { formatDateTime } from '@shared/lib/utils'
+import { liquidSpringConfig } from '@design-system/theme/animations'
 import type { Order } from '@erp/types/order'
 
 export default function PoolPage() {
@@ -66,111 +68,109 @@ export default function PoolPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="公共池"
-        description={`${poolTitle} · 共 ${total} 条`}
-      />
+      {/* 标题 */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={liquidSpringConfig.gentle}
+      >
+        <h1 className="text-2xl font-bold text-liquid-deep tracking-tight">
+          公共池
+        </h1>
+        <p className="mt-1 text-sm text-liquid-mist">
+          {poolTitle} · 共 {total} 条
+        </p>
+      </motion.div>
 
+      {/* 加载状态 */}
       {isLoading ? (
-        <GlassCard className="p-12 text-center">
-          <div className="inline-block w-6 h-6 border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin" />
-          <p className="mt-3 text-sm text-[var(--color-text-secondary)]">加载中...</p>
-        </GlassCard>
+        <LiquidCard padding="xl" variant="liquid" className="text-center">
+          <motion.div
+            className="inline-block w-6 h-6 border-2 border-liquid-ocean/30 border-t-liquid-ocean rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          />
+          <p className="mt-3 text-sm text-liquid-mist">加载中...</p>
+        </LiquidCard>
       ) : orders.length === 0 ? (
-        <GlassCard className="p-12 text-center animate-fade-in-up">
-          <svg className="w-16 h-16 mx-auto text-[var(--color-text-placeholder)] mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-          </svg>
-          <p className="text-lg text-[var(--color-text-primary)] font-medium">暂无待接单订单</p>
-          <p className="text-sm text-[var(--color-text-secondary)] mt-1">当前公共池没有需要处理的订单</p>
-        </GlassCard>
+        /* 空状态 */
+        <LiquidCard padding="xl" variant="liquid" className="text-center">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={liquidSpringConfig.bouncy}
+          >
+            <motion.div
+              className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-liquid-ocean/10 flex items-center justify-center"
+              animate={{ 
+                scale: [1, 1.05, 1],
+                rotate: [0, 5, -5, 0]
+              }}
+              transition={{ 
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              <svg className="w-8 h-8 text-liquid-ocean" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+            </motion.div>
+            <p className="text-lg text-liquid-deep font-semibold">暂无待接单订单</p>
+            <p className="text-sm text-liquid-mist mt-1">当前公共池没有需要处理的订单</p>
+          </motion.div>
+        </LiquidCard>
       ) : (
+        /* 订单卡片网格 */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {orders.map((order, i) => (
-            <GlassCard
+            <LiquidPoolCard
               key={order.id}
-              className="p-5 animate-fade-in-up hover:shadow-lg transition-all duration-300"
-              style={{ animationDelay: `${i * 50}ms` }}
-              hover
-            >
-              {/* 订单头部 */}
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <span className="text-xs font-mono text-[var(--color-primary-light)]">{order.orderNo}</span>
-                  <h3 className="text-base font-semibold text-[var(--color-text-primary)] mt-1">
-                    {order.customerName}
-                  </h3>
-                </div>
-                <StatusBadge status={order.status} />
-              </div>
-
-              {/* 信息 */}
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <svg className="w-4 h-4 text-[var(--color-text-placeholder)] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-                  </svg>
-                  <span className="text-[var(--color-text-primary)]">{order.targetCountry}</span>
-                  <span className="text-[var(--color-text-placeholder)]">·</span>
-                  <span className="text-[var(--color-text-secondary)]">{order.visaType}</span>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm">
-                  <svg className="w-4 h-4 text-[var(--color-text-placeholder)] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-[var(--color-text-primary)]">¥{Number(order.amount).toLocaleString()}</span>
-                </div>
-
-                <div className="flex items-center gap-2 text-xs text-[var(--color-text-placeholder)]">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {formatDateTime(order.createdAt)}
-                </div>
-              </div>
-
-              {/* 接单按钮 */}
-              <button
-                onClick={() => handleClaim(order.id, order.orderNo)}
-                disabled={claiming === order.id}
-                className="w-full glass-btn-primary py-2.5 text-sm font-medium disabled:opacity-50"
-              >
-                {claiming === order.id ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    接单中...
-                  </span>
-                ) : (
-                  '立即接单'
-                )}
-              </button>
-            </GlassCard>
+              orderNo={order.orderNo}
+              customerName={order.customerName}
+              status={<StatusBadge status={order.status} />}
+              country={order.targetCountry}
+              visaType={order.visaType}
+              amount={Number(order.amount)}
+              createdAt={formatDateTime(order.createdAt)}
+              isClaiming={claiming === order.id}
+              onClaim={() => handleClaim(order.id, order.orderNo)}
+              delay={i}
+            />
           ))}
         </div>
       )}
 
       {/* 分页 */}
       {total > 20 && (
-        <div className="flex justify-center gap-2">
-          <button
+        <motion.div 
+          className="flex justify-center gap-2"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...liquidSpringConfig.gentle, delay: 0.3 }}
+        >
+          <motion.button
             disabled={page <= 1}
             onClick={() => { setPage(page - 1); fetchPool(page - 1) }}
-            className="px-4 py-2 text-sm rounded-xl bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            whileHover={page > 1 ? { scale: 1.05 } : {}}
+            whileTap={page > 1 ? { scale: 0.95 } : {}}
+            className="px-4 py-2.5 text-sm rounded-xl bg-white/60 backdrop-blur-xl text-liquid-mist hover:bg-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-white/40 shadow-liquid-soft"
           >
             上一页
-          </button>
-          <span className="px-4 py-2 text-sm text-[var(--color-text-secondary)]">
+          </motion.button>
+          <span className="px-4 py-2.5 text-sm text-liquid-mist bg-white/40 backdrop-blur-xl rounded-xl border border-white/30">
             第 {page} 页
           </span>
-          <button
+          <motion.button
             disabled={page * 20 >= total}
             onClick={() => { setPage(page + 1); fetchPool(page + 1) }}
-            className="px-4 py-2 text-sm rounded-xl bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            whileHover={page * 20 < total ? { scale: 1.05 } : {}}
+            whileTap={page * 20 < total ? { scale: 0.95 } : {}}
+            className="px-4 py-2.5 text-sm rounded-xl bg-white/60 backdrop-blur-xl text-liquid-mist hover:bg-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-white/40 shadow-liquid-soft"
           >
             下一页
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       )}
     </div>
   )

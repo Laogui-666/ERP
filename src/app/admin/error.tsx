@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { GlassCard } from '@shared/ui/glass-card'
+import { LiquidCard } from '@design-system/components/liquid-card'
 
 export default function AdminError({
   error,
@@ -21,20 +21,20 @@ export default function AdminError({
 
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <GlassCard className="p-8 max-w-md text-center animate-fade-in-up">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--color-error)]/15 flex items-center justify-center text-2xl">
+      <LiquidCard className="p-8 max-w-md text-center">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-liquid-ruby/15 flex items-center justify-center text-2xl">
           ⚠️
         </div>
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
+        <h2 className="text-lg font-semibold text-liquid-deep mb-2">
           页面加载失败
         </h2>
-        <p className="text-sm text-[var(--color-text-secondary)] mb-6">
+        <p className="text-sm text-liquid-mist mb-6">
           该页面在渲染时发生了错误。你可以尝试重新加载，或者返回上一页。
         </p>
         <div className="flex justify-center gap-3">
           <button
             onClick={() => window.history.back()}
-            className="px-4 py-2 text-sm rounded-xl bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all"
+            className="px-4 py-2 text-sm rounded-xl bg-liquid-ocean/5 text-liquid-mist hover:bg-liquid-ocean/10 transition-all"
           >
             返回上一页
           </button>
@@ -46,11 +46,11 @@ export default function AdminError({
           </button>
         </div>
         {error.digest && (
-          <p className="mt-4 text-xs text-[var(--color-text-placeholder)]">
+          <p className="mt-4 text-xs text-liquid-mist/60">
             错误编号: {error.digest}
           </p>
         )}
-      </GlassCard>
+      </LiquidCard>
     </div>
   )
 }

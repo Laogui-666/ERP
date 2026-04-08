@@ -1,17 +1,22 @@
 'use client'
 import { apiFetch } from '@shared/lib/api-client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { useOrderStore } from '@erp/stores/order-store'
-import { useAuth } from '@shared/hooks/use-auth'
+import { motion } from 'framer-motion'
 import { StatusBadge } from '@erp/components/orders/status-badge'
-import { PageHeader } from '@shared/components/layout/page-header'
-import { Modal } from '@shared/ui/modal'
 import { useToast } from '@shared/ui/toast'
-import { ApplicantFormItem } from '@erp/components/orders/applicant-form-item'
 import { formatDate } from '@shared/lib/utils'
-import type { OrderStatus } from '@erp/types/order'
+import { ORDER_STATUS_LABELS } from '@erp/types/order'
+import { LiquidTable, Column } from '@design-system/components/liquid-table'
+import { LiquidFilterBar } from '@design-system/components/liquid-filter-bar'
+import { LiquidBatchAction } from '@design-system/components/liquid-batch-action'
+import { LiquidPagination } from '@design-system/components/liquid-pagination'
+import { LiquidButton } from '@design-system/components/liquid-button'
+import { LiquidInput } from '@design-system/components/liquid-input'
+import { LiquidCard, LiquidCardContent } from '@design-system/components/liquid-card'
+import { liquidSpringConfig } from '@design-system/theme/animations'
+import type { Order, OrderStatus } from '@erp/types/order'
 
 interface ApplicantForm {
   name: string
@@ -19,347 +24,230 @@ interface ApplicantForm {
   passportNo: string
 }
 
-// 订单状态筛选选项
-const STATUS_OPTIONS: { value: OrderStatus | ''; label: string }[] = [
-  { value: '', label: '全部' },
-  { value: 'PENDING_CONNECTION', label: '待对接' },
-  { value: 'CONNECTED', label: '已对接' },
-  { value: 'COLLECTING_DOCS', label: '资料收集中' },
-  { value: 'PENDING_REVIEW', label: '待审核' },
-  { value: 'UNDER_REVIEW', label: '资料审核中' },
-  { value: 'MAKING_MATERIALS', label: '材料制作中' },
-  { value: 'PENDING_DELIVERY', label: '待交付' },
-  { value: 'DELIVERED', label: '已交付' },
-  { value: 'APPROVED', label: '已出签' },
-  { value: 'REJECTED', label: '已拒签' },
-  { value: 'PARTIAL', label: '部分出签' },
-]
-
 export default function OrdersPage() {
-  const { orders, meta, isLoading, fetchOrders } = useOrderStore()
-  const { user } = useAuth()
   const { toast } = useToast()
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('')
-  const [searchText, setSearchText] = useState('')
+  const [orders, setOrders] = useState<Order[]>([])
+  const [meta, setMeta] = useState<{ page: number; pageSize: number; total: number; totalPages: number } | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
-  // 批量操作
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL')
+  const [keyword, setKeyword] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [showBatchMenu, setShowBatchMenu] = useState(false)
-  const [batchAction, setBatchAction] = useState<string | null>(null)
-  const [batchTemplateId, setBatchTemplateId] = useState('')
-  const [batchCancelReason, setBatchCancelReason] = useState('')
-  const [templates, setTemplates] = useState<Array<{id:string;name:string}>>([])
-  const [isBatchRunning, setIsBatchRunning] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+
+  const fetchOrders = useCallback(async (params: { page: number; pageSize: number }) => {
+    setIsLoading(true)
+    try {
+      const query = new URLSearchParams({
+        page: String(params.page),
+        pageSize: String(params.pageSize),
+        ...(statusFilter !== 'ALL' && { status: statusFilter }),
+        ...(keyword.trim() && { keyword: keyword.trim() }),
+      })
+      const res = await apiFetch(`/api/orders?${query.toString()}`)
+      const json = await res.json()
+      if (json.success) {
+        setOrders(json.data)
+        setMeta(json.meta)
+        setSelectedIds(new Set())
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [statusFilter, keyword])
+
+  useEffect(() => {
+    fetchOrders({ page: 1, pageSize: 20 })
+    setPage(1)
+  }, [fetchOrders])
+
+  const handlePageChange = (p: number) => {
+    setPage(p)
+    fetchOrders({ page: p, pageSize: 20 })
+  }
 
   const toggleSelect = (id: string) => {
-    const next = new Set(selectedIds)
-    if (next.has(id)) next.delete(id); else next.add(id)
-    setSelectedIds(next)
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
+
   const toggleSelectAll = () => {
-    if (selectedIds.size === orders.length) { setSelectedIds(new Set()); return }
-    setSelectedIds(new Set(orders.map(o => o.id)))
-  }
-  const clearSelection = () => { setSelectedIds(new Set()); setBatchAction(null) }
-
-  const loadTemplates = async () => {
-    try {
-      const res = await apiFetch('/api/templates')
-      const json = await res.json()
-      if (json.success) setTemplates(json.data.map((t: { id: string; name: string }) => ({ id: t.id, name: t.name })))
-    } catch {}
+    if (selectedIds.size === orders.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(orders.map((o) => o.id)))
+    }
   }
 
-  const handleBatch = async () => {
+  const handleBatchAction = async (action: string) => {
     if (selectedIds.size === 0) return
-    if (!batchAction) return
-    setIsBatchRunning(true)
-    try {
-      const payload: Record<string, unknown> = {
-        action: batchAction,
-        orderIds: Array.from(selectedIds),
-      }
-      if (batchAction === 'apply_template') {
-        if (!batchTemplateId) { toast('error', '请选择模板'); setIsBatchRunning(false); return }
-        payload.templateId = batchTemplateId
-      }
-      if (batchAction === 'cancel') {
-        if (!batchCancelReason) { toast('error', '请填写取消原因'); setIsBatchRunning(false); return }
-        payload.cancelReason = batchCancelReason
-      }
-      const res = await apiFetch('/api/orders/batch', {
+    if (action === 'cancel') {
+      const res = await apiFetch('/api/orders/batch-cancel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
       })
       const json = await res.json()
       if (json.success) {
-        const { successCount, failCount } = json.data
-        toast('success', `批量操作完成：成功 ${successCount}，失败 ${failCount}`)
-        clearSelection()
-        handleFilter()
+        toast('success', `已批量取消 ${selectedIds.size} 个订单`)
+        fetchOrders({ page, pageSize: 20 })
       } else {
-        toast('error', json.error?.message ?? '批量操作失败')
+        toast('error', json.error?.message ?? '批量取消失败')
       }
-    } catch {
-      toast('error', '批量操作失败')
-    } finally {
-      setIsBatchRunning(false)
     }
   }
 
-  // 初始加载
-  useEffect(() => {
-    fetchOrders({ page: 1, pageSize: 20 })
-  }, [fetchOrders])
+  const statusOptions = useMemo(() => [
+    { value: 'ALL', label: '全部状态' },
+    ...Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => ({ value, label })),
+  ], [])
 
-  // 筛选
-  const handleFilter = useCallback(() => {
-    setPage(1)
-    const q: { page: number; pageSize: number; status?: OrderStatus; search?: string } = {
-      page: 1,
-      pageSize: 20,
-    }
-    if (statusFilter) q.status = statusFilter
-    if (searchText) q.search = searchText
-    fetchOrders(q)
-  }, [fetchOrders, statusFilter, searchText])
-
-  // 翻页
-  const handlePageChange = useCallback((newPage: number) => {
-    setPage(newPage)
-    const q: { page: number; pageSize: number; status?: OrderStatus; search?: string } = {
-      page: newPage,
-      pageSize: 20,
-    }
-    if (statusFilter) q.status = statusFilter
-    if (searchText) q.search = searchText
-    fetchOrders(q)
-  }, [fetchOrders, statusFilter, searchText])
-
-  // 是否可创建订单
-  const canCreate = user?.role && ['SUPER_ADMIN', 'COMPANY_OWNER', 'CS_ADMIN', 'CUSTOMER_SERVICE'].includes(user.role)
+  // 表格列定义
+  const columns: Column<Order>[] = [
+    {
+      key: 'orderNo',
+      title: '订单号',
+      width: '140px',
+      render: (order) => (
+        <span className="text-sm font-mono text-liquid-ocean">{order.orderNo}</span>
+      ),
+    },
+    {
+      key: 'customer',
+      title: '客户',
+      render: (order) => (
+        <div>
+          <div className="text-sm font-medium text-liquid-deep">{order.customerName}</div>
+          <div className="text-xs text-liquid-mist">{order.customerPhone}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'visa',
+      title: '签证信息',
+      render: (order) => (
+        <div>
+          <div className="text-sm text-liquid-deep">{order.targetCountry}</div>
+          <div className="text-xs text-liquid-mist">{order.visaType}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      title: '状态',
+      width: '120px',
+      render: (order) => <StatusBadge status={order.status} />,
+    },
+    {
+      key: 'amount',
+      title: '金额',
+      width: '100px',
+      render: (order) => (
+        <span className="text-sm text-liquid-deep">¥{Number(order.amount).toLocaleString()}</span>
+      ),
+    },
+    {
+      key: 'createdAt',
+      title: '创建时间',
+      width: '140px',
+      render: (order) => (
+        <span className="text-xs text-liquid-mist">{formatDate(order.createdAt)}</span>
+      ),
+    },
+    {
+      key: 'action',
+      title: '操作',
+      width: '80px',
+      render: (order) => (
+        <Link
+          href={`/admin/orders/${order.id}`}
+          className="text-xs text-liquid-ocean hover:text-liquid-oceanLight transition-colors"
+        >
+          查看详情
+        </Link>
+      ),
+    },
+  ]
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="订单管理"
-        description="管理所有签证订单"
-        action={
-          canCreate ? (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="glass-btn-primary flex items-center gap-2 px-4 py-2.5 text-sm font-medium"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              新建订单
-            </button>
-          ) : undefined
-        }
-      />
+    <div className="space-y-4">
+      {/* 标题 */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={liquidSpringConfig.gentle}
+        className="flex items-center justify-between"
+      >
+        <div>
+          <h1 className="text-2xl font-bold text-liquid-deep tracking-tight">订单管理</h1>
+          <p className="mt-1 text-sm text-liquid-mist">管理所有签证订单</p>
+        </div>
+        <LiquidButton
+          variant="primary"
+          size="md"
+          leftIcon={
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          }
+          onClick={() => setShowCreateModal(true)}
+        >
+          新建订单
+        </LiquidButton>
+      </motion.div>
 
       {/* 筛选栏 */}
-      <div className="bg-card rounded-xl border border-border p-4 animate-fade-in-up" style={{ animationDelay: '50ms' }}>
-        <div className="flex flex-wrap items-center gap-3">
-          {/* 状态筛选 */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as OrderStatus | '')}
-            className="border border-border rounded-lg px-3 py-2 text-sm min-w-[140px] bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+      <LiquidFilterBar
+        filters={[
+          {
+            key: 'status',
+            label: '状态',
+            value: statusFilter,
+            options: statusOptions,
+            onChange: (value) => setStatusFilter(value as OrderStatus | 'ALL'),
+          },
+        ]}
+        searchValue={keyword}
+        onSearchChange={setKeyword}
+        onSearch={() => fetchOrders({ page: 1, pageSize: 20 })}
+      />
 
-          {/* 搜索 */}
-          <div className="flex-1 min-w-[200px]">
-            <input
-              type="text"
-              placeholder="搜索订单号、客户姓名..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleFilter()}
-              className="border border-border rounded-lg px-3 py-2 w-full text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-          </div>
+      {/* 批量操作 */}
+      <LiquidBatchAction
+        selectedCount={selectedIds.size}
+        actions={[
+          { key: 'cancel', label: '批量取消', danger: true },
+        ]}
+        onAction={handleBatchAction}
+        onClear={() => setSelectedIds(new Set())}
+      />
 
-          <button
-            onClick={handleFilter}
-            className="px-4 py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-          >
-            查询
-          </button>
+      {/* 订单表格 */}
+      <LiquidTable
+        data={orders}
+        columns={columns}
+        rowKey="id"
+        selectable
+        selectedIds={selectedIds}
+        onSelect={toggleSelect}
+        onSelectAll={toggleSelectAll}
+        loading={isLoading}
+        emptyText="暂无订单"
+      />
 
-          {/* 统计 */}
-          {meta && (
-            <span className="text-sm text-muted-foreground ml-auto">
-              共 {meta.total} 条
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* 批量操作栏 */}
-      {selectedIds.size > 0 && (
-        <div className="bg-card rounded-xl border border-border p-3 animate-fade-in-up flex items-center gap-3 flex-wrap">
-          <span className="text-sm text-muted-foreground">已选 {selectedIds.size} 单</span>
-          <div className="relative">
-            <button
-              onClick={() => { setShowBatchMenu(!showBatchMenu); if (!showBatchMenu) loadTemplates() }}
-              className="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-            >
-              批量操作 ▾
-            </button>
-            {showBatchMenu && (
-              <div className="absolute top-full mt-1 left-0 z-30 bg-card border border-border rounded-xl p-2 min-w-[180px] space-y-1 shadow-xl">
-                {['apply_template', 'cancel'].map(a => (
-                  <button key={a} onClick={() => { setBatchAction(a); setShowBatchMenu(false) }}
-                    className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-accent text-foreground">
-                    {a === 'apply_template' ? '📄 应用模板' : '❌ 批量取消'}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <button onClick={clearSelection} className="text-xs text-muted-foreground hover:text-foreground">取消选择</button>
-
-          {/* 应用模板面板 */}
-          {batchAction === 'apply_template' && (
-            <div className="w-full flex items-center gap-2 mt-1">
-              <select value={batchTemplateId} onChange={(e) => setBatchTemplateId(e.target.value)} className="border border-border rounded-lg px-3 py-2 text-xs flex-1 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <option value="">选择模板...</option>
-                {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
-              <button onClick={handleBatch} disabled={isBatchRunning} className="px-3 py-2 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50">
-                {isBatchRunning ? '执行中...' : '执行'}
-              </button>
-            </div>
-          )}
-
-          {/* 取消订单面板 */}
-          {batchAction === 'cancel' && (
-            <div className="w-full flex items-center gap-2 mt-1">
-              <input value={batchCancelReason} onChange={(e) => setBatchCancelReason(e.target.value)} placeholder="取消原因" className="border border-border rounded-lg px-3 py-2 text-xs flex-1 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
-              <button onClick={handleBatch} disabled={isBatchRunning} className="px-3 py-2 text-xs font-medium bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors disabled:opacity-50">
-                {isBatchRunning ? '执行中...' : '确认取消'}
-              </button>
-            </div>
-          )}
-        </div>
+      {/* 分页 */}
+      {meta && (
+        <LiquidPagination
+          current={page}
+          total={meta.total}
+          pageSize={meta.pageSize}
+          onChange={handlePageChange}
+        />
       )}
-
-      {/* 订单列表 */}
-      <div className="bg-card rounded-xl border border-border overflow-hidden animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-        {isLoading ? (
-          <div className="p-12 text-center">
-            <div className="inline-block w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-            <p className="mt-3 text-sm text-muted-foreground">加载中...</p>
-          </div>
-        ) : orders.length === 0 ? (
-          <div className="p-12 text-center">
-            <svg className="w-12 h-12 mx-auto text-muted-foreground mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <p className="text-muted-foreground">暂无订单</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="px-2 py-3 w-8">
-                    <input type="checkbox" checked={orders.length > 0 && selectedIds.size === orders.length}
-                      onChange={toggleSelectAll} className="rounded border-border text-primary focus:ring-primary/50" />
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">订单号</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">客户</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">国家/类型</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">状态</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">金额</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">创建时间</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((order, i) => (
-                  <tr
-                    key={order.id}
-                    className="border-b border-border hover:bg-accent transition-colors animate-fade-in-up"
-                    style={{ animationDelay: `${i * 30}ms` }}
-                  >
-                    <td className="px-2 py-3">
-                      <input type="checkbox" checked={selectedIds.has(order.id)} onChange={() => toggleSelect(order.id)} className="rounded border-border text-primary focus:ring-primary/50" />
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-mono text-primary">{order.orderNo}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div>
-                        <div className="text-sm font-medium text-foreground">{order.customerName}</div>
-                        <div className="text-xs text-muted-foreground">{order.customerPhone}</div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div>
-                        <div className="text-sm text-foreground">{order.targetCountry}</div>
-                        <div className="text-xs text-muted-foreground">{order.visaType}</div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={order.status} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-foreground">¥{Number(order.amount).toLocaleString()}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs text-muted-foreground">{formatDate(order.createdAt)}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/admin/orders/${order.id}`}
-                        className="text-xs text-blue-500 hover:text-blue-400 transition-colors"
-                      >
-                        查看详情
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* 分页 */}
-        {meta && meta.totalPages && meta.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-            <span className="text-xs text-muted-foreground">
-              第 {meta.page} / {meta.totalPages} 页
-            </span>
-            <div className="flex gap-2">
-              <button
-                disabled={page <= 1}
-                onClick={() => handlePageChange(page - 1)}
-                className="px-3 py-1.5 text-xs rounded-lg bg-accent text-foreground hover:bg-accent/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                上一页
-              </button>
-              <button
-                disabled={page >= (meta.totalPages ?? 1)}
-                onClick={() => handlePageChange(page + 1)}
-                className="px-3 py-1.5 text-xs rounded-lg bg-accent text-foreground hover:bg-accent/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                下一页
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* 新建订单弹窗 */}
       {showCreateModal && (
@@ -376,60 +264,10 @@ export default function OrdersPage() {
   )
 }
 
-// 新建订单弹窗
+// 新建订单弹窗组件
 function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showQuickEntry, setShowQuickEntry] = useState(true)
-  const [quickTemplates, setQuickTemplates] = useState<Array<{id:string;name:string;country:string;visaType:string;items:unknown[];isSystem:boolean}>>([])
-  const [recentCustomers, setRecentCustomers] = useState<Array<{customerName:string;customerPhone:string;customerEmail:string|null;passportNo:string|null;targetCountry:string;visaType:string;visaCategory:string|null;targetCity:string|null;paymentMethod:string|null;amount:string;sourceChannel:string|null;contactName:string|null}>>([])
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
-  const [applyDocTemplate, setApplyDocTemplate] = useState(false)
-
-  // 快速录入数据加载
-  useEffect(() => {
-    apiFetch('/api/order-templates').then(r => r.json()).then(json => {
-      if (json.success) {
-        setQuickTemplates(json.data.templates ?? [])
-        setRecentCustomers(json.data.recentCustomers ?? [])
-      }
-    }).catch(() => {})
-  }, [])
-
-  const handleQuickFill = (data: {
-    customerName?: string; customerPhone?: string; customerEmail?: string | null;
-    passportNo?: string | null; targetCountry?: string; visaType?: string;
-    visaCategory?: string | null; targetCity?: string | null; paymentMethod?: string | null;
-    amount?: string | number; sourceChannel?: string | null; contactName?: string | null;
-  }) => {
-    setForm(prev => ({
-      ...prev,
-      customerName: data.customerName ?? prev.customerName,
-      customerPhone: data.customerPhone ?? prev.customerPhone,
-      customerEmail: data.customerEmail ?? prev.customerEmail,
-      passportNo: data.passportNo ?? prev.passportNo,
-      targetCountry: data.targetCountry ?? prev.targetCountry,
-      visaType: data.visaType ?? prev.visaType,
-      visaCategory: data.visaCategory ?? prev.visaCategory,
-      targetCity: data.targetCity ?? prev.targetCity,
-      paymentMethod: data.paymentMethod ?? prev.paymentMethod,
-      amount: data.amount ? String(data.amount) : prev.amount,
-      sourceChannel: data.sourceChannel ?? prev.sourceChannel,
-      contactName: data.contactName ?? prev.contactName,
-    }))
-    toast('success', '已快速填充')
-  }
-
-  const handleTemplateSelect = (t: {id:string;country:string;visaType:string}) => {
-    setSelectedTemplateId(t.id)
-    setApplyDocTemplate(true)
-    setForm(prev => ({
-      ...prev,
-      targetCountry: t.country || prev.targetCountry,
-      visaType: t.visaType || prev.visaType,
-    }))
-    toast('success', '已应用模板')
-  }
 
   const [form, setForm] = useState({
     customerName: '',
@@ -454,7 +292,6 @@ function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSucce
     reviewBonus: '',
   })
 
-  // M5：多申请人
   const [applicants, setApplicants] = useState<ApplicantForm[]>([
     { name: '', phone: '', passportNo: '' },
   ])
@@ -492,10 +329,9 @@ function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSucce
       return
     }
 
-    // 校验申请人
     const validApplicants = applicants.filter((a) => a.name.trim())
     if (validApplicants.length === 0) {
-      toast('error', '至少需要一个申请人')
+      toast('error', '请至少填写一个申请人')
       return
     }
 
@@ -505,421 +341,298 @@ function CreateOrderModal({ onClose, onSuccess }: { onClose: () => void; onSucce
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customerName: form.customerName,
-          customerPhone: form.customerPhone,
-          customerEmail: form.customerEmail || undefined,
-          passportNo: form.passportNo || undefined,
-          targetCountry: form.targetCountry,
-          visaType: form.visaType,
-          visaCategory: form.visaCategory || undefined,
-          travelDate: form.travelDate || undefined,
-          amount: parseFloat(form.amount),
-          paymentMethod: form.paymentMethod || undefined,
-          sourceChannel: form.sourceChannel || undefined,
-          remark: form.remark || undefined,
-          externalOrderNo: form.externalOrderNo || undefined,
-          // M5
-          applicants: validApplicants.length > 1 || validApplicants[0].name !== form.customerName
-            ? validApplicants.map((a) => ({
-                name: a.name,
-                phone: a.phone || undefined,
-                passportNo: a.passportNo || undefined,
-              }))
-            : undefined,
-          contactName: form.contactName || undefined,
-          targetCity: form.targetCity || undefined,
-          platformFeeRate: rate,
-          visaFee: visaFee || undefined,
-          insuranceFee: insuranceFee || undefined,
-          rejectionInsurance: rejectIns || undefined,
-          reviewBonus: reviewBonus || undefined,
+          ...form,
+          amount: Number(form.amount),
+          platformFeeRate: Number(form.platformFeeRate),
+          visaFee: form.visaFee ? Number(form.visaFee) : undefined,
+          insuranceFee: form.insuranceFee ? Number(form.insuranceFee) : undefined,
+          rejectionInsurance: form.rejectionInsurance ? Number(form.rejectionInsurance) : undefined,
+          reviewBonus: form.reviewBonus ? Number(form.reviewBonus) : undefined,
+          applicants: validApplicants,
         }),
       })
       const json = await res.json()
       if (json.success) {
-        // 如果选择了模板且开启了自动应用，创建资料清单
-        if (applyDocTemplate && selectedTemplateId && json.data?.id) {
-          try {
-            await apiFetch('/api/templates/apply', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ orderId: json.data.id, templateId: selectedTemplateId }),
-            })
-          } catch { /* 不阻塞主流程 */ }
-        }
         onSuccess()
       } else {
         toast('error', json.error?.message ?? '创建失败')
       }
     } catch {
-      toast('error', '创建失败，请重试')
+      toast('error', '创建失败')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const inputClass = 'glass-input w-full text-sm'
-  const labelClass = 'block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5'
-
   return (
-    <Modal isOpen onClose={onClose} title="新建订单" size="xl">
-      <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-        {/* 快速录入 */}
-        {(quickTemplates.length > 0 || recentCustomers.length > 0) && (
-          <div className="rounded-xl bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/10">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-liquid-deep/80 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={liquidSpringConfig.medium}
+        className="w-full max-w-4xl max-h-[90vh] overflow-auto"
+      >
+        <LiquidCard padding="none" variant="liquid-elevated" className="overflow-hidden">
+          {/* 弹窗头部 */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/20">
+            <h2 className="text-lg font-semibold text-liquid-deep">新建订单</h2>
             <button
-              onClick={() => setShowQuickEntry(!showQuickEntry)}
-              className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium text-[var(--color-primary-light)]"
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-liquid-mist hover:text-liquid-deep hover:bg-white/50 transition-all"
             >
-              <span className="flex items-center gap-1.5">⚡ 快速录入</span>
-              <span>{showQuickEntry ? '▲' : '▼'}</span>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
-            {showQuickEntry && (
-              <div className="px-4 pb-3 space-y-2">
-                {/* 模板快速填充 */}
-                {quickTemplates.length > 0 && (
-                  <div>
-                    <p className="text-[10px] text-[var(--color-text-placeholder)] mb-1.5">从模板填充</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {quickTemplates.slice(0, 6).map(t => (
-                        <button key={t.id}
-                          onClick={() => handleTemplateSelect(t)}
-                          className={`text-[11px] px-2.5 py-1 rounded-lg transition-all ${
-                            selectedTemplateId === t.id
-                              ? 'bg-[var(--color-primary)]/30 text-[var(--color-text-primary)] border border-[var(--color-primary)]/40'
-                              : 'bg-white/[0.06] text-[var(--color-text-secondary)] hover:bg-white/[0.1] border border-transparent'
-                          }`}
-                        >
-                          {t.country}·{t.visaType}
-                          {t.isSystem && <span className="ml-1 text-[var(--color-info)]">★</span>}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {/* 老客户快速填充 */}
-                {recentCustomers.length > 0 && (
-                  <div>
-                    <p className="text-[10px] text-[var(--color-text-placeholder)] mb-1.5">老客户快速填充</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {recentCustomers.slice(0, 5).map((c, i) => (
-                        <button key={i}
-                          onClick={() => handleQuickFill(c)}
-                          className="text-[11px] px-2.5 py-1 rounded-lg bg-white/[0.06] text-[var(--color-text-secondary)] hover:bg-white/[0.1] border border-transparent transition-all"
-                        >
-                          {c.customerName} · {c.targetCountry}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+          </div>
+
+          <LiquidCardContent className="space-y-6">
+            {/* 客户信息 */}
+            <div>
+              <h3 className="text-sm font-semibold text-liquid-deep mb-3">客户信息</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <LiquidInput
+                  label="客户姓名 *"
+                  value={form.customerName}
+                  onChange={(e) => handleChange('customerName', e.target.value)}
+                  placeholder="请输入客户姓名"
+                />
+                <LiquidInput
+                  label="手机号 *"
+                  value={form.customerPhone}
+                  onChange={(e) => handleChange('customerPhone', e.target.value)}
+                  placeholder="请输入手机号"
+                />
+                <LiquidInput
+                  label="邮箱"
+                  value={form.customerEmail}
+                  onChange={(e) => handleChange('customerEmail', e.target.value)}
+                  placeholder="请输入邮箱"
+                />
+                <LiquidInput
+                  label="护照号"
+                  value={form.passportNo}
+                  onChange={(e) => handleChange('passportNo', e.target.value)}
+                  placeholder="请输入护照号"
+                />
               </div>
-            )}
-          </div>
-        )}
+            </div>
 
-        {/* 联系人信息 */}
-        <div>
-          <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-3 pb-2 border-b border-white/5">
-            联系人信息
-          </h4>
-          <div className="grid grid-cols-2 gap-3">
+            {/* 签证信息 */}
             <div>
-              <label className={labelClass}>联系人姓名 *</label>
-              <input
-                className={inputClass}
-                placeholder="请输入联系人姓名"
-                value={form.customerName}
-                onChange={(e) => handleChange('customerName', e.target.value)}
-              />
+              <h3 className="text-sm font-semibold text-liquid-deep mb-3">签证信息</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <LiquidInput
+                  label="目的国家 *"
+                  value={form.targetCountry}
+                  onChange={(e) => handleChange('targetCountry', e.target.value)}
+                  placeholder="如：日本"
+                />
+                <LiquidInput
+                  label="签证类型 *"
+                  value={form.visaType}
+                  onChange={(e) => handleChange('visaType', e.target.value)}
+                  placeholder="如：旅游签证"
+                />
+                <LiquidInput
+                  label="签证类别"
+                  value={form.visaCategory}
+                  onChange={(e) => handleChange('visaCategory', e.target.value)}
+                  placeholder="如：单次/多次"
+                />
+                <LiquidInput
+                  label="目的城市"
+                  value={form.targetCity}
+                  onChange={(e) => handleChange('targetCity', e.target.value)}
+                  placeholder="如：东京"
+                />
+              </div>
             </div>
-            <div>
-              <label className={labelClass}>手机号 *</label>
-              <input
-                className={inputClass}
-                placeholder="138xxxxxxxx"
-                value={form.customerPhone}
-                onChange={(e) => handleChange('customerPhone', e.target.value)}
-                maxLength={11}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>邮箱</label>
-              <input
-                className={inputClass}
-                placeholder="example@mail.com"
-                type="email"
-                value={form.customerEmail}
-                onChange={(e) => handleChange('customerEmail', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>护照号</label>
-              <input
-                className={inputClass}
-                placeholder="E12345678"
-                value={form.passportNo}
-                onChange={(e) => handleChange('passportNo', e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
 
-        {/* M5：申请人列表 */}
-        <div>
-          <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/5">
-            <h4 className="text-sm font-medium text-[var(--color-text-primary)]">
-              申请人列表 ({applicants.length}人)
-            </h4>
-            <button
-              onClick={addApplicant}
-              className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors"
-            >
-              + 添加申请人
-            </button>
-          </div>
-          <div className="space-y-2">
-            {applicants.map((applicant, i) => (
-              <ApplicantFormItem
-                key={i}
-                index={i}
-                applicant={applicant}
-                onChange={updateApplicant}
-                onRemove={removeApplicant}
-                canRemove={applicants.length > 1}
-              />
-            ))}
-          </div>
-        </div>
+            {/* 申请人信息 */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-liquid-deep">申请人信息</h3>
+                <LiquidButton variant="ghost" size="sm" onClick={addApplicant}>
+                  + 添加申请人
+                </LiquidButton>
+              </div>
+              <div className="space-y-3">
+                {applicants.map((applicant, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white/40 border border-white/30"
+                  >
+                    <span className="text-xs text-liquid-mist w-6">#{index + 1}</span>
+                    <LiquidInput
+                      placeholder="姓名"
+                      value={applicant.name}
+                      onChange={(e) => updateApplicant(index, 'name', e.target.value)}
+                      className="flex-1"
+                    />
+                    <LiquidInput
+                      placeholder="手机号"
+                      value={applicant.phone}
+                      onChange={(e) => updateApplicant(index, 'phone', e.target.value)}
+                      className="flex-1"
+                    />
+                    <LiquidInput
+                      placeholder="护照号"
+                      value={applicant.passportNo}
+                      onChange={(e) => updateApplicant(index, 'passportNo', e.target.value)}
+                      className="flex-1"
+                    />
+                    {applicants.length > 1 && (
+                      <button
+                        onClick={() => removeApplicant(index)}
+                        className="text-red-500 hover:text-red-600 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            </div>
 
-        {/* 签证信息 */}
-        <div>
-          <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-3 pb-2 border-b border-white/5">
-            签证信息
-          </h4>
-          <div className="grid grid-cols-2 gap-3">
+            {/* 财务信息 */}
             <div>
-              <label className={labelClass}>申请国家 *</label>
-              <input
-                className={inputClass}
-                placeholder="如：法国、美国"
-                value={form.targetCountry}
-                onChange={(e) => handleChange('targetCountry', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>签证类型 *</label>
-              <input
-                className={inputClass}
-                placeholder="如：旅游、商务"
-                value={form.visaType}
-                onChange={(e) => handleChange('visaType', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>签证类别</label>
-              <input
-                className={inputClass}
-                placeholder="如：贴纸签、电子签"
-                value={form.visaCategory}
-                onChange={(e) => handleChange('visaCategory', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>送签城市</label>
-              <input
-                className={inputClass}
-                placeholder="如：北京、上海"
-                value={form.targetCity}
-                onChange={(e) => handleChange('targetCity', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>出行日期</label>
-              <input
-                className={inputClass}
-                type="date"
-                value={form.travelDate}
-                onChange={(e) => handleChange('travelDate', e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
+              <h3 className="text-sm font-semibold text-liquid-deep mb-3">财务信息</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <LiquidInput
+                  label="订单金额 *"
+                  type="number"
+                  value={form.amount}
+                  onChange={(e) => handleChange('amount', e.target.value)}
+                  placeholder="请输入金额"
+                />
+                <LiquidInput
+                  label="平台费率"
+                  value={form.platformFeeRate}
+                  onChange={(e) => handleChange('platformFeeRate', e.target.value)}
+                  placeholder="0.061"
+                />
+                <LiquidInput
+                  label="签证费"
+                  type="number"
+                  value={form.visaFee}
+                  onChange={(e) => handleChange('visaFee', e.target.value)}
+                  placeholder="请输入签证费"
+                />
+                <LiquidInput
+                  label="保险费"
+                  type="number"
+                  value={form.insuranceFee}
+                  onChange={(e) => handleChange('insuranceFee', e.target.value)}
+                  placeholder="请输入保险费"
+                />
+                <LiquidInput
+                  label="拒签险"
+                  type="number"
+                  value={form.rejectionInsurance}
+                  onChange={(e) => handleChange('rejectionInsurance', e.target.value)}
+                  placeholder="请输入拒签险"
+                />
+                <LiquidInput
+                  label="好评返现"
+                  type="number"
+                  value={form.reviewBonus}
+                  onChange={(e) => handleChange('reviewBonus', e.target.value)}
+                  placeholder="请输入好评返现"
+                />
+              </div>
 
-        {/* 订单信息 */}
-        <div>
-          <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-3 pb-2 border-b border-white/5">
-            订单信息
-          </h4>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>金额 (¥) *</label>
-              <input
-                className={inputClass}
-                type="number"
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-                value={form.amount}
-                onChange={(e) => handleChange('amount', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>支付方式</label>
-              <select
-                className={inputClass}
-                value={form.paymentMethod}
-                onChange={(e) => handleChange('paymentMethod', e.target.value)}
-              >
-                <option value="" className="bg-[#252B3B]">请选择</option>
-                <option value="支付宝" className="bg-[#252B3B]">支付宝</option>
-                <option value="花呗" className="bg-[#252B3B]">花呗</option>
-                <option value="信用支付" className="bg-[#252B3B]">信用支付</option>
-                <option value="微信" className="bg-[#252B3B]">微信</option>
-                <option value="现金" className="bg-[#252B3B]">现金</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>来源渠道</label>
-              <input
-                className={inputClass}
-                placeholder="如：淘宝、门店"
-                value={form.sourceChannel}
-                onChange={(e) => handleChange('sourceChannel', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>外部订单号</label>
-              <input
-                className={inputClass}
-                placeholder="网店/第三方订单号"
-                value={form.externalOrderNo}
-                onChange={(e) => handleChange('externalOrderNo', e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="mt-3">
-            <label className={labelClass}>备注</label>
-            <textarea
-              className={inputClass + ' resize-none'}
-              rows={2}
-              placeholder="订单备注信息"
-              value={form.remark}
-              onChange={(e) => handleChange('remark', e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* M5：财务明细 */}
-        <div>
-          <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-3 pb-2 border-b border-white/5">
-            财务明细
-          </h4>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>平台扣点费率</label>
-              <select
-                className={inputClass}
-                value={form.platformFeeRate}
-                onChange={(e) => handleChange('platformFeeRate', e.target.value)}
-              >
-                <option value="0.061" className="bg-[#252B3B]">6.1%</option>
-                <option value="0.073" className="bg-[#252B3B]">7.3%</option>
-                <option value="0.05" className="bg-[#252B3B]">5%</option>
-                <option value="0" className="bg-[#252B3B]">0%</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>签证费 (¥)</label>
-              <input
-                className={inputClass}
-                type="number"
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-                value={form.visaFee}
-                onChange={(e) => handleChange('visaFee', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>保险费 (¥)</label>
-              <input
-                className={inputClass}
-                type="number"
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-                value={form.insuranceFee}
-                onChange={(e) => handleChange('insuranceFee', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>拒签保险 (¥)</label>
-              <input
-                className={inputClass}
-                type="number"
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-                value={form.rejectionInsurance}
-                onChange={(e) => handleChange('rejectionInsurance', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>好评返现 (¥)</label>
-              <input
-                className={inputClass}
-                type="number"
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-                value={form.reviewBonus}
-                onChange={(e) => handleChange('reviewBonus', e.target.value)}
-              />
-            </div>
-          </div>
-          {/* 财务预览 */}
-          {amount > 0 && (
-            <div className="mt-3 p-3 rounded-xl bg-white/[0.03] border border-white/5">
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                <div>
-                  <span className="text-[var(--color-text-placeholder)]">平台费用</span>
-                  <p className="text-[var(--color-warning)] font-medium">¥{platformFeePreview.toFixed(2)}</p>
-                </div>
-                <div>
-                  <span className="text-[var(--color-text-placeholder)]">总成本</span>
-                  <p className="text-[var(--color-error)] font-medium">
-                    ¥{(platformFeePreview + visaFee + insuranceFee + rejectIns + reviewBonus).toFixed(2)}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-[var(--color-text-placeholder)]">预估毛利</span>
-                  <p className={`font-medium ${grossProfitPreview >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'}`}>
-                    ¥{grossProfitPreview.toFixed(2)}
-                  </p>
+              {/* 财务预览 */}
+              <div className="mt-4 p-4 rounded-xl bg-liquid-ocean/5 border border-liquid-ocean/20">
+                <h4 className="text-xs font-semibold text-liquid-mist mb-2">财务预览</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="text-liquid-mist text-xs">订单金额</span>
+                    <div className="text-liquid-deep font-semibold">¥{amount.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <span className="text-liquid-mist text-xs">平台费</span>
+                    <div className="text-red-500">-¥{platformFeePreview.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <span className="text-liquid-mist text-xs">成本合计</span>
+                    <div className="text-red-500">
+                      -¥{(visaFee + insuranceFee + rejectIns + reviewBonus).toLocaleString()}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-liquid-mist text-xs">毛利</span>
+                    <div className={grossProfitPreview >= 0 ? 'text-emerald-600' : 'text-red-500'}>
+                      ¥{grossProfitPreview.toLocaleString()}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          )}
-        </div>
 
-        {/* 操作按钮 */}
-        <div className="flex justify-end gap-3 pt-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm rounded-xl bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all"
-          >
-            取消
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="glass-btn-primary px-6 py-2 text-sm font-medium disabled:opacity-50"
-          >
-            {isSubmitting ? '创建中...' : '创建订单'}
-          </button>
-        </div>
-      </div>
-    </Modal>
+            {/* 其他信息 */}
+            <div>
+              <h3 className="text-sm font-semibold text-liquid-deep mb-3">其他信息</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <LiquidInput
+                  label="付款方式"
+                  value={form.paymentMethod}
+                  onChange={(e) => handleChange('paymentMethod', e.target.value)}
+                  placeholder="如：支付宝/微信/银行转账"
+                />
+                <LiquidInput
+                  label="来源渠道"
+                  value={form.sourceChannel}
+                  onChange={(e) => handleChange('sourceChannel', e.target.value)}
+                  placeholder="如：淘宝/京东/线下"
+                />
+                <LiquidInput
+                  label="外部订单号"
+                  value={form.externalOrderNo}
+                  onChange={(e) => handleChange('externalOrderNo', e.target.value)}
+                  placeholder="电商平台订单号"
+                />
+                <LiquidInput
+                  label="出行日期"
+                  type="date"
+                  value={form.travelDate}
+                  onChange={(e) => handleChange('travelDate', e.target.value)}
+                />
+              </div>
+              <div className="mt-4">
+                <label className="text-sm font-semibold text-liquid-deep mb-2 block">备注</label>
+                <textarea
+                  value={form.remark}
+                  onChange={(e) => handleChange('remark', e.target.value)}
+                  placeholder="请输入备注信息"
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-2xl bg-white/55 backdrop-blur-xl border border-white/50 text-liquid-deep text-sm placeholder:text-liquid-silver focus:outline-none focus:bg-white/70 focus:border-liquid-ocean/60 resize-none"
+                />
+              </div>
+            </div>
+          </LiquidCardContent>
+
+          {/* 弹窗底部 */}
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/20">
+            <LiquidButton variant="ghost" size="md" onClick={onClose}>
+              取消
+            </LiquidButton>
+            <LiquidButton
+              variant="primary"
+              size="md"
+              isLoading={isSubmitting}
+              onClick={handleSubmit}
+            >
+              创建订单
+            </LiquidButton>
+          </div>
+        </LiquidCard>
+      </motion.div>
+    </div>
   )
 }

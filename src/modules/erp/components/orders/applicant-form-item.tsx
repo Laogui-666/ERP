@@ -16,18 +16,18 @@ interface ApplicantFormItemProps {
 
 export function ApplicantFormItem({ index, applicant, onChange, onRemove, canRemove }: ApplicantFormItemProps) {
   const inputClass = 'glass-input w-full text-sm'
-  const labelClass = 'block text-xs font-medium text-[var(--color-text-secondary)] mb-1'
+  const labelClass = 'block text-xs font-medium text-liquid-mist mb-1'
 
   return (
-    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+    <div className="p-3 rounded-xl bg-liquid-ocean/5 border border-liquid-ocean/10">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-[var(--color-primary-light)]">
+        <span className="text-xs font-medium text-liquid-oceanLight">
           申请人 {index + 1}
         </span>
         {canRemove && (
           <button
             onClick={() => onRemove(index)}
-            className="text-xs text-[var(--color-error)] hover:text-[var(--color-error)]/80 transition-colors"
+            className="text-xs text-liquid-ruby hover:text-liquid-ruby/80 transition-colors"
           >
             移除
           </button>

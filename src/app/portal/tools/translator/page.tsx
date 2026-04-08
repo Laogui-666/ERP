@@ -54,7 +54,7 @@ export default function TranslatorPage() {
       <GlassCard intensity="medium" className="mb-6 p-5">
         <div className="mb-4 flex items-center gap-3">
           <select className="glass-input flex-1" value={sourceLang} onChange={e => setSourceLang(e.target.value)}>{LANGS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}</select>
-          <span className="text-[var(--color-text-secondary)]">→</span>
+          <span className="text-liquid-mist">→</span>
           <select className="glass-input flex-1" value={targetLang} onChange={e => setTargetLang(e.target.value)}>{LANGS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}</select>
         </div>
         <div className="mb-3"><select className="glass-input w-full" value={docType} onChange={e => setDocType(e.target.value)}>{DOC_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
@@ -62,7 +62,7 @@ export default function TranslatorPage() {
         <Button variant="primary" className="w-full" onClick={handleTranslate} isLoading={submitting}>翻译</Button>
       </GlassCard>
 
-      <h2 className="mb-3 text-[16px] font-semibold text-[var(--color-text-primary)]">翻译记录</h2>
+      <h2 className="mb-3 text-[16px] font-semibold text-liquid-deep">翻译记录</h2>
       {!user ? (
         <ToolEmptyState
           icon="🔒"
@@ -81,11 +81,11 @@ export default function TranslatorPage() {
         <div className="space-y-3">
           {records.map((r, i) => (
             <GlassCard key={r.id} intensity="light" className="p-4 animate-fade-in-up" style={{ animationDelay: `${i * 50}ms` } as React.CSSProperties}>
-              <div className="mb-1 flex items-center gap-2 text-[11px] text-[var(--color-text-placeholder)]">
+              <div className="mb-1 flex items-center gap-2 text-[11px] text-liquid-mist/60">
                 <span>{LANGS.find(l => l.code === r.sourceLang)?.label} → {LANGS.find(l => l.code === r.targetLang)?.label}</span><span>·</span><span>{r.docType}</span>
-                <span className={`ml-auto rounded-full px-2 py-0.5 ${r.status === 'completed' ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]' : 'bg-[var(--color-warning)]/15 text-[var(--color-warning)]'}`}>{r.status === 'completed' ? '已完成' : '处理中'}</span>
+                <span className={`ml-auto rounded-full px-2 py-0.5 ${r.status === 'completed' ? 'bg-liquid-emerald/15 text-liquid-emerald' : 'bg-liquid-amber/15 text-liquid-amber'}`}>{r.status === 'completed' ? '已完成' : '处理中'}</span>
               </div>
-              {r.resultText && <p className="text-[13px] text-[var(--color-text-primary)]">{r.resultText}</p>}
+              {r.resultText && <p className="text-[13px] text-liquid-deep">{r.resultText}</p>}
             </GlassCard>
           ))}
         </div>

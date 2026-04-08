@@ -1,17 +1,21 @@
 'use client'
 
 /**
- * 客户端通知页 — 卡片窗口布局 + 日期筛选
+ * 客户端通知页 — 液体玻璃设计版
  */
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { apiFetch } from '@shared/lib/api-client'
 import { useNotificationStore } from '@shared/stores/notification-store'
-import { GlassCard } from '@shared/ui/glass-card'
+import { LiquidNotificationItem } from '@design-system/components/liquid-notification-item'
+import { LiquidCard } from '@design-system/components/liquid-card'
+import { LiquidButton } from '@design-system/components/liquid-button'
 import { useToast } from '@shared/ui/toast'
 import { formatDateTime } from '@shared/lib/utils'
 import { NOTIFICATION_ICONS, getNotificationRoute } from '@shared/lib/notification-icons'
+import { liquidSpringConfig } from '@design-system/theme/animations'
 
 interface Notification {
   id: string
@@ -112,7 +116,7 @@ export default function CustomerNotificationsPage() {
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
       )
       setUnreadCount((prev) => Math.max(0, prev - 1))
-      // 同步更新全局 store，让底部 Tab 角标同步减少
+      // 同步更新全局 store
       useNotificationStore.setState((state) => ({
         notifications: state.notifications.map((n) =>
           n.id === id ? { ...n, isRead: true } : n,
@@ -150,122 +154,129 @@ export default function CustomerNotificationsPage() {
   return (
     <div className="space-y-4 pb-20">
       {/* 标题栏 */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
-          站内通知
-          {unreadCount > 0 && (
-            <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-[var(--color-error)] text-white">
-              {unreadCount}
-            </span>
-          )}
-        </h2>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={liquidSpringConfig.gentle}
+        className="flex items-center justify-between"
+      >
+        <div>
+          <h2 className="text-lg font-semibold text-liquid-deep">
+            站内通知
+            {unreadCount > 0 && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="ml-2 text-xs px-2 py-0.5 rounded-full bg-red-500 text-white"
+              >
+                {unreadCount}
+              </motion.span>
+            )}
+          </h2>
+          <p className="text-xs text-liquid-mist mt-1">订单状态变更时会通知您</p>
+        </div>
         {unreadCount > 0 && (
-          <button
+          <LiquidButton
+            variant="ghost"
+            size="sm"
             onClick={handleMarkAllRead}
-            className="text-xs text-[var(--color-info)] hover:underline"
           >
             全部已读
-          </button>
+          </LiquidButton>
         )}
-      </div>
+      </motion.div>
 
       {/* 日期筛选 */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...liquidSpringConfig.gentle, delay: 0.1 }}
+        className="flex gap-2 overflow-x-auto scrollbar-none pb-1"
+      >
         {DATE_FILTERS.map((f) => (
-          <button
+          <motion.button
             key={f.value}
             onClick={() => setDateFilter(f.value)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95 ${
               dateFilter === f.value
-                ? 'bg-[var(--color-primary)] text-white shadow-md shadow-[var(--color-primary)]/20'
-                : 'bg-white/[0.06] text-[var(--color-text-secondary)] hover:bg-white/[0.10]'
+                ? 'bg-liquid-ocean text-white shadow-md shadow-liquid-ocean/20'
+                : 'bg-white/50 text-liquid-mist hover:bg-white/70 border border-white/30'
             }`}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             {f.label}
-          </button>
+          </motion.button>
         ))}
-      </div>
+      </motion.div>
 
-      {/* 通知卡片容器 */}
-      <GlassCard className="overflow-hidden">
+      {/* 通知列表 */}
+      <LiquidCard padding="none" variant="liquid" className="overflow-hidden">
         <div className="max-h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin">
           {isLoading ? (
             <div className="p-8 text-center">
-              <div className="inline-block w-6 h-6 border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin" />
-              <p className="mt-3 text-sm text-[var(--color-text-secondary)]">加载中...</p>
+              <motion.div
+                className="inline-block w-6 h-6 border-2 border-liquid-ocean/30 border-t-liquid-ocean rounded-full"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              />
+              <p className="mt-3 text-sm text-liquid-mist">加载中...</p>
             </div>
           ) : notifications.length === 0 ? (
-            <div className="p-8 text-center animate-fade-in-up">
-              <span className="text-3xl block mb-3">🔔</span>
-              <p className="text-sm text-[var(--color-text-secondary)]">暂无通知</p>
-              <p className="text-xs text-[var(--color-text-placeholder)] mt-1">
-                订单状态变更时会通知您
-              </p>
+            <div className="p-8 text-center">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={liquidSpringConfig.bouncy}
+              >
+                <span className="text-3xl block mb-3">🔔</span>
+                <p className="text-sm text-liquid-mist">暂无通知</p>
+                <p className="text-xs text-liquid-silver mt-1">
+                  订单状态变更时会通知您
+                </p>
+              </motion.div>
             </div>
           ) : (
-            <div className="divide-y divide-white/[0.04]">
+            <div>
               {notifications.map((n, i) => (
-                <div
+                <LiquidNotificationItem
                   key={n.id}
-                  className={`px-4 py-3.5 cursor-pointer transition-colors hover:bg-white/[0.03] active:bg-white/[0.05] animate-fade-in-up ${
-                    !n.isRead ? 'bg-[var(--color-primary)]/[0.04]' : ''
-                  }`}
-                  style={{ animationDelay: `${i * 20}ms` }}
+                  icon={NOTIFICATION_ICONS[n.type] ?? '🔔'}
+                  title={n.title}
+                  content={n.content}
+                  createdAt={formatDateTime(n.createdAt)}
+                  isRead={n.isRead}
                   onClick={() => { void handleClick(n) }}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="text-base shrink-0 mt-0.5">
-                      {NOTIFICATION_ICONS[n.type] ?? '🔔'}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span
-                          className={`text-[13px] truncate ${
-                            !n.isRead
-                              ? 'font-semibold text-[var(--color-text-primary)]'
-                              : 'text-[var(--color-text-secondary)]'
-                          }`}
-                        >
-                          {n.title}
-                        </span>
-                        {!n.isRead && (
-                          <span className="w-2 h-2 rounded-full bg-[var(--color-primary)] shrink-0" />
-                        )}
-                      </div>
-                      {n.content && (
-                        <p className="text-xs text-[var(--color-text-placeholder)] mt-0.5 line-clamp-2 leading-relaxed">
-                          {n.content}
-                        </p>
-                      )}
-                      <span className="text-[10px] text-[var(--color-text-placeholder)] mt-1 block">
-                        {formatDateTime(n.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                  delay={i}
+                />
               ))}
 
               {/* 加载更多 */}
               {hasMore && (
-                <button
+                <motion.button
                   onClick={handleLoadMore}
                   disabled={isLoadingMore}
-                  className="w-full py-3.5 text-xs text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] transition-colors disabled:opacity-50"
+                  className="w-full py-3.5 text-xs text-liquid-silver hover:text-liquid-mist transition-colors disabled:opacity-50"
+                  whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
                 >
                   {isLoadingMore ? (
                     <span className="inline-flex items-center gap-2">
-                      <span className="w-3 h-3 border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin" />
+                      <motion.span
+                        className="w-3 h-3 border-2 border-liquid-ocean/30 border-t-liquid-ocean rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                      />
                       加载中...
                     </span>
                   ) : (
                     '加载更多'
                   )}
-                </button>
+                </motion.button>
               )}
             </div>
           )}
         </div>
-      </GlassCard>
+      </LiquidCard>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import '@shared/styles/globals.css'
 import '@shared/styles/glassmorphism.css'
+import '@shared/styles/liquid-globals.css'
 import { ToastProvider } from '@shared/ui/toast'
 import { DynamicBackground } from '@shared/ui/dynamic-bg'
 

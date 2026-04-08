@@ -81,8 +81,8 @@ export function ChatMessageList({
       {/* 加载更多指示器 */}
       {(isLoading || isLoadingMore) && (
         <div className="flex justify-center py-3">
-          <div className="flex items-center gap-2 text-xs text-[var(--color-text-placeholder)]">
-            <span className="w-4 h-4 border-2 border-[var(--color-primary)]/20 border-t-[var(--color-primary)] rounded-full animate-spin" />
+          <div className="flex items-center gap-2 text-xs text-liquid-mist/60">
+            <span className="w-4 h-4 border-2 border-liquid-ocean/20 border-t-liquid-ocean rounded-full animate-spin" />
             加载中...
           </div>
         </div>
@@ -91,7 +91,7 @@ export function ChatMessageList({
       {/* 无更多消息提示 */}
       {!hasMore && messages.length > 0 && (
         <div className="flex justify-center py-3">
-          <span className="text-[10px] text-[var(--color-text-placeholder)] bg-white/[0.03] px-3 py-1 rounded-full">
+          <span className="text-[10px] text-liquid-mist/60 bg-liquid-ocean/5 px-3 py-1 rounded-full">
             — 以上是历史消息 —
           </span>
         </div>
@@ -99,7 +99,7 @@ export function ChatMessageList({
 
       {/* 空态 */}
       {messages.length === 0 && !isLoading && (
-        <div className="flex flex-col items-center justify-center h-full gap-2 text-[var(--color-text-placeholder)]">
+        <div className="flex flex-col items-center justify-center h-full gap-2 text-liquid-mist/60">
           <span className="text-3xl">💬</span>
           <span className="text-sm">暂无消息</span>
           <span className="text-xs">发送第一条消息开始沟通</span>
@@ -119,13 +119,13 @@ export function ChatMessageList({
 
       {/* 输入指示器 */}
       {typingUsers.length > 0 && (
-        <div className="flex items-center gap-2 px-1 py-1 animate-fade-in-up" style={{ animationDuration: '150ms' }}>
+        <div className="flex items-center gap-2 px-1 py-1" style={{ animationDuration: '150ms' }}>
           <div className="flex gap-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-placeholder)] animate-bounce" style={{ animationDelay: '0ms' }} />
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-placeholder)] animate-bounce" style={{ animationDelay: '150ms' }} />
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-placeholder)] animate-bounce" style={{ animationDelay: '300ms' }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-liquid-mist/60 animate-bounce" style={{ animationDelay: '0ms' }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-liquid-mist/60 animate-bounce" style={{ animationDelay: '150ms' }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-liquid-mist/60 animate-bounce" style={{ animationDelay: '300ms' }} />
           </div>
-          <span className="text-[11px] text-[var(--color-text-placeholder)]">
+          <span className="text-[11px] text-liquid-mist/60">
             {typingUsers.map((u) => u.realName).join('、')}正在输入...
           </span>
         </div>

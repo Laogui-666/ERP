@@ -40,7 +40,7 @@ export default function AssessmentPage() {
     } catch { toast('error', '评估失败，请重试') }
   }
 
-  const levelColors: Record<string, string> = { high: 'var(--color-success)', medium: 'var(--color-warning)', low: 'var(--color-error)' }
+  const levelColors: Record<string, string> = { high: 'rgb(127,168,122)', medium: 'rgb(196,169,125)', low: 'rgb(184,124,124)' }
   const levelLabels: Record<string, string> = { high: '通过率较高', medium: '通过率中等', low: '通过率较低' }
 
   return (
@@ -53,10 +53,10 @@ export default function AssessmentPage() {
 
       {step === 0 && (
         <div className="space-y-3">
-          <p className="mb-4 text-[14px] text-[var(--color-text-secondary)]">选择目标国家</p>
+          <p className="mb-4 text-[14px] text-liquid-mist">选择目标国家</p>
           {COUNTRIES.map(c => (
             <GlassCard key={c} intensity="light" hover className="cursor-pointer p-4" onClick={() => { setCountry(c); setStep(1) }}>
-              <p className="text-[15px] font-medium text-[var(--color-text-primary)]">🌍 {c}</p>
+              <p className="text-[15px] font-medium text-liquid-deep">🌍 {c}</p>
             </GlassCard>
           ))}
         </div>
@@ -64,16 +64,16 @@ export default function AssessmentPage() {
 
       {step >= 1 && step <= 4 && (
         <div>
-          <button onClick={() => setStep(s => Math.max(0, s - 1))} className="mb-4 text-[13px] text-[var(--color-primary)] hover:underline">← 上一步</button>
-          <div className="mb-4 flex gap-1">{[1,2,3,4].map(s => <div key={s} className={`h-1 flex-1 rounded-full ${s <= step ? 'bg-[var(--color-primary)]' : 'bg-white/10'}`} />)}</div>
-          <p className="mb-2 text-[11px] text-[var(--color-text-placeholder)]">{country} · 旅游签证</p>
+          <button onClick={() => setStep(s => Math.max(0, s - 1))} className="mb-4 text-[13px] text-liquid-ocean hover:underline">← 上一步</button>
+          <div className="mb-4 flex gap-1">{[1,2,3,4].map(s => <div key={s} className={`h-1 flex-1 rounded-full ${s <= step ? 'bg-liquid-ocean' : 'bg-liquid-ocean/10'}`} />)}</div>
+          <p className="mb-2 text-[11px] text-liquid-mist/60">{country} · 旅游签证</p>
           {QUESTIONS[step - 1] && (
             <div>
-              <p className="mb-4 text-[16px] font-semibold text-[var(--color-text-primary)]">{QUESTIONS[step - 1].label}</p>
+              <p className="mb-4 text-[16px] font-semibold text-liquid-deep">{QUESTIONS[step - 1].label}</p>
               <div className="space-y-3">
                 {QUESTIONS[step - 1].options.map(opt => (
                   <GlassCard key={opt.value} intensity={answers[QUESTIONS[step - 1].key] === opt.value ? 'accent' : 'light'} hover className="cursor-pointer p-4" onClick={() => handleAnswer(QUESTIONS[step - 1].key, opt.value)}>
-                    <p className="text-[14px] text-[var(--color-text-primary)]">{opt.label}</p>
+                    <p className="text-[14px] text-liquid-deep">{opt.label}</p>
                   </GlassCard>
                 ))}
               </div>
@@ -87,19 +87,19 @@ export default function AssessmentPage() {
 
       {step === 5 && result && (
         <div>
-          <button onClick={() => { setStep(0); setAnswers({}); setResult(null) }} className="mb-4 text-[13px] text-[var(--color-primary)] hover:underline">← 重新评估</button>
+          <button onClick={() => { setStep(0); setAnswers({}); setResult(null) }} className="mb-4 text-[13px] text-liquid-ocean hover:underline">← 重新评估</button>
           <GlassCard intensity="medium" className="p-6 text-center">
-            <p className="mb-2 text-[13px] text-[var(--color-text-secondary)]">{country} · 旅游签证</p>
+            <p className="mb-2 text-[13px] text-liquid-mist">{country} · 旅游签证</p>
             <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full border-4" style={{ borderColor: levelColors[result.level] }}>
               <span className="text-[32px] font-bold" style={{ color: levelColors[result.level] }}>{result.score}</span>
             </div>
             <p className="mb-4 text-[16px] font-semibold" style={{ color: levelColors[result.level] }}>{levelLabels[result.level]}</p>
             <div className="mt-4 space-y-2 text-left">
-              <p className="text-[13px] font-semibold text-[var(--color-text-primary)]">建议：</p>
-              {result.suggestions.map((s, i) => <p key={i} className="text-[13px] text-[var(--color-text-secondary)]">• {s}</p>)}
+              <p className="text-[13px] font-semibold text-liquid-deep">建议：</p>
+              {result.suggestions.map((s, i) => <p key={i} className="text-[13px] text-liquid-mist">• {s}</p>)}
             </div>
           </GlassCard>
-          <div className="mt-4 text-center"><p className="text-[12px] text-[var(--color-text-placeholder)]">* 评估结果仅供参考，实际结果以使馆审批为准</p></div>
+          <div className="mt-4 text-center"><p className="text-[12px] text-liquid-mist/60">* 评估结果仅供参考，实际结果以使馆审批为准</p></div>
         </div>
       )}
     </div>

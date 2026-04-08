@@ -1,7 +1,7 @@
 'use client'
 import { apiFetch } from '@shared/lib/api-client'
 import { useEffect, useState, useCallback } from 'react'
-import { GlassCard } from '@shared/ui/glass-card'
+import { LiquidCard } from '@design-system/components/liquid-card'
 import { PageHeader } from '@shared/components/layout/page-header'
 import { useToast } from '@shared/ui/toast'
 import { useAuth } from '@shared/hooks/use-auth'
@@ -178,13 +178,13 @@ export default function TemplatesPage() {
 
       {/* 创建/编辑表单 */}
       {showForm && (
-        <GlassCard className="p-6 animate-fade-in-up space-y-4">
-          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+        <LiquidCard className="p-6 space-y-4">
+          <h3 className="text-lg font-semibold text-liquid-deep">
             {editingId ? '编辑模板' : '新建模板'}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">模板名称</label>
+              <label className="text-xs text-liquid-mist mb-1 block">模板名称</label>
               <input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
@@ -193,7 +193,7 @@ export default function TemplatesPage() {
               />
             </div>
             <div>
-              <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">国家</label>
+              <label className="text-xs text-liquid-mist mb-1 block">国家</label>
               <input
                 value={formCountry}
                 onChange={(e) => setFormCountry(e.target.value)}
@@ -202,7 +202,7 @@ export default function TemplatesPage() {
               />
             </div>
             <div>
-              <label className="text-xs text-[var(--color-text-secondary)] mb-1 block">签证类型</label>
+              <label className="text-xs text-liquid-mist mb-1 block">签证类型</label>
               <input
                 value={formVisaType}
                 onChange={(e) => setFormVisaType(e.target.value)}
@@ -214,7 +214,7 @@ export default function TemplatesPage() {
 
           {/* 资料项列表 */}
           <div className="space-y-2">
-            <label className="text-xs text-[var(--color-text-secondary)]">资料清单</label>
+            <label className="text-xs text-liquid-mist">资料清单</label>
             {formItems.map((item, i) => (
               <div key={i} className="flex items-center gap-2">
                 <input
@@ -229,7 +229,7 @@ export default function TemplatesPage() {
                   placeholder="说明（可选）"
                   className="flex-1 glass-input text-sm"
                 />
-                <label className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)] whitespace-nowrap">
+                <label className="flex items-center gap-1 text-xs text-liquid-mist whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={item.required}
@@ -241,7 +241,7 @@ export default function TemplatesPage() {
                 <button
                   onClick={() => removeItem(i)}
                   disabled={formItems.length <= 1}
-                  className="text-[var(--color-error)] text-sm disabled:opacity-30"
+                  className="text-liquid-ruby text-sm disabled:opacity-30"
                 >
                   ✕
                 </button>
@@ -249,14 +249,14 @@ export default function TemplatesPage() {
             ))}
             <button
               onClick={addItem}
-              className="text-xs text-[var(--color-primary-light)] hover:text-[var(--color-text-primary)] transition-colors"
+              className="text-xs text-liquid-oceanLight hover:text-liquid-deep transition-colors"
             >
               + 添加资料项
             </button>
           </div>
 
           <div className="flex gap-3 justify-end">
-            <button onClick={resetForm} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
+            <button onClick={resetForm} className="px-4 py-2 text-sm text-liquid-mist hover:text-liquid-deep transition-colors">
               取消
             </button>
             <button
@@ -267,35 +267,35 @@ export default function TemplatesPage() {
               {isSaving ? '保存中...' : '保存'}
             </button>
           </div>
-        </GlassCard>
+        </LiquidCard>
       )}
 
       {/* 模板列表 */}
       {isLoading ? (
         <div className="text-center py-12">
-          <div className="inline-block w-6 h-6 border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin" />
+          <div className="inline-block w-6 h-6 border-2 border-liquid-ocean/30 border-t-liquid-ocean rounded-full animate-spin" />
         </div>
       ) : templates.length === 0 ? (
-        <GlassCard className="p-12 text-center">
-          <p className="text-[var(--color-text-secondary)]">暂无模板</p>
-        </GlassCard>
+        <LiquidCard className="p-12 text-center">
+          <p className="text-liquid-mist">暂无模板</p>
+        </LiquidCard>
       ) : (
         <div className="space-y-3">
           {templates.map((t) => (
-            <GlassCard key={t.id} className="p-5 animate-fade-in-up">
+            <LiquidCard key={t.id} className="p-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-sm">
+                  <div className="w-10 h-10 rounded-xl bg-liquid-ocean/10 flex items-center justify-center text-sm">
                     🌍
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-[var(--color-text-primary)]">{t.name}</span>
+                      <span className="text-sm font-semibold text-liquid-deep">{t.name}</span>
                       {t.isSystem && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-info)]/15 text-[var(--color-info)]">系统</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-liquid-ocean/15 text-liquid-ocean">系统</span>
                       )}
                     </div>
-                    <span className="text-xs text-[var(--color-text-placeholder)]">
+                    <span className="text-xs text-liquid-mist/60">
                       {t.country} · {t.visaType} · {Array.isArray(t.items) ? t.items.length : 0} 项
                     </span>
                   </div>
@@ -303,16 +303,16 @@ export default function TemplatesPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
-                    className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] px-2 py-1 rounded bg-white/5"
+                    className="text-xs text-liquid-mist hover:text-liquid-deep px-2 py-1 rounded bg-liquid-ocean/5"
                   >
                     {expandedId === t.id ? '收起' : '展开'}
                   </button>
                   {canManage && !t.isSystem && (
                     <>
-                      <button onClick={() => handleEdit(t)} className="text-xs text-[var(--color-primary-light)] hover:text-[var(--color-text-primary)] px-2 py-1 rounded bg-white/5">
+                      <button onClick={() => handleEdit(t)} className="text-xs text-liquid-oceanLight hover:text-liquid-deep px-2 py-1 rounded bg-liquid-ocean/5">
                         编辑
                       </button>
-                      <button onClick={() => handleDelete(t.id)} className="text-xs text-[var(--color-error)] hover:text-[var(--color-error)]/80 px-2 py-1 rounded bg-[var(--color-error)]/10">
+                      <button onClick={() => handleDelete(t.id)} className="text-xs text-liquid-ruby hover:text-liquid-ruby/80 px-2 py-1 rounded bg-liquid-ruby/10">
                         删除
                       </button>
                     </>
@@ -322,20 +322,20 @@ export default function TemplatesPage() {
 
               {/* 展开的资料项 */}
               {expandedId === t.id && Array.isArray(t.items) && (
-                <div className="mt-4 pl-13 space-y-1.5 border-t border-white/5 pt-3">
+                <div className="mt-4 pl-13 space-y-1.5 border-t border-liquid-ocean/10 pt-3">
                   {t.items.map((item: TemplateItem, i: number) => (
                     <div key={i} className="flex items-center gap-2 text-xs">
-                      <span className={`w-1.5 h-1.5 rounded-full ${item.required ? 'bg-[var(--color-error)]' : 'bg-[var(--color-text-placeholder)]'}`} />
-                      <span className="text-[var(--color-text-primary)]">{item.name}</span>
+                      <span className={`w-1.5 h-1.5 rounded-full ${item.required ? 'bg-liquid-ruby' : 'bg-liquid-mist/40'}`} />
+                      <span className="text-liquid-deep">{item.name}</span>
                       {item.description && (
-                        <span className="text-[var(--color-text-placeholder)]">— {item.description}</span>
+                        <span className="text-liquid-mist/60">— {item.description}</span>
                       )}
-                      {item.required && <span className="text-[var(--color-error)] text-[10px]">必填</span>}
+                      {item.required && <span className="text-liquid-ruby text-[10px]">必填</span>}
                     </div>
                   ))}
                 </div>
               )}
-            </GlassCard>
+            </LiquidCard>
           ))}
         </div>
       )}

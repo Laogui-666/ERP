@@ -17,7 +17,7 @@ export function PageHeader({ title, description, action, backLink }: PageHeaderP
         {backLink && (
           <Link
             href={backLink}
-            className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.06] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-white/[0.07] hover:border-white/[0.1] active:scale-90 transition-all duration-200"
+            className="p-2 rounded-xl bg-liquid-ocean/5 border border-liquid-ocean/10 text-liquid-mist hover:text-liquid-deep hover:bg-liquid-ocean/10 hover:border-liquid-ocean/20 active:scale-90 transition-all duration-200"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
@@ -25,9 +25,9 @@ export function PageHeader({ title, description, action, backLink }: PageHeaderP
           </Link>
         )}
         <div>
-          <h1 className="text-[20px] font-bold text-[var(--color-text-primary)] tracking-tight">{title}</h1>
+          <h1 className="text-[20px] font-bold text-liquid-deep tracking-tight">{title}</h1>
           {description && (
-            <div className="mt-1 text-[13px] text-[var(--color-text-secondary)]">{description}</div>
+            <div className="mt-1 text-[13px] text-liquid-mist">{description}</div>
           )}
         </div>
       </div>

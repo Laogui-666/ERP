@@ -17,12 +17,12 @@ interface CustomerUploadProps {
 }
 
 const STATUS_STYLES: Record<DocReqStatus, { dot: string; bg: string; text: string }> = {
-  PENDING: { dot: 'bg-[#8E99A8]', bg: 'bg-white/[0.04]', text: 'text-[#8E99A8]' },
-  UPLOADED: { dot: 'bg-[#7CA8B8]', bg: 'bg-[#7CA8B8]/[0.06]', text: 'text-[#7CA8B8]' },
-  REVIEWING: { dot: 'bg-[#9B8EC4]', bg: 'bg-[#9B8EC4]/[0.06]', text: 'text-[#9B8EC4]' },
-  APPROVED: { dot: 'bg-[#7FA87A]', bg: 'bg-[#7FA87A]/[0.06]', text: 'text-[#7FA87A]' },
-  REJECTED: { dot: 'bg-[#B87C7C]', bg: 'bg-[#B87C7C]/[0.06]', text: 'text-[#B87C7C]' },
-  SUPPLEMENT: { dot: 'bg-[#C4A97D]', bg: 'bg-[#C4A97D]/[0.06]', text: 'text-[#C4A97D]' },
+  PENDING: { dot: 'bg-liquid-mist', bg: 'bg-liquid-ocean/5', text: 'text-liquid-mist' },
+  UPLOADED: { dot: 'bg-liquid-ocean', bg: 'bg-liquid-ocean/5', text: 'text-liquid-ocean' },
+  REVIEWING: { dot: 'bg-liquid-sand', bg: 'bg-liquid-sand/5', text: 'text-liquid-sand' },
+  APPROVED: { dot: 'bg-liquid-emerald', bg: 'bg-liquid-emerald/5', text: 'text-liquid-emerald' },
+  REJECTED: { dot: 'bg-liquid-ruby', bg: 'bg-liquid-ruby/5', text: 'text-liquid-ruby' },
+  SUPPLEMENT: { dot: 'bg-liquid-amber', bg: 'bg-liquid-amber/5', text: 'text-liquid-amber' },
 }
 
 export function CustomerUpload({ orderId: _orderId, requirements, applicantCount = 1, applicants = [], onRefresh }: CustomerUploadProps) {
@@ -229,16 +229,16 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
     const canOperate = canUpload(req.status)
 
     return (
-      <div key={req.id} className={`rounded-xl border border-white/[0.06] p-4 ${style.bg}`}>
+      <div key={req.id} className={`rounded-xl border border-liquid-ocean/10 p-4 ${style.bg}`}>
         {/* 标题行 */}
           <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${style.dot}`} />
-            <span className="text-sm font-medium text-[var(--color-text-primary)]">
+            <span className="text-sm font-medium text-liquid-deep">
               {req.name}
             </span>
             {req.isRequired && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#B87C7C]/15 text-[#B87C7C]">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-liquid-ruby/15 text-liquid-ruby">
                 必填
               </span>
             )}
@@ -250,7 +250,7 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
 
         {/* 说明文字 */}
         {req.description && (
-          <p className="text-xs text-[var(--color-text-secondary)] mb-2 ml-4">
+          <p className="text-xs text-liquid-mist mb-2 ml-4">
             {req.description}
           </p>
         )}
@@ -272,7 +272,7 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
                 {canOperate ? (
                   <button
                     onClick={() => handleDelete(file.id)}
-                    className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[#B87C7C] bg-[#B87C7C]/10 hover:bg-[#B87C7C]/20 active:scale-90 transition-all"
+                    className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-liquid-ruby bg-liquid-ruby/10 hover:bg-liquid-ruby/20 active:scale-90 transition-all"
                     title="删除文件"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -280,7 +280,7 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
                     </svg>
                   </button>
                 ) : req.status === 'APPROVED' ? (
-                  <span className="shrink-0 text-[10px] text-[var(--color-success)] px-1.5 py-0.5 rounded bg-[var(--color-success)]/10">✓ 已合格</span>
+                  <span className="shrink-0 text-[10px] text-liquid-emerald px-1.5 py-0.5 rounded bg-liquid-emerald/10">✓ 已合格</span>
                 ) : null}
               </div>
             ))}
@@ -290,12 +290,12 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
         {/* 上传进度 */}
         {isUploading && uploadProgress !== null && (
           <div className="ml-4 mb-2">
-            <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] mb-1">
+            <div className="flex items-center gap-2 text-xs text-liquid-mist mb-1">
               <span>上传中... {uploadProgress}%</span>
             </div>
-            <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden">
+            <div className="h-1 rounded-full bg-liquid-ocean/10 overflow-hidden">
               <div
-                className="h-full bg-[var(--color-primary)] rounded-full transition-all duration-300"
+                className="h-full bg-liquid-ocean rounded-full transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
@@ -307,13 +307,13 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
           <div className="ml-4 flex gap-2">
             <button
               onClick={() => handleUploadClick(req.id)}
-              className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-primary)]/15 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/25 transition-colors"
+              className="text-xs px-3 py-1.5 rounded-lg bg-liquid-ocean/15 text-liquid-ocean hover:bg-liquid-ocean/25 transition-colors"
             >
               📁 上传
             </button>
             <button
               onClick={() => setCameraTargetId(req.id)}
-              className="text-xs px-3 py-1.5 rounded-lg bg-white/[0.06] text-[var(--color-text-secondary)] hover:bg-white/[0.10] transition-colors"
+              className="text-xs px-3 py-1.5 rounded-lg bg-liquid-ocean/5 text-liquid-mist hover:bg-liquid-ocean/10 transition-colors"
             >
               📷 拍照
             </button>
@@ -325,7 +325,7 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
           <div className="ml-4 flex gap-2 mt-2">
             <button
               onClick={() => handleResubmitClick(req.id)}
-              className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-warning)]/15 text-[var(--color-warning)] hover:bg-[var(--color-warning)]/25 transition-colors"
+              className="text-xs px-3 py-1.5 rounded-lg bg-liquid-amber/15 text-liquid-amber hover:bg-liquid-amber/25 transition-colors"
             >
               🔄 重新提交
             </button>
@@ -339,11 +339,11 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
     <div className="space-y-3">
       {/* 标题 + 进度 */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-liquid-deep flex items-center gap-2">
           <span>📤</span>
           <span>我需要上传的资料</span>
         </h3>
-        <span className="text-xs text-[var(--color-text-secondary)]">
+        <span className="text-xs text-liquid-mist">
           {approved}/{total} 已合格
         </span>
       </div>
@@ -353,13 +353,13 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
         <div key={gi}>
           {showGrouped && (
             <div className="flex items-center gap-2 mb-2 mt-3">
-              <div className="w-6 h-6 rounded-full bg-[var(--color-primary)]/15 flex items-center justify-center text-xs font-medium text-[var(--color-primary)]">
+              <div className="w-6 h-6 rounded-full bg-liquid-ocean/15 flex items-center justify-center text-xs font-medium text-liquid-ocean">
                 {group.name[0]}
               </div>
-              <span className="text-xs font-medium text-[var(--color-text-primary)]">
+              <span className="text-xs font-medium text-liquid-deep">
                 {group.name}
               </span>
-              <span className="text-xs text-[var(--color-text-secondary)]">
+              <span className="text-xs text-liquid-mist">
                 {group.items.filter(r => r.status === 'APPROVED').length}/{group.items.length}
               </span>
             </div>
@@ -371,7 +371,7 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
       ))}
 
       {requirements.length === 0 && (
-        <div className="text-center py-8 text-sm text-[var(--color-text-secondary)]">
+        <div className="text-center py-8 text-sm text-liquid-mist">
           暂无资料需求，请等待资料员发送清单
         </div>
       )}

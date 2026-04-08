@@ -9,7 +9,6 @@ import { useChatStore } from '@erp/stores/chat-store'
 import { registerNotificationHandler } from '@shared/hooks/use-socket-client'
 import { StatusBadge } from '@erp/components/orders/status-badge'
 import { ApplicantCard } from '@erp/components/orders/applicant-card'
-import { GlassCard } from '@shared/ui/glass-card'
 import { PageHeader } from '@shared/components/layout/page-header'
 import { DocumentPanel } from '@erp/components/documents/document-panel'
 import { MaterialPanel } from '@erp/components/documents/material-panel'
@@ -18,6 +17,13 @@ import { Modal } from '@shared/ui/modal'
 import { useToast } from '@shared/ui/toast'
 import { formatDateTime, formatDate } from '@shared/lib/utils'
 import { ORDER_STATUS_LABELS } from '@erp/types/order'
+import { LiquidOrderDetailCard } from '@design-system/components/liquid-order-detail-card'
+import { LiquidInfoField } from '@design-system/components/liquid-info-field'
+// import { LiquidInput } from '@design-system/components/liquid-input'
+// import { LiquidTimeline } from '@design-system/components/liquid-timeline'
+import { LiquidButton } from '@design-system/components/liquid-button'
+import { liquidSpringConfig } from '@design-system/theme/animations'
+import { motion } from 'framer-motion'
 import type { OrderStatus } from '@erp/types/order'
 
 // 可编辑的角色
@@ -378,8 +384,12 @@ export default function OrderDetailPage() {
   if (isLoading) {
     return (
       <div className="p-12 text-center">
-        <div className="inline-block w-6 h-6 border-2 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin" />
-        <p className="mt-3 text-sm text-[var(--color-text-secondary)]">加载中...</p>
+        <motion.div
+          className="inline-block w-6 h-6 border-2 border-liquid-ocean/30 border-t-liquid-ocean rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        />
+        <p className="mt-3 text-sm text-liquid-mist">加载中...</p>
       </div>
     )
   }
@@ -387,10 +397,21 @@ export default function OrderDetailPage() {
   if (!currentOrder) {
     return (
       <div className="p-12 text-center">
-        <p className="text-[var(--color-text-secondary)]">订单不存在</p>
-        <button onClick={() => router.push('/admin/orders')} className="mt-4 text-sm text-[var(--color-info)] hover:underline">
-          返回订单列表
-        </button>
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={liquidSpringConfig.bouncy}
+        >
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-liquid-ocean/10 flex items-center justify-center">
+            <svg className="w-8 h-8 text-liquid-ocean" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <p className="text-lg text-liquid-deep font-semibold">订单不存在</p>
+          <LiquidButton variant="ghost" size="sm" onClick={() => router.push('/admin/orders')} className="mt-4">
+            返回订单列表
+          </LiquidButton>
+        </motion.div>
       </div>
     )
   }
@@ -410,7 +431,7 @@ export default function OrderDetailPage() {
         description={
           <div className="flex items-center gap-3 mt-1">
             <StatusBadge status={order.status} />
-            <span className="text-xs text-[var(--color-text-placeholder)]">
+            <span className="text-xs text-liquid-mist/70">
               创建于 {formatDateTime(order.createdAt)}
             </span>
           </div>
@@ -431,7 +452,7 @@ export default function OrderDetailPage() {
               {canCancel && (
                 <button
                   onClick={() => setShowCancelConfirm(true)}
-                  className="px-4 py-2.5 text-sm font-medium rounded-xl border border-[var(--color-error)]/30 text-[var(--color-error)] hover:bg-[var(--color-error)]/10 transition-all"
+                  className="px-4 py-2.5 text-sm font-medium rounded-xl border border-liquid-ruby/30 text-liquid-ruby hover:bg-liquid-ruby/10 transition-all"
                 >
                   取消订单
                 </button>
@@ -441,22 +462,33 @@ export default function OrderDetailPage() {
         }
       />
 
-      {/* 智能检查警告 */}
+      {/* 智能检查警告 - TRANSFORMED */}
       {showCheck && checkWarnings.length > 0 && (
-        <GlassCard className="p-4 animate-fade-in-up border-l-2" style={{ borderLeftColor: checkWarnings.some(w => w.level === 'error') ? 'var(--color-error)' : 'var(--color-warning)' }}>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={liquidSpringConfig.snappy}
+          className={`p-4 rounded-2xl border-l-2 bg-gradient-to-br from-liquid-card/80 to-liquid-card/40 backdrop-blur-xl shadow-lg ${
+            checkWarnings.some(w => w.level === 'error') 
+              ? 'border-liquid-ruby shadow-liquid-ruby/10' 
+              : 'border-liquid-amber shadow-liquid-amber/10'
+          }`}
+        >
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-xs font-semibold text-[var(--color-text-secondary)]">⚠️ 智能检查</h4>
-            <button onClick={() => setShowCheck(false)} className="text-xs text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]">忽略</button>
+            <h4 className="text-xs font-semibold text-liquid-mist">⚠️ 智能检查</h4>
+            <button onClick={() => setShowCheck(false)} className="text-xs text-liquid-mist hover:text-liquid-deep transition-colors">忽略</button>
           </div>
           <div className="space-y-1.5">
             {checkWarnings.map((w, i) => (
               <div key={i} className="flex items-start gap-2 text-xs">
-                <span className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${w.level === 'error' ? 'bg-[var(--color-error)]' : w.level === 'warning' ? 'bg-[var(--color-warning)]' : 'bg-[var(--color-info)]'}`} />
-                <span className="text-[var(--color-text-primary)]">{w.message}</span>
+                <span className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                  w.level === 'error' ? 'bg-liquid-ruby' : w.level === 'warning' ? 'bg-liquid-amber' : 'bg-liquid-ocean'
+                }`} />
+                <span className="text-liquid-deep">{w.message}</span>
               </div>
             ))}
           </div>
-        </GlassCard>
+        </motion.div>
       )}
 
       {/* ===================== 单人订单布局 ===================== */}
@@ -465,15 +497,15 @@ export default function OrderDetailPage() {
           {/* 左侧：全部信息 */}
           <div className="lg:col-span-2 space-y-6">
             {/* 客户信息 */}
-            <GlassCard className="p-5 animate-fade-in-up">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
-                  <svg className="w-4 h-4 text-[var(--color-primary-light)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  客户信息
-                </h3>
-                {canEdit && editingSection !== 'customer' && (
+            <LiquidOrderDetailCard
+              title="客户信息"
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              }
+              action={
+                canEdit && editingSection !== 'customer' ? (
                   <button
                     onClick={() => startEdit('customer', {
                       contactName: order.contactName ?? order.customerName,
@@ -481,13 +513,15 @@ export default function OrderDetailPage() {
                       customerEmail: order.customerEmail ?? '',
                       passportNo: order.passportNo ?? '',
                     })}
-                    className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors flex items-center gap-1"
+                    className="text-xs text-liquid-ocean hover:text-liquid-oceanLight transition-colors flex items-center gap-1"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                     编辑
                   </button>
-                )}
-              </div>
+                ) : undefined
+              }
+              delay={0}
+            >
               {editingSection === 'customer' ? (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-4">
@@ -499,44 +533,53 @@ export default function OrderDetailPage() {
                   <EditActions onSave={saveEdit} onCancel={cancelEdit} isSaving={isSaving} />
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <InfoField label="联系人" value={order.contactName ?? order.customerName} />
-                  <InfoField label="手机号" value={order.customerPhone} />
-                  <InfoField label="邮箱" value={order.customerEmail} />
-                  <InfoField label="护照号" value={order.passportNo} />
-                  <InfoField label="护照签发日" value={formatDate(order.passportIssue)} />
-                  <InfoField label="护照有效期" value={formatDate(order.passportExpiry)} />
+                <div className="grid grid-cols-2 gap-4">
+                  <LiquidInfoField label="联系人" value={order.contactName ?? order.customerName} />
+                  <LiquidInfoField label="手机号" value={order.customerPhone} />
+                  <LiquidInfoField label="邮箱" value={order.customerEmail} />
+                  <LiquidInfoField label="护照号" value={order.passportNo} />
+                  <LiquidInfoField label="护照签发日" value={formatDate(order.passportIssue)} />
+                  <LiquidInfoField label="护照有效期" value={formatDate(order.passportExpiry)} />
                 </div>
               )}
-            </GlassCard>
+            </LiquidOrderDetailCard>
 
-            {/* 申请人卡片 */}
-            <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '25ms' }}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
-                  <svg className="w-4 h-4 text-[var(--color-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  申请人 ({order.applicants.length}人)
-                </h3>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-[var(--color-text-secondary)]">
+            {/* 申请人卡片 - TRANSFORMED */}
+            <LiquidOrderDetailCard
+              title={`申请人 (${order.applicants.length}人)`}
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              }
+              action={
+                canEdit ? (
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-liquid-mist">
+                      资料齐全: {order.applicants.filter(a => a.documentsComplete).length}/{order.applicants.length}
+                      {order.applicants.some(a => a.visaResult) && (
+                        <> · 已出结果: {order.applicants.filter(a => a.visaResult).length}/{order.applicants.length}</>
+                      )}
+                    </span>
+                    <button
+                      onClick={() => setShowAddApplicant(true)}
+                      className="text-xs text-liquid-ocean hover:text-liquid-oceanLight transition-colors flex items-center gap-1"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
+                      添加
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-xs text-liquid-mist">
                     资料齐全: {order.applicants.filter(a => a.documentsComplete).length}/{order.applicants.length}
                     {order.applicants.some(a => a.visaResult) && (
                       <> · 已出结果: {order.applicants.filter(a => a.visaResult).length}/{order.applicants.length}</>
                     )}
                   </span>
-                  {canEdit && (
-                    <button
-                      onClick={() => setShowAddApplicant(true)}
-                      className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors flex items-center gap-1"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
-                      添加
-                    </button>
-                  )}
-                </div>
-              </div>
+                )
+              }
+              delay={0.1}
+            >
               <div className="space-y-2">
                 {order.applicants.map((applicant) => (
                   <ApplicantCard
@@ -565,18 +608,18 @@ export default function OrderDetailPage() {
                   />
                 ))}
               </div>
-            </GlassCard>
+            </LiquidOrderDetailCard>
 
-            {/* 签证信息 */}
-            <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '50ms' }}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
-                  <svg className="w-4 h-4 text-[var(--color-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                  签证信息
-                </h3>
-                {canEdit && editingSection !== 'visa' && (
+            {/* 签证信息 - TRANSFORMED */}
+            <LiquidOrderDetailCard
+              title="签证信息"
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              }
+              action={
+                canEdit && editingSection !== 'visa' ? (
                   <button
                     onClick={() => startEdit('visa', {
                       targetCountry: order.targetCountry,
@@ -584,13 +627,15 @@ export default function OrderDetailPage() {
                       visaCategory: order.visaCategory ?? '',
                       travelDate: order.travelDate ? order.travelDate.split('T')[0] : '',
                     })}
-                    className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors flex items-center gap-1"
+                    className="text-xs text-liquid-ocean hover:text-liquid-oceanLight transition-colors flex items-center gap-1"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                     编辑
                   </button>
-                )}
-              </div>
+                ) : undefined
+              }
+              delay={0.15}
+            >
               {editingSection === 'visa' ? (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-4">
@@ -602,34 +647,39 @@ export default function OrderDetailPage() {
                   <EditActions onSave={saveEdit} onCancel={cancelEdit} isSaving={isSaving} />
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <InfoField label="申请国家" value={order.targetCountry} />
-                  <InfoField label="签证类型" value={order.visaType} />
-                  <InfoField label="签证类别" value={order.visaCategory} />
-                  <InfoField label="出行日期" value={formatDate(order.travelDate)} />
-                  <InfoField label="预约日期" value={formatDate(order.appointmentDate)} />
-                  <InfoField label="需录指纹" value={order.fingerprintRequired ? '是' : '否'} />
+                <div className="grid grid-cols-2 gap-4">
+                  <LiquidInfoField label="申请国家" value={order.targetCountry} />
+                  <LiquidInfoField label="签证类型" value={order.visaType} />
+                  <LiquidInfoField label="签证类别" value={order.visaCategory} />
+                  <LiquidInfoField label="出行日期" value={formatDate(order.travelDate)} />
+                  <LiquidInfoField label="预约日期" value={formatDate(order.appointmentDate)} />
+                  <LiquidInfoField label="需录指纹" value={order.fingerprintRequired ? '是' : '否'} />
                 </div>
               )}
-            </GlassCard>
+            </LiquidOrderDetailCard>
 
-            {/* 签证分类流程提示 */}
+            {/* 签证分类流程提示 - TRANSFORMED */}
             {order.visaCategory && (
-              <GlassCard className="p-4 animate-fade-in-up" style={{ animationDelay: '75ms' }}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...liquidSpringConfig.gentle, delay: 0.2 }}
+                className="rounded-2xl border border-liquid-ocean/10 bg-gradient-to-br from-liquid-card/80 to-liquid-card/40 backdrop-blur-xl p-4 shadow-lg shadow-liquid-ocean/5"
+              >
                 <VisaFlowHints category={order.visaCategory} fingerprintRequired={order.fingerprintRequired} appointmentDate={order.appointmentDate} />
-              </GlassCard>
+              </motion.div>
             )}
 
-            {/* 订单信息 */}
-            <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
-                  <svg className="w-4 h-4 text-[var(--color-info)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                  订单信息
-                </h3>
-                {canEdit && editingSection !== 'order' && (
+            {/* 订单信息 - TRANSFORMED */}
+            <LiquidOrderDetailCard
+              title="订单信息"
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              }
+              action={
+                canEdit && editingSection !== 'order' ? (
                   <button
                     onClick={() => startEdit('order', {
                       externalOrderNo: order.externalOrderNo ?? '',
@@ -638,13 +688,15 @@ export default function OrderDetailPage() {
                       sourceChannel: order.sourceChannel ?? '',
                       targetCity: order.targetCity ?? '',
                     })}
-                    className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors flex items-center gap-1"
+                    className="text-xs text-liquid-ocean hover:text-liquid-oceanLight transition-colors flex items-center gap-1"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                     编辑
                   </button>
-                )}
-              </div>
+                ) : undefined
+              }
+              delay={0.2}
+            >
               {editingSection === 'order' ? (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-4">
@@ -657,97 +709,104 @@ export default function OrderDetailPage() {
                   <EditActions onSave={saveEdit} onCancel={cancelEdit} isSaving={isSaving} />
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <InfoField label="订单号" value={order.orderNo} highlight />
-                  <InfoField label="外部订单号" value={order.externalOrderNo} />
-                  <InfoField label="金额" value={`¥${Number(order.amount).toLocaleString()}`} highlight />
-                  <InfoField label="支付方式" value={order.paymentMethod} />
-                  <InfoField label="来源渠道" value={order.sourceChannel} />
-                  <InfoField label="创建者" value={order.customer?.realName ?? order.createdBy} />
-                  <InfoField label="送签城市" value={order.targetCity} />
-                  <InfoField label="递交日期" value={formatDate(order.submittedAt)} />
+                <div className="grid grid-cols-2 gap-4">
+                  <LiquidInfoField label="订单号" value={order.orderNo} className="text-liquid-sand font-medium" />
+                  <LiquidInfoField label="外部订单号" value={order.externalOrderNo} />
+                  <LiquidInfoField label="金额" value={`¥${Number(order.amount).toLocaleString()}`} className="text-liquid-sand font-medium" />
+                  <LiquidInfoField label="支付方式" value={order.paymentMethod} />
+                  <LiquidInfoField label="来源渠道" value={order.sourceChannel} />
+                  <LiquidInfoField label="创建者" value={order.customer?.realName ?? order.createdBy} />
+                  <LiquidInfoField label="送签城市" value={order.targetCity} />
+                  <LiquidInfoField label="递交日期" value={formatDate(order.submittedAt)} />
                 </div>
               )}
 
               {/* 财务明细 */}
               {(order.platformFee || order.visaFee || order.grossProfit) && (
-                <div className="mt-4 pt-4 border-t border-white/5">
-                  <span className="text-xs font-medium text-[var(--color-text-secondary)] mb-2 block">财务明细</span>
+                <div className="mt-4 pt-4 border-t border-liquid-ocean/10">
+                  <span className="text-xs font-medium text-liquid-mist mb-2 block">财务明细</span>
                   <div className="grid grid-cols-3 gap-3 text-xs">
                     <div>
-                      <span className="text-[var(--color-text-placeholder)]">平台扣点</span>
-                      <p className="text-[var(--color-text-primary)]">
+                      <span className="text-liquid-mist">平台扣点</span>
+                      <p className="text-liquid-deep">
                         {order.platformFeeRate ? `${(Number(order.platformFeeRate) * 100).toFixed(1)}%` : '-'}
-                        {order.platformFee && <span className="text-[var(--color-text-secondary)]"> (¥{Number(order.platformFee).toFixed(2)})</span>}
+                        {order.platformFee && <span className="text-liquid-mist"> (¥{Number(order.platformFee).toFixed(2)})</span>}
                       </p>
                     </div>
                     <div>
-                      <span className="text-[var(--color-text-placeholder)]">签证费</span>
-                      <p className="text-[var(--color-text-primary)]">{order.visaFee ? `¥${Number(order.visaFee).toFixed(2)}` : '-'}</p>
+                      <span className="text-liquid-mist">签证费</span>
+                      <p className="text-liquid-deep">{order.visaFee ? `¥${Number(order.visaFee).toFixed(2)}` : '-'}</p>
                     </div>
                     <div>
-                      <span className="text-[var(--color-text-placeholder)]">保险费</span>
-                      <p className="text-[var(--color-text-primary)]">{order.insuranceFee ? `¥${Number(order.insuranceFee).toFixed(2)}` : '-'}</p>
+                      <span className="text-liquid-mist">保险费</span>
+                      <p className="text-liquid-deep">{order.insuranceFee ? `¥${Number(order.insuranceFee).toFixed(2)}` : '-'}</p>
                     </div>
                     <div>
-                      <span className="text-[var(--color-text-placeholder)]">拒签保险</span>
-                      <p className="text-[var(--color-text-primary)]">{order.rejectionInsurance ? `¥${Number(order.rejectionInsurance).toFixed(2)}` : '-'}</p>
+                      <span className="text-liquid-mist">拒签保险</span>
+                      <p className="text-liquid-deep">{order.rejectionInsurance ? `¥${Number(order.rejectionInsurance).toFixed(2)}` : '-'}</p>
                     </div>
                     <div>
-                      <span className="text-[var(--color-text-placeholder)]">好评返现</span>
-                      <p className="text-[var(--color-text-primary)]">{order.reviewBonus ? `¥${Number(order.reviewBonus).toFixed(2)}` : '-'}</p>
+                      <span className="text-liquid-mist">好评返现</span>
+                      <p className="text-liquid-deep">{order.reviewBonus ? `¥${Number(order.reviewBonus).toFixed(2)}` : '-'}</p>
                     </div>
                     <div>
-                      <span className="text-[var(--color-text-placeholder)]">毛利</span>
-                      <p className={`font-medium ${Number(order.grossProfit ?? 0) >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'}`}>
+                      <span className="text-liquid-mist">毛利</span>
+                      <p className={`font-medium ${Number(order.grossProfit ?? 0) >= 0 ? 'text-liquid-emerald' : 'text-liquid-ruby'}`}>
                         {order.grossProfit ? `¥${Number(order.grossProfit).toFixed(2)}` : '-'}
                       </p>
                     </div>
                   </div>
                 </div>
               )}
-            </GlassCard>
+            </LiquidOrderDetailCard>
 
-            {/* 备注 */}
-            <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '125ms' }}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
-                  <svg className="w-4 h-4 text-[var(--color-warning)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                  </svg>
-                  备注 ({remarks.length})
-                </h3>
-                {canEdit && (
+            {/* 备注 - TRANSFORMED */}
+            <LiquidOrderDetailCard
+              title={`备注 (${remarks.length})`}
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                </svg>
+              }
+              action={
+                canEdit ? (
                   <button
                     onClick={() => setShowRemarkModal(true)}
-                    className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors flex items-center gap-1"
+                    className="text-xs text-liquid-ocean hover:text-liquid-oceanLight transition-colors flex items-center gap-1"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
                     添加备注
                   </button>
-                )}
-              </div>
+                ) : undefined
+              }
+              delay={0.25}
+            >
               {remarks.length === 0 ? (
-                <p className="text-xs text-[var(--color-text-placeholder)] py-4 text-center">暂无备注</p>
+                <p className="text-xs text-liquid-mist py-4 text-center">暂无备注</p>
               ) : (
                 <div className="space-y-3 max-h-64 overflow-y-auto">
                   {remarks.map((r, i) => (
-                    <div key={i} className="bg-white/[0.03] rounded-lg p-3">
+                    <div key={i} className="bg-liquid-ocean/5 rounded-lg p-3 border border-liquid-ocean/5">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium text-[var(--color-primary-light)]">{r.author}</span>
-                        <span className="text-[10px] text-[var(--color-text-placeholder)]">
+                        <span className="text-xs font-medium text-liquid-sand">{r.author}</span>
+                        <span className="text-[10px] text-liquid-mist">
                           {r.time ? formatDateTime(r.time) : ''}
                         </span>
                       </div>
-                      <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">{r.content}</p>
+                      <p className="text-sm text-liquid-deep whitespace-pre-wrap">{r.content}</p>
                     </div>
                   ))}
                 </div>
               )}
-            </GlassCard>
+            </LiquidOrderDetailCard>
 
-            {/* 资料清单（移到左侧） */}
-            <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+            {/* 资料清单（移到左侧）- TRANSFORMED */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...liquidSpringConfig.gentle, delay: 0.3 }}
+              className="rounded-2xl border border-liquid-ocean/10 bg-gradient-to-br from-liquid-card/80 to-liquid-card/40 backdrop-blur-xl p-5 shadow-lg shadow-liquid-ocean/5"
+            >
               <DocumentPanel
                 orderId={order.id}
                 requirements={order.documentRequirements}
@@ -757,10 +816,15 @@ export default function OrderDetailPage() {
                 applicants={order.applicants.map(a => ({ id: a.id, name: a.name }))}
                 onRefresh={() => fetchOrder(orderId)}
               />
-            </GlassCard>
+            </motion.div>
 
-            {/* 签证材料（移到左侧） */}
-            <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '175ms' }}>
+            {/* 签证材料（移到左侧）- TRANSFORMED */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...liquidSpringConfig.gentle, delay: 0.35 }}
+              className="rounded-2xl border border-liquid-ocean/10 bg-gradient-to-br from-liquid-card/80 to-liquid-card/40 backdrop-blur-xl p-5 shadow-lg shadow-liquid-ocean/5"
+            >
               <MaterialPanel
                 orderId={order.id}
                 materials={order.visaMaterials}
@@ -768,50 +832,66 @@ export default function OrderDetailPage() {
                 orderStatus={order.status}
                 onRefresh={() => fetchOrder(orderId)}
               />
-            </GlassCard>
+            </motion.div>
           </div>
 
           {/* 右侧：关联人员 + 操作日志 */}
           <div className="space-y-6">
-            <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">关联人员</h3>
-              <div className="space-y-3 text-sm">
+            {/* 关联人员 - TRANSFORMED */}
+            <LiquidOrderDetailCard
+              title="关联人员"
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              }
+              delay={0.4}
+            >
+              <div className="space-y-3">
                 <PersonField label="资料员" person={order.collector} />
                 <PersonField label="操作员" person={order.operator} />
                 <PersonField label="客户" person={order.customer} />
               </div>
-            </GlassCard>
+            </LiquidOrderDetailCard>
 
-            <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '225ms' }}>
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">操作日志</h3>
+            {/* 操作日志 - TRANSFORMED */}
+            <LiquidOrderDetailCard
+              title="操作日志"
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+              delay={0.45}
+            >
               {order.orderLogs.length === 0 ? (
-                <p className="text-xs text-[var(--color-text-placeholder)]">暂无日志</p>
+                <p className="text-xs text-liquid-mist">暂无日志</p>
               ) : (
                 <div className="space-y-3">
                   {order.orderLogs.map((log, i) => (
                     <div key={log.id} className="relative pl-4">
-                      <div className="absolute left-0 top-2 w-2 h-2 rounded-full bg-[var(--color-primary)]/50" />
+                      <div className="absolute left-0 top-2 w-2 h-2 rounded-full bg-liquid-sand/50" />
                       {i < order.orderLogs.length - 1 && (
-                        <div className="absolute left-[3px] top-4 w-px h-full bg-white/5" />
+                        <div className="absolute left-[3px] top-4 w-px h-full bg-liquid-ocean/10" />
                       )}
                       <div className="text-xs">
-                        <span className="text-[var(--color-text-primary)] font-medium">{log.user.realName}</span>
-                        <span className="text-[var(--color-text-secondary)]"> {log.action}</span>
+                        <span className="text-liquid-deep font-medium">{log.user.realName}</span>
+                        <span className="text-liquid-mist"> {log.action}</span>
                         {log.fromStatus && log.toStatus && (
-                          <span className="text-[var(--color-text-placeholder)]">
+                          <span className="text-liquid-mist">
                             {' '}({ORDER_STATUS_LABELS[log.fromStatus as OrderStatus] ?? log.fromStatus} → {ORDER_STATUS_LABELS[log.toStatus as OrderStatus] ?? log.toStatus})
                           </span>
                         )}
                         {log.detail && (
-                          <p className="text-[var(--color-text-secondary)] mt-0.5">{log.detail}</p>
+                          <p className="text-liquid-mist mt-0.5">{log.detail}</p>
                         )}
-                        <p className="text-[var(--color-text-placeholder)] mt-0.5">{formatDateTime(log.createdAt)}</p>
+                        <p className="text-liquid-mist/70 mt-0.5">{formatDateTime(log.createdAt)}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </GlassCard>
+            </LiquidOrderDetailCard>
           </div>
         </div>
       )}
@@ -821,16 +901,16 @@ export default function OrderDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 左侧：共享信息 + 申请人标签页 */}
           <div className="lg:col-span-2 space-y-6">
-            {/* 客户信息 */}
-            <GlassCard className="p-5 animate-fade-in-up">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
-                  <svg className="w-4 h-4 text-[var(--color-primary-light)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  客户信息
-                </h3>
-                {canEdit && editingSection !== 'customer' && (
+            {/* 客户信息 - TRANSFORMED */}
+            <LiquidOrderDetailCard
+              title="客户信息"
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              }
+              action={
+                canEdit && editingSection !== 'customer' ? (
                   <button
                     onClick={() => startEdit('customer', {
                       contactName: order.contactName ?? order.customerName,
@@ -838,13 +918,15 @@ export default function OrderDetailPage() {
                       customerEmail: order.customerEmail ?? '',
                       passportNo: order.passportNo ?? '',
                     })}
-                    className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors flex items-center gap-1"
+                    className="text-xs text-liquid-ocean hover:text-liquid-oceanLight transition-colors flex items-center gap-1"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                     编辑
                   </button>
-                )}
-              </div>
+                ) : undefined
+              }
+              delay={0}
+            >
               {editingSection === 'customer' ? (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-4">
@@ -856,44 +938,53 @@ export default function OrderDetailPage() {
                   <EditActions onSave={saveEdit} onCancel={cancelEdit} isSaving={isSaving} />
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <InfoField label="联系人" value={order.contactName ?? order.customerName} />
-                  <InfoField label="手机号" value={order.customerPhone} />
-                  <InfoField label="邮箱" value={order.customerEmail} />
-                  <InfoField label="护照号" value={order.passportNo} />
-                  <InfoField label="护照签发日" value={formatDate(order.passportIssue)} />
-                  <InfoField label="护照有效期" value={formatDate(order.passportExpiry)} />
+                <div className="grid grid-cols-2 gap-4">
+                  <LiquidInfoField label="联系人" value={order.contactName ?? order.customerName} />
+                  <LiquidInfoField label="手机号" value={order.customerPhone} />
+                  <LiquidInfoField label="邮箱" value={order.customerEmail} />
+                  <LiquidInfoField label="护照号" value={order.passportNo} />
+                  <LiquidInfoField label="护照签发日" value={formatDate(order.passportIssue)} />
+                  <LiquidInfoField label="护照有效期" value={formatDate(order.passportExpiry)} />
                 </div>
               )}
-            </GlassCard>
+            </LiquidOrderDetailCard>
 
-            {/* 申请人总览 */}
-            <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '25ms' }}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
-                  <svg className="w-4 h-4 text-[var(--color-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  申请人 ({order.applicants.length}人)
-                </h3>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-[var(--color-text-secondary)]">
+            {/* 申请人总览 - TRANSFORMED */}
+            <LiquidOrderDetailCard
+              title={`申请人 (${order.applicants.length}人)`}
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              }
+              action={
+                canEdit ? (
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-liquid-mist">
+                      资料齐全: {order.applicants.filter(a => a.documentsComplete).length}/{order.applicants.length}
+                      {order.applicants.some(a => a.visaResult) && (
+                        <> · 已出结果: {order.applicants.filter(a => a.visaResult).length}/{order.applicants.length}</>
+                      )}
+                    </span>
+                    <button
+                      onClick={() => setShowAddApplicant(true)}
+                      className="text-xs text-liquid-ocean hover:text-liquid-oceanLight transition-colors flex items-center gap-1"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
+                      添加
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-xs text-liquid-mist">
                     资料齐全: {order.applicants.filter(a => a.documentsComplete).length}/{order.applicants.length}
                     {order.applicants.some(a => a.visaResult) && (
                       <> · 已出结果: {order.applicants.filter(a => a.visaResult).length}/{order.applicants.length}</>
                     )}
                   </span>
-                  {canEdit && (
-                    <button
-                      onClick={() => setShowAddApplicant(true)}
-                      className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors flex items-center gap-1"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
-                      添加
-                    </button>
-                  )}
-                </div>
-              </div>
+                )
+              }
+              delay={0.1}
+            >
               <div className="space-y-2">
                 {order.applicants.map((applicant) => (
                   <ApplicantCard
@@ -922,37 +1013,42 @@ export default function OrderDetailPage() {
                   />
                 ))}
               </div>
-            </GlassCard>
+            </LiquidOrderDetailCard>
 
-            {/* 申请人标签页 */}
-            <GlassCard className="p-0 animate-fade-in-up overflow-hidden" style={{ animationDelay: '50ms' }}>
+            {/* 申请人标签页 - TRANSFORMED */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...liquidSpringConfig.gentle, delay: 0.15 }}
+              className="rounded-2xl border border-liquid-ocean/10 bg-gradient-to-br from-liquid-card/80 to-liquid-card/40 backdrop-blur-xl shadow-lg shadow-liquid-ocean/5 overflow-hidden"
+            >
               {/* 标签头 */}
-              <div className="flex border-b border-white/5 overflow-x-auto">
+              <div className="flex border-b border-liquid-ocean/10 overflow-x-auto">
                 {order.applicants.map((applicant, idx) => (
                   <button
                     key={applicant.id}
                     onClick={() => setActiveTab(idx)}
                     className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap transition-all relative ${
                       activeTab === idx
-                        ? 'text-[var(--color-primary-light)] bg-[var(--color-primary)]/5'
-                        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-white/[0.02]'
+                        ? 'text-liquid-sand bg-liquid-ocean/10'
+                        : 'text-liquid-mist hover:text-liquid-deep hover:bg-liquid-ocean/5'
                     }`}
                   >
                     <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
                       activeTab === idx
-                        ? 'bg-[var(--color-primary)]/20 text-[var(--color-primary-light)]'
-                        : 'bg-white/10 text-[var(--color-text-placeholder)]'
+                        ? 'bg-liquid-sand/20 text-liquid-sand'
+                        : 'bg-liquid-ocean/10 text-liquid-mist'
                     }`}>
                       {applicant.name[0]}
                     </span>
                     <span>{applicant.name}</span>
                     {/* 状态小点 */}
                     {applicant.visaResult && (
-                      <span className={`w-2 h-2 rounded-full ${applicant.visaResult === 'APPROVED' ? 'bg-[var(--color-success)]' : 'bg-[var(--color-error)]'}`} />
+                      <span className={`w-2 h-2 rounded-full ${applicant.visaResult === 'APPROVED' ? 'bg-liquid-emerald' : 'bg-liquid-ruby'}`} />
                     )}
                     {/* 选中下划线 */}
                     {activeTab === idx && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)]" />
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-liquid-sand" />
                     )}
                   </button>
                 ))}
@@ -978,20 +1074,20 @@ export default function OrderDetailPage() {
                 return (
                   <div className="p-5 space-y-6">
                     {/* 申请人头信息 */}
-                    <div className="flex items-center gap-3 pb-4 border-b border-white/5">
-                      <span className="w-10 h-10 rounded-full bg-[var(--color-primary)]/15 flex items-center justify-center text-sm font-bold text-[var(--color-primary-light)]">
+                    <div className="flex items-center gap-3 pb-4 border-b border-liquid-ocean/10">
+                      <span className="w-10 h-10 rounded-full bg-liquid-sand/15 flex items-center justify-center text-sm font-bold text-liquid-sand">
                         {applicant.name[0]}
                       </span>
                       <div>
-                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">{applicant.name}</h4>
-                        <div className="flex items-center gap-3 text-xs text-[var(--color-text-placeholder)] mt-0.5">
+                        <h4 className="text-sm font-semibold text-liquid-deep">{applicant.name}</h4>
+                        <div className="flex items-center gap-3 text-xs text-liquid-mist mt-0.5">
                           {applicant.phone && <span>📱 {applicant.phone}</span>}
                           {applicant.passportNo && <span>🛂 {applicant.passportNo}</span>}
                           {applicant.documentsComplete && (
-                            <span className="text-[var(--color-success)]">✅ 资料齐全</span>
+                            <span className="text-liquid-emerald">✅ 资料齐全</span>
                           )}
                           {applicant.visaResult && (
-                            <span className={applicant.visaResult === 'APPROVED' ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'}>
+                            <span className={applicant.visaResult === 'APPROVED' ? 'text-liquid-emerald' : 'text-liquid-ruby'}>
                               {applicant.visaResult === 'APPROVED' ? '🎉 出签' : '❌ 拒签'}
                             </span>
                           )}
@@ -1001,44 +1097,44 @@ export default function OrderDetailPage() {
 
                     {/* 签证信息 */}
                     <div>
-                      <h4 className="text-xs font-semibold text-[var(--color-text-secondary)] mb-3 flex items-center gap-1.5">
+                      <h4 className="text-xs font-semibold text-liquid-mist mb-3 flex items-center gap-1.5">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                         </svg>
                         签证信息
                       </h4>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <InfoField label="申请国家" value={order.targetCountry} />
-                        <InfoField label="签证类型" value={order.visaType} />
-                        <InfoField label="签证类别" value={order.visaCategory} />
-                        <InfoField label="出行日期" value={formatDate(order.travelDate)} />
-                        <InfoField label="预约日期" value={formatDate(order.appointmentDate)} />
-                        <InfoField label="需录指纹" value={order.fingerprintRequired ? '是' : '否'} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <LiquidInfoField label="申请国家" value={order.targetCountry} />
+                        <LiquidInfoField label="签证类型" value={order.visaType} />
+                        <LiquidInfoField label="签证类别" value={order.visaCategory} />
+                        <LiquidInfoField label="出行日期" value={formatDate(order.travelDate)} />
+                        <LiquidInfoField label="预约日期" value={formatDate(order.appointmentDate)} />
+                        <LiquidInfoField label="需录指纹" value={order.fingerprintRequired ? '是' : '否'} />
                       </div>
                     </div>
 
                     {/* 订单信息 */}
                     <div>
-                      <h4 className="text-xs font-semibold text-[var(--color-text-secondary)] mb-3 flex items-center gap-1.5">
+                      <h4 className="text-xs font-semibold text-liquid-mist mb-3 flex items-center gap-1.5">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                         订单信息
                       </h4>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <InfoField label="订单号" value={order.orderNo} highlight />
-                        <InfoField label="金额" value={`¥${Number(order.amount).toLocaleString()}`} highlight />
-                        <InfoField label="外部订单号" value={order.externalOrderNo} />
-                        <InfoField label="支付方式" value={order.paymentMethod} />
-                        <InfoField label="来源渠道" value={order.sourceChannel} />
-                        <InfoField label="送签城市" value={order.targetCity} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <LiquidInfoField label="订单号" value={order.orderNo} className="text-liquid-sand font-medium" />
+                        <LiquidInfoField label="金额" value={`¥${Number(order.amount).toLocaleString()}`} className="text-liquid-sand font-medium" />
+                        <LiquidInfoField label="外部订单号" value={order.externalOrderNo} />
+                        <LiquidInfoField label="支付方式" value={order.paymentMethod} />
+                        <LiquidInfoField label="来源渠道" value={order.sourceChannel} />
+                        <LiquidInfoField label="送签城市" value={order.targetCity} />
                       </div>
                     </div>
 
                     {/* 备注 */}
                     <div>
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-xs font-semibold text-[var(--color-text-secondary)] flex items-center gap-1.5">
+                        <h4 className="text-xs font-semibold text-liquid-mist flex items-center gap-1.5">
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                           </svg>
@@ -1047,23 +1143,23 @@ export default function OrderDetailPage() {
                         {canEdit && (
                           <button
                             onClick={() => setShowRemarkModal(true)}
-                            className="text-xs text-[var(--color-info)] hover:text-[var(--color-primary-light)] transition-colors"
+                            className="text-xs text-liquid-ocean hover:text-liquid-oceanLight transition-colors"
                           >
                             + 添加
                           </button>
                         )}
                       </div>
                       {remarks.length === 0 ? (
-                        <p className="text-xs text-[var(--color-text-placeholder)] py-3 text-center">暂无备注</p>
+                        <p className="text-xs text-liquid-mist py-3 text-center">暂无备注</p>
                       ) : (
                         <div className="space-y-2 max-h-40 overflow-y-auto">
                           {remarks.map((r, i) => (
-                            <div key={i} className="bg-white/[0.03] rounded-lg p-2.5">
+                            <div key={i} className="bg-liquid-ocean/5 rounded-lg p-2.5 border border-liquid-ocean/5">
                               <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-medium text-[var(--color-primary-light)]">{r.author}</span>
-                                <span className="text-[10px] text-[var(--color-text-placeholder)]">{r.time ? formatDateTime(r.time) : ''}</span>
+                                <span className="text-xs font-medium text-liquid-sand">{r.author}</span>
+                                <span className="text-[10px] text-liquid-mist">{r.time ? formatDateTime(r.time) : ''}</span>
                               </div>
-                              <p className="text-xs text-[var(--color-text-secondary)]">{r.content}</p>
+                              <p className="text-xs text-liquid-deep">{r.content}</p>
                             </div>
                           ))}
                         </div>
@@ -1072,13 +1168,13 @@ export default function OrderDetailPage() {
 
                     {/* 资料清单 */}
                     <div>
-                      <h4 className="text-xs font-semibold text-[var(--color-text-secondary)] mb-3 flex items-center gap-1.5">
+                      <h4 className="text-xs font-semibold text-liquid-mist mb-3 flex items-center gap-1.5">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         {applicant.name} 的资料清单
                         {applicantReqs.length > 0 && (
-                          <span className="text-[10px] text-[var(--color-text-placeholder)] font-normal">
+                          <span className="text-[10px] text-liquid-mist/60 font-normal">
                             ({applicantReqs.filter(r => r.status === 'APPROVED').length}/{applicantReqs.length} 已合格)
                           </span>
                         )}
@@ -1096,7 +1192,7 @@ export default function OrderDetailPage() {
 
                     {/* 签证材料 */}
                     <div>
-                      <h4 className="text-xs font-semibold text-[var(--color-text-secondary)] mb-3 flex items-center gap-1.5">
+                      <h4 className="text-xs font-semibold text-liquid-mist mb-3 flex items-center gap-1.5">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
@@ -1120,50 +1216,66 @@ export default function OrderDetailPage() {
                   </div>
                 )
               })()}
-            </GlassCard>
+            </motion.div>
           </div>
 
           {/* 右侧：关联人员 + 操作日志 */}
           <div className="space-y-6">
-            <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">关联人员</h3>
-              <div className="space-y-3 text-sm">
+            {/* 关联人员 - TRANSFORMED */}
+            <LiquidOrderDetailCard
+              title="关联人员"
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              }
+              delay={0.2}
+            >
+              <div className="space-y-3">
                 <PersonField label="资料员" person={order.collector} />
                 <PersonField label="操作员" person={order.operator} />
                 <PersonField label="客户" person={order.customer} />
               </div>
-            </GlassCard>
+            </LiquidOrderDetailCard>
 
-            <GlassCard className="p-5 animate-fade-in-up" style={{ animationDelay: '125ms' }}>
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">操作日志</h3>
+            {/* 操作日志 - TRANSFORMED */}
+            <LiquidOrderDetailCard
+              title="操作日志"
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+              delay={0.25}
+            >
               {order.orderLogs.length === 0 ? (
-                <p className="text-xs text-[var(--color-text-placeholder)]">暂无日志</p>
+                <p className="text-xs text-liquid-mist">暂无日志</p>
               ) : (
                 <div className="space-y-3">
                   {order.orderLogs.map((log, i) => (
                     <div key={log.id} className="relative pl-4">
-                      <div className="absolute left-0 top-2 w-2 h-2 rounded-full bg-[var(--color-primary)]/50" />
+                      <div className="absolute left-0 top-2 w-2 h-2 rounded-full bg-liquid-sand/50" />
                       {i < order.orderLogs.length - 1 && (
-                        <div className="absolute left-[3px] top-4 w-px h-full bg-white/5" />
+                        <div className="absolute left-[3px] top-4 w-px h-full bg-liquid-ocean/10" />
                       )}
                       <div className="text-xs">
-                        <span className="text-[var(--color-text-primary)] font-medium">{log.user.realName}</span>
-                        <span className="text-[var(--color-text-secondary)]"> {log.action}</span>
+                        <span className="text-liquid-deep font-medium">{log.user.realName}</span>
+                        <span className="text-liquid-mist"> {log.action}</span>
                         {log.fromStatus && log.toStatus && (
-                          <span className="text-[var(--color-text-placeholder)]">
+                          <span className="text-liquid-mist">
                             {' '}({ORDER_STATUS_LABELS[log.fromStatus as OrderStatus] ?? log.fromStatus} → {ORDER_STATUS_LABELS[log.toStatus as OrderStatus] ?? log.toStatus})
                           </span>
                         )}
                         {log.detail && (
-                          <p className="text-[var(--color-text-secondary)] mt-0.5">{log.detail}</p>
+                          <p className="text-liquid-mist mt-0.5">{log.detail}</p>
                         )}
-                        <p className="text-[var(--color-text-placeholder)] mt-0.5">{formatDateTime(log.createdAt)}</p>
+                        <p className="text-liquid-mist/70 mt-0.5">{formatDateTime(log.createdAt)}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </GlassCard>
+            </LiquidOrderDetailCard>
           </div>
         </div>
       )}
@@ -1190,7 +1302,7 @@ export default function OrderDetailPage() {
         <Modal isOpen onClose={() => { setShowRemarkModal(false); setNewRemark('') }} title="添加备注" size="md">
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+              <label className="block text-xs font-medium text-liquid-mist mb-1.5">
                 备注内容 *
               </label>
               <textarea
@@ -1205,7 +1317,7 @@ export default function OrderDetailPage() {
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => { setShowRemarkModal(false); setNewRemark('') }}
-                className="px-4 py-2 text-sm rounded-xl bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all"
+                className="px-4 py-2 text-sm rounded-xl bg-liquid-ocean/5 text-liquid-mist hover:bg-liquid-ocean/10 transition-all"
               >
                 取消
               </button>
@@ -1227,7 +1339,7 @@ export default function OrderDetailPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-3">
               <div>
-                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">姓名 *</label>
+                <label className="block text-xs font-medium text-liquid-mist mb-1.5">姓名 *</label>
                 <input
                   className="glass-input w-full text-sm"
                   placeholder="请输入申请人姓名"
@@ -1237,7 +1349,7 @@ export default function OrderDetailPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">手机号</label>
+                <label className="block text-xs font-medium text-liquid-mist mb-1.5">手机号</label>
                 <input
                   className="glass-input w-full text-sm"
                   placeholder="请输入手机号（可选）"
@@ -1246,7 +1358,7 @@ export default function OrderDetailPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">护照号</label>
+                <label className="block text-xs font-medium text-liquid-mist mb-1.5">护照号</label>
                 <input
                   className="glass-input w-full text-sm"
                   placeholder="请输入护照号（可选）"
@@ -1258,7 +1370,7 @@ export default function OrderDetailPage() {
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => { setShowAddApplicant(false); setNewApplicant({ name: '', phone: '', passportNo: '' }) }}
-                className="px-4 py-2 text-sm rounded-xl bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all"
+                className="px-4 py-2 text-sm rounded-xl bg-liquid-ocean/5 text-liquid-mist hover:bg-liquid-ocean/10 transition-all"
               >
                 取消
               </button>
@@ -1278,11 +1390,11 @@ export default function OrderDetailPage() {
       {showCancelConfirm && (
         <Modal isOpen onClose={() => { setShowCancelConfirm(false); setCancelReason('') }} title="确认取消订单" size="md">
           <div className="space-y-4">
-            <p className="text-sm text-[var(--color-text-secondary)]">
+            <p className="text-sm text-liquid-mist">
               取消后订单将标记为「拒签」终态，此操作不可撤销。
             </p>
             <div>
-              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+              <label className="block text-xs font-medium text-liquid-mist mb-1.5">
                 取消原因 *
               </label>
               <textarea
@@ -1296,14 +1408,14 @@ export default function OrderDetailPage() {
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => { setShowCancelConfirm(false); setCancelReason('') }}
-                className="px-4 py-2 text-sm rounded-xl bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all"
+                className="px-4 py-2 text-sm rounded-xl bg-liquid-ocean/5 text-liquid-mist hover:bg-liquid-ocean/10 transition-all"
               >
                 返回
               </button>
               <button
                 onClick={handleCancel}
                 disabled={isTransitioning || !cancelReason.trim()}
-                className="px-6 py-2 text-sm font-medium rounded-xl bg-[var(--color-error)]/20 text-[var(--color-error)] border border-[var(--color-error)]/30 hover:bg-[var(--color-error)]/30 transition-all disabled:opacity-50"
+                className="px-6 py-2 text-sm font-medium rounded-xl bg-liquid-ruby/20 text-liquid-ruby border border-liquid-ruby/30 hover:bg-liquid-ruby/30 transition-all disabled:opacity-50"
               >
                 {isTransitioning ? '处理中...' : '确认取消'}
               </button>
@@ -1316,21 +1428,10 @@ export default function OrderDetailPage() {
 }
 
 // 辅助组件
-function InfoField({ label, value, highlight }: { label: string; value: string | null | undefined; highlight?: boolean }) {
-  return (
-    <div>
-      <span className="text-xs text-[var(--color-text-placeholder)]">{label}</span>
-      <p className={`mt-0.5 ${highlight ? 'text-[var(--color-primary-light)] font-medium' : 'text-[var(--color-text-primary)]'}`}>
-        {value || '-'}
-      </p>
-    </div>
-  )
-}
-
 function EditField({ label, value, onChange, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
   return (
     <div>
-      <label className="block text-xs text-[var(--color-text-placeholder)] mb-1">{label}</label>
+      <label className="block text-xs text-liquid-mist mb-1">{label}</label>
       <input
         type={type}
         className="glass-input w-full text-sm"
@@ -1347,7 +1448,7 @@ function EditActions({ onSave, onCancel, isSaving }: { onSave: () => void; onCan
     <div className="flex justify-end gap-2 pt-2">
       <button
         onClick={onCancel}
-        className="px-4 py-2 text-sm rounded-xl bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all"
+        className="px-4 py-2 text-sm rounded-xl bg-liquid-ocean/5 text-liquid-mist hover:bg-liquid-ocean/10 transition-all"
       >
         取消
       </button>
@@ -1365,11 +1466,11 @@ function EditActions({ onSave, onCancel, isSaving }: { onSave: () => void; onCan
 function PersonField({ label, person }: { label: string; person: { id: string; realName: string } | null }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-xs text-[var(--color-text-placeholder)]">{label}</span>
+      <span className="text-xs text-liquid-mist">{label}</span>
       {person ? (
-        <span className="text-sm text-[var(--color-text-primary)]">{person.realName}</span>
+        <span className="text-sm text-liquid-deep">{person.realName}</span>
       ) : (
-        <span className="text-xs text-[var(--color-text-placeholder)]">未分配</span>
+        <span className="text-xs text-liquid-mist">未分配</span>
       )}
     </div>
   )
@@ -1411,15 +1512,15 @@ function StatusTransitionModal({
     <Modal isOpen onClose={onClose} title="状态流转" size="md">
       <div className="space-y-4">
         <div>
-          <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-2">选择操作</label>
+          <label className="block text-xs font-medium text-liquid-mist mb-2">选择操作</label>
           <div className="space-y-2">
             {actions.map((action) => (
               <label
                 key={action.toStatus}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all ${
                   selectedStatus === action.toStatus
-                    ? 'bg-[var(--color-primary)]/15 border border-[var(--color-primary)]/30'
-                    : 'bg-white/[0.03] border border-white/5 hover:bg-white/[0.06]'
+                    ? 'bg-liquid-sand/15 border border-liquid-sand/30'
+                    : 'bg-liquid-ocean/5 border border-liquid-ocean/10 hover:bg-liquid-ocean/10'
                 }`}
               >
                 <input
@@ -1428,11 +1529,11 @@ function StatusTransitionModal({
                   value={action.toStatus}
                   checked={selectedStatus === action.toStatus}
                   onChange={() => setSelectedStatus(action.toStatus)}
-                  className="accent-[var(--color-primary)]"
+                  className="accent-liquid-sand"
                 />
                 <div>
-                  <span className="text-sm text-[var(--color-text-primary)] font-medium">{action.label}</span>
-                  <span className="text-xs text-[var(--color-text-placeholder)] ml-2">→ {ORDER_STATUS_LABELS[action.toStatus]}</span>
+                  <span className="text-sm text-liquid-deep font-medium">{action.label}</span>
+                  <span className="text-xs text-liquid-mist ml-2">→ {ORDER_STATUS_LABELS[action.toStatus]}</span>
                 </div>
               </label>
             ))}
@@ -1440,7 +1541,7 @@ function StatusTransitionModal({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+          <label className="block text-xs font-medium text-liquid-mist mb-1.5">
             备注{currentRequired ? ' *' : '（可选）'}
           </label>
           <textarea
@@ -1455,7 +1556,7 @@ function StatusTransitionModal({
         <div className="flex justify-end gap-3 pt-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm rounded-xl bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 transition-all"
+            className="px-4 py-2 text-sm rounded-xl bg-liquid-ocean/5 text-liquid-mist hover:bg-liquid-ocean/10 transition-all"
           >
             取消
           </button>
@@ -1489,16 +1590,22 @@ function ChatFloatingButton({ orderId }: { orderId: string }) {
   return (
     <div className="fixed bottom-6 right-6 z-40">
       {isOpen && (
-        <div className="w-[420px] h-[580px] mb-3 rounded-2xl overflow-hidden shadow-2xl border border-white/[0.08] animate-fade-in-up"
-          style={{ animationDuration: '200ms' }}
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.95 }}
+          transition={liquidSpringConfig.bouncy}
+          className="w-[420px] h-[580px] mb-3 rounded-2xl overflow-hidden shadow-2xl shadow-liquid-ocean/20 border border-liquid-ocean/20 bg-gradient-to-br from-liquid-card/90 to-liquid-card/70 backdrop-blur-xl"
         >
           <ChatPanel orderId={orderId} onClose={() => setIsOpen(false)} />
-        </div>
+        </motion.div>
       )}
 
-      <button
+      <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 hover:shadow-[var(--color-primary)]/50 hover:scale-105 transition-all duration-200 flex items-center justify-center relative"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="w-14 h-14 rounded-full bg-gradient-to-br from-liquid-sand to-liquid-sand/80 text-liquid-deep shadow-lg shadow-liquid-sand/30 hover:shadow-liquid-sand/50 transition-all duration-200 flex items-center justify-center relative border border-liquid-sand/50"
       >
         {isOpen ? (
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1510,11 +1617,11 @@ function ChatFloatingButton({ orderId }: { orderId: string }) {
           </svg>
         )}
         {unread > 0 && !isOpen && (
-          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 rounded-full bg-[var(--color-error)] text-[11px] text-white flex items-center justify-center px-1 font-medium">
+          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 rounded-full bg-liquid-ruby text-[11px] text-white flex items-center justify-center px-1 font-medium shadow-lg">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
-      </button>
+      </motion.button>
     </div>
   )
 }
@@ -1533,21 +1640,21 @@ function VisaFlowHints({ category, fingerprintRequired, appointmentDate }: {
   const hints: Array<{ icon: string; text: string; color: string }> = []
 
   if (isEVisa) {
-    hints.push({ icon: '💻', text: '电子签证：交付时提供电子文件即可，无需邮寄护照原件', color: 'var(--color-info)' })
-    hints.push({ icon: '📧', text: '出签后将电子签证发送至客户邮箱/聊天窗口', color: 'var(--color-info)' })
+    hints.push({ icon: '💻', text: '电子签证：交付时提供电子文件即可，无需邮寄护照原件', color: '#5B7B7A' })
+    hints.push({ icon: '📧', text: '出签后将电子签证发送至客户邮箱/聊天窗口', color: '#5B7B7A' })
   } else if (isSticker) {
-    hints.push({ icon: '📮', text: '贴纸签证：交付时需提供邮寄指引，客户需寄送护照原件', color: 'var(--color-warning)' })
-    hints.push({ icon: '📋', text: '确认客户收件地址后安排邮寄', color: 'var(--color-warning)' })
+    hints.push({ icon: '📮', text: '贴纸签证：交付时需提供邮寄指引，客户需寄送护照原件', color: '#fbbd41' })
+    hints.push({ icon: '📋', text: '确认客户收件地址后安排邮寄', color: '#fbbd41' })
   }
 
   if (isSchengen) {
-    hints.push({ icon: '🇪🇺', text: '申根签证：客户需自行反馈出签状态', color: 'var(--color-accent)' })
+    hints.push({ icon: '🇪🇺', text: '申根签证：客户需自行反馈出签状态', color: '#7FA0A0' })
   }
 
   if (fingerprintRequired) {
-    hints.push({ icon: '🖐️', text: '需录指纹：请在预约日前提醒客户前往签证中心采集', color: 'var(--color-warning)' })
+    hints.push({ icon: '🖐️', text: '需录指纹：请在预约日前提醒客户前往签证中心采集', color: '#fbbd41' })
     if (appointmentDate) {
-      hints.push({ icon: '📅', text: `指纹采集预约：${formatDate(appointmentDate)}`, color: 'var(--color-warning)' })
+      hints.push({ icon: '📅', text: `指纹采集预约：${formatDate(appointmentDate)}`, color: '#fbbd41' })
     }
   }
 
@@ -1555,7 +1662,7 @@ function VisaFlowHints({ category, fingerprintRequired, appointmentDate }: {
 
   return (
     <div>
-      <h4 className="text-xs font-semibold text-[var(--color-text-secondary)] mb-2 flex items-center gap-1.5">
+      <h4 className="text-xs font-semibold text-liquid-mist mb-2 flex items-center gap-1.5">
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>

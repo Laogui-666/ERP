@@ -24,6 +24,7 @@ export function PdfPreview({ url }: PdfPreviewProps) {
   // 加载 PDF 文档
   useEffect(() => {
     let cancelled = false
+    let currentPdfDoc: any = null
 
     async function loadPdf() {
       try {
@@ -41,6 +42,7 @@ export function PdfPreview({ url }: PdfPreviewProps) {
         const doc = await loadingTask.promise
 
         if (!cancelled) {
+          currentPdfDoc = doc
           setPdfDoc(doc)
           setTotalPages(doc.numPages)
           setCurrentPage(1)
@@ -57,7 +59,7 @@ export function PdfPreview({ url }: PdfPreviewProps) {
     loadPdf()
     return () => {
       cancelled = true
-      if (pdfDoc) pdfDoc.destroy()
+      if (currentPdfDoc) currentPdfDoc.destroy()
     }
   }, [url])
 

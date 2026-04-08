@@ -67,14 +67,18 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   fetchUnreadCount: async () => {
     try {
-      // 冷却期内跳过轮询拉取，防止覆盖本地递减
-      const { _lastMutationAt } = get()
-      if (Date.now() - _lastMutationAt < MUTATION_COOLDOWN_MS) return
-
       const res = await apiFetch('/api/notifications?unreadOnly=true&pageSize=1')
       const json = await res.json()
       if (json.success) {
-        set({ unreadCount: json.meta?.unreadCount ?? 0 })
+        const serverCount = json.meta?.unreadCount ?? 0
+        const { _lastMutationAt, unreadCount } = get()
+        const withinCooldown = Date.now() - _lastMutationAt < MUTATION_COOLDOWN_MS
+        
+        set({ 
+          unreadCount: withinCooldown 
+            ? Math.min(unreadCount, serverCount) 
+            : serverCount 
+        })
       }
     } catch {
       // silent
@@ -101,11 +105,12 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     const res = await apiFetch('/api/notifications/mark-all-read', { method: 'POST' })
     const json = await res.json()
     if (json.success) {
-      set({
-        notifications: [],
-        unreadCount: 0,
+      const serverCount = json.data?.unreadCount ?? 0
+      set((state) => ({
+        notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
+        unreadCount: serverCount,
         _lastMutationAt: Date.now(),
-      })
+      }))
     }
   },
 

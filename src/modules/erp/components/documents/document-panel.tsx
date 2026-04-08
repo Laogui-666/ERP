@@ -39,7 +39,7 @@ interface SelectableItem extends TemplateItem {
   selected: boolean
 }
 
-export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _orderStatus, applicantCount = 1, applicants = [], onRefresh: _onRefresh }: DocumentPanelProps) {
+export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _orderStatus, applicantCount = 1, applicants = [], onRefresh }: DocumentPanelProps) {
   const { toast } = useToast()
 
   // 内部资料列表（支持本地乐观更新）
@@ -222,8 +222,9 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         toast('success', `已添加 ${items.length} 项资料需求`)
         setShowTemplateModal(false)
         setSelectedTemplate(null)
-        // 仅刷新弹窗内列表，不触发全页刷新
+        // 刷新弹窗内列表并同步父组件
         await fetchRequirements()
+        onRefresh?.()
       } else {
         toast('error', json.error?.message ?? '添加失败')
       }
@@ -262,8 +263,9 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         setNewItemName('')
         setNewItemDesc('')
         setShowManualForm(false)
-        // 仅刷新弹窗内列表，不触发全页刷新
+        // 刷新弹窗内列表并同步父组件
         await fetchRequirements()
+        onRefresh?.()
       } else {
         toast('error', json.error?.message ?? '添加失败')
       }
@@ -335,6 +337,7 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       if (json.success) {
         toast('success', '已删除')
         await fetchRequirements()
+        onRefresh?.()
       } else {
         toast('error', json.error?.message ?? '删除失败')
         fetchRequirements().catch(() => {})

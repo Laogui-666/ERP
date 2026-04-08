@@ -83,7 +83,7 @@
   - `programmatic` TR-6.2: 修复后TypeScript类型检查应通过 ✓
 - **Notes**: 修复时注意保持代码风格一致性
 
-## [/] Task 7: 推送Git并部署到云服务器
+## [x] Task 7: 推送Git并部署到云服务器
 - **Priority**: P0
 - **Depends On**: Task 6
 - **Description**: 

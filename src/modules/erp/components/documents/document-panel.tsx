@@ -142,11 +142,13 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         setLocalReqs(json.data)
       } else {
         console.error('[DocumentPanel] fetchRequirements failed:', json.error?.message)
+        toast('error', '刷新资料列表失败: ' + (json.error?.message ?? '未知错误'))
       }
     } catch (err) {
       console.error('[DocumentPanel] fetchRequirements error:', err)
+      toast('error', '网络异常，资料列表刷新失败')
     }
-  }, [orderId])
+  }, [orderId, toast])
 
   // ===== 模板相关 =====
   const loadTemplates = useCallback(async () => {
@@ -220,10 +222,8 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         toast('success', `已添加 ${items.length} 项资料需求`)
         setShowTemplateModal(false)
         setSelectedTemplate(null)
-        // 先拉取本地资料清单（快速更新弹窗内列表）
+        // 仅刷新弹窗内列表，不触发全页刷新
         await fetchRequirements()
-        // 再通知父组件刷新完整订单数据（更新状态等）
-        _onRefresh()
       } else {
         toast('error', json.error?.message ?? '添加失败')
       }
@@ -262,8 +262,8 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
         setNewItemName('')
         setNewItemDesc('')
         setShowManualForm(false)
+        // 仅刷新弹窗内列表，不触发全页刷新
         await fetchRequirements()
-        _onRefresh()
       } else {
         toast('error', json.error?.message ?? '添加失败')
       }
@@ -312,7 +312,6 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
           description: editDesc.trim() || null,
           isRequired: editRequired,
         } : r))
-        _onRefresh()
       } else {
         toast('error', json.error?.message ?? '保存失败')
       }
@@ -336,7 +335,6 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       if (json.success) {
         toast('success', '已删除')
         await fetchRequirements()
-        _onRefresh()
       } else {
         toast('error', json.error?.message ?? '删除失败')
         fetchRequirements().catch(() => {})
@@ -406,7 +404,6 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       if (successCount > 0) {
         toast('success', `${successCount} 个文件上传成功`)
         await fetchRequirements()
-        _onRefresh()
       }
     } catch (err) {
       console.error('[DocumentPanel] handleFileChange error:', err)
@@ -433,7 +430,6 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       if (json.success) {
         toast('success', '照片上传成功')
         await fetchRequirements()
-        _onRefresh()
       } else {
         toast('error', json.error?.message ?? '上传失败')
       }
@@ -464,7 +460,6 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
       if (json.success) {
         toast('success', '已删除')
         fetchRequirements().catch(() => {})
-        _onRefresh()
       } else {
         toast('error', json.error?.message ?? '删除失败')
         fetchRequirements().catch(() => {})
@@ -527,7 +522,6 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
 
         // 后台静默拉取服务端最新数据（确保最终一致）
         fetchRequirements().catch(() => {})
-        _onRefresh()
       } else {
         toast('error', json.error?.message ?? '审核失败')
       }

@@ -12,10 +12,10 @@ const PROPS = [
 
 export function ValueProps() {
   return (
-    <section className="py-16 md:py-24 bg-white relative overflow-hidden">
+    <section className="py-16 md:py-24 relative overflow-hidden">
       {/* 背景装饰 */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-liquid-ocean/5 to-liquid-sand/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-glass-primary/5 to-glass-secondary/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 md:px-8">
@@ -26,10 +26,10 @@ export function ValueProps() {
           viewport={{ once: true }}
           transition={liquidSpringConfig.gentle}
         >
-          <span className="inline-block px-4 py-1.5 rounded-full bg-liquid-ocean/5 border border-liquid-ocean/10 text-sm font-medium text-liquid-ocean mb-4">
+          <span className="inline-block px-4 py-1.5 rounded-glass-sm glass-card mb-4">
             我们的优势
           </span>
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-liquid-deep tracking-tight">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-glass-text-primary tracking-tight glass-text-gradient">
             为什么选择华夏签证
           </h2>
         </motion.div>
@@ -44,13 +44,13 @@ export function ValueProps() {
               transition={{ ...liquidSpringConfig.gentle, delay: i * 0.1 }}
               className="group"
             >
-              <div className="h-full p-6 rounded-3xl bg-white border border-liquid-ocean/10 shadow-lg shadow-liquid-ocean/5 text-center transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-liquid-ocean/10 hover:border-liquid-ocean/20">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-liquid-ocean/15 to-liquid-sand/10 transition-transform duration-500 group-hover:scale-110">
+              <div className="h-full p-6 rounded-glass-lg glass-card shadow-glass-medium text-center transition-all duration-500 hover:-translate-y-2 hover:shadow-glass-strong glass-card-hover">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-glass-sm bg-gradient-to-br from-glass-primary/15 to-glass-secondary/10 transition-transform duration-500 group-hover:scale-110">
                   <span className="text-2xl">{p.icon}</span>
                 </div>
-                <h3 className="text-base font-semibold text-liquid-deep mb-1">{p.title}</h3>
-                <p className="text-2xl md:text-3xl font-bold text-liquid-ocean mb-2">{p.value}</p>
-                <p className="text-xs text-liquid-mist leading-relaxed">{p.desc}</p>
+                <h3 className="text-base font-semibold text-glass-text-primary mb-1">{p.title}</h3>
+                <p className="text-2xl md:text-3xl font-bold text-glass-primary mb-2">{p.value}</p>
+                <p className="text-xs text-glass-text-muted leading-relaxed">{p.desc}</p>
               </div>
             </motion.div>
           ))}

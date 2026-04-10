@@ -24,7 +24,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={selectId}
-            className="block text-[12px] font-medium text-liquid-mist mb-1.5 tracking-wide uppercase"
+            className="block text-[12px] font-medium text-glass-primary mb-1.5 tracking-wide uppercase"
           >
             {label}
           </label>
@@ -34,26 +34,26 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             id={selectId}
             className={cn(
-              'glass-input w-full appearance-none cursor-pointer pr-10',
-              error && 'border-liquid-ruby/40 animate-shake',
+              'glass-input w-full appearance-none cursor-pointer pr-10 border border-glass-border rounded-xl',
+              error && 'border-glass-danger animate-shake',
               className,
             )}
             onChange={(e) => onChange?.(e.target.value)}
             {...props}
           >
             {options.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-liquid-deep text-liquid-light">
+              <option key={opt.value} value={opt.value} className="bg-glass-bg text-glass-primary">
                 {opt.label}
               </option>
             ))}
           </select>
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <svg className="w-3.5 h-3.5 text-liquid-mist/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5 text-glass-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
             </svg>
           </div>
         </div>
-        {error && <p className="mt-1.5 text-[12px] text-liquid-ruby">{error}</p>}
+        {error && <p className="mt-1.5 text-[12px] text-glass-danger">{error}</p>}
       </div>
     )
   },

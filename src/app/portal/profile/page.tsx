@@ -68,16 +68,16 @@ const TOOL_SHORTCUTS = [
 ]
 
 const NOTIFICATION_ICONS: Record<string, { emoji: string; color: string }> = {
-  ORDER_NEW: { emoji: '📬', color: 'text-liquid-ocean' },
-  ORDER_CREATED: { emoji: '📋', color: 'text-liquid-ocean' },
-  STATUS_CHANGE: { emoji: '🔄', color: 'text-liquid-amber' },
-  DOC_REVIEWED: { emoji: '📄', color: 'text-liquid-ocean' },
-  MATERIAL_UPLOADED: { emoji: '📎', color: 'text-liquid-emerald' },
-  MATERIAL_FEEDBACK: { emoji: '💬', color: 'text-liquid-ocean' },
-  APPOINTMENT_REMIND: { emoji: '⏰', color: 'text-liquid-amber' },
-  DOCS_SUBMITTED: { emoji: '✅', color: 'text-liquid-emerald' },
-  CHAT_MESSAGE: { emoji: '💬', color: 'text-liquid-ocean' },
-  SYSTEM: { emoji: '🔔', color: 'text-liquid-mist' },
+  ORDER_NEW: { emoji: '📬', color: 'text-glass-primary' },
+  ORDER_CREATED: { emoji: '📋', color: 'text-glass-primary' },
+  STATUS_CHANGE: { emoji: '🔄', color: 'text-glass-warning' },
+  DOC_REVIEWED: { emoji: '📄', color: 'text-glass-primary' },
+  MATERIAL_UPLOADED: { emoji: '📎', color: 'text-glass-accent' },
+  MATERIAL_FEEDBACK: { emoji: '💬', color: 'text-glass-primary' },
+  APPOINTMENT_REMIND: { emoji: '⏰', color: 'text-glass-warning' },
+  DOCS_SUBMITTED: { emoji: '✅', color: 'text-glass-accent' },
+  CHAT_MESSAGE: { emoji: '💬', color: 'text-glass-primary' },
+  SYSTEM: { emoji: '🔔', color: 'text-glass-muted' },
 }
 
 function formatRelativeTime(dateStr: string): string {
@@ -286,21 +286,21 @@ export default function PortalProfilePage() {
       {/* ====== 1. 用户信息卡片 ====== */}
       <GlassCard intensity="medium" className="p-6 animate-fade-in-up">
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-liquid-ocean/25 to-liquid-ocean/15 border border-liquid-ocean/10">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-glass-primary/25 to-glass-primary/15 border border-glass-primary/10">
             <span className="text-xl">{isEmployee ? '👤' : '🙋'}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-[18px] font-semibold text-liquid-deep truncate">
+            <h2 className="text-[18px] font-semibold text-glass-primary truncate">
               {user.realName}
             </h2>
-            <p className="mt-0.5 text-[13px] text-liquid-mist truncate">
+            <p className="mt-0.5 text-[13px] text-glass-muted truncate">
               {ROLE_LABELS[user.role] || user.role}
               {user.company?.name && ` · ${user.company.name}`}
             </p>
           </div>
           <Link
             href="/portal/profile"
-            className="flex-shrink-0 rounded-xl bg-liquid-ocean/6 px-3 py-1.5 text-[12px] text-liquid-mist transition-colors hover:bg-liquid-ocean/10 hover:text-liquid-deep"
+            className="flex-shrink-0 glass-button-hover rounded-xl px-3 py-1.5 text-[12px] text-glass-muted hover:text-glass-primary"
           >
             编辑资料
           </Link>
@@ -310,10 +310,10 @@ export default function PortalProfilePage() {
       {/* ====== 2. 订单快捷统计 ====== */}
       <section className="animate-fade-in-up" style={{ animationDelay: '80ms' }}>
         <div className="mb-2 flex items-center justify-between px-1">
-          <h3 className="text-[13px] font-medium text-liquid-mist">我的订单</h3>
+          <h3 className="text-[13px] font-medium text-glass-muted">我的订单</h3>
           <Link
             href="/portal/orders"
-            className="text-[12px] text-liquid-ocean hover:text-liquid-oceanLight transition-colors"
+            className="text-[12px] text-glass-primary hover:text-glass-primary/80 transition-colors"
           >
             全部订单 →
           </Link>
@@ -339,7 +339,7 @@ export default function PortalProfilePage() {
                     >
                       {stat.count}
                     </p>
-                    <p className="mt-0.5 text-[12px] text-liquid-mist">
+                    <p className="mt-0.5 text-[12px] text-glass-muted">
                       {stat.label}
                     </p>
                   </GlassCard>
@@ -351,7 +351,7 @@ export default function PortalProfilePage() {
       {/* ====== 3. 常用工具快捷入口 ====== */}
       <section className="animate-fade-in-up" style={{ animationDelay: '160ms' }}>
         <div className="mb-2 px-1">
-          <h3 className="text-[13px] font-medium text-liquid-mist">常用工具</h3>
+          <h3 className="text-[13px] font-medium text-glass-muted">常用工具</h3>
         </div>
         <div className="grid grid-cols-3 gap-2">
           {TOOL_SHORTCUTS.map((tool) => (
@@ -369,10 +369,10 @@ export default function PortalProfilePage() {
                 >
                   <span className="text-lg">{tool.icon}</span>
                 </div>
-                <p className="text-[13px] font-medium text-liquid-deep">
+                <p className="text-[13px] font-medium text-glass-primary">
                   {tool.label}
                 </p>
-                <p className="mt-0.5 text-[11px] text-liquid-mist/60">
+                <p className="mt-0.5 text-[11px] text-glass-muted/60">
                   {tool.desc}
                 </p>
               </GlassCard>
@@ -385,16 +385,16 @@ export default function PortalProfilePage() {
       <section className="animate-fade-in-up" style={{ animationDelay: '240ms' }}>
         <div className="mb-2 flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
-            <h3 className="text-[13px] font-medium text-liquid-mist">通知中心</h3>
+            <h3 className="text-[13px] font-medium text-glass-muted">通知中心</h3>
             {unreadCount > 0 && (
-              <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-liquid-ruby px-1 text-[10px] font-medium text-white">
+              <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-glass-danger px-1 text-[10px] font-medium text-white">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </div>
           <Link
             href="/portal/notifications"
-            className="text-[12px] text-liquid-ocean hover:text-liquid-oceanLight transition-colors"
+            className="text-[12px] text-glass-primary hover:text-glass-primary/80 transition-colors"
           >
             查看全部 →
           </Link>
@@ -415,7 +415,7 @@ export default function PortalProfilePage() {
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8">
               <span className="text-2xl">🔔</span>
-              <p className="text-[13px] text-liquid-mist/60">暂无通知</p>
+              <p className="text-[13px] text-glass-muted/60">暂无通知</p>
             </div>
           ) : (
             <div>
@@ -426,15 +426,15 @@ export default function PortalProfilePage() {
                     key={notif.id}
                     href={notif.orderId ? `/portal/orders` : '/portal/notifications'}
                     className={cn(
-                      'flex items-start gap-3 px-4 py-3 transition-colors hover:bg-liquid-ocean/3 active:bg-liquid-ocean/5',
-                      index < notifications.length - 1 && 'border-b border-liquid-ocean/4',
-                      !notif.isRead && 'bg-liquid-ocean/4'
+                      'flex items-start gap-3 px-4 py-3 transition-colors hover:bg-glass-primary/3 active:bg-glass-primary/5',
+                      index < notifications.length - 1 && 'border-b border-glass-primary/4',
+                      !notif.isRead && 'bg-glass-primary/4'
                     )}
                   >
                     <div
                       className={cn(
                         'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg',
-                        !notif.isRead ? 'bg-liquid-ocean/15' : 'bg-liquid-ocean/5'
+                        !notif.isRead ? 'bg-glass-primary/15' : 'bg-glass-primary/5'
                       )}
                     >
                       <span className={cn('text-sm', iconInfo.color)}>{iconInfo.emoji}</span>
@@ -444,21 +444,21 @@ export default function PortalProfilePage() {
                         className={cn(
                           'text-[13px] truncate',
                           !notif.isRead
-                            ? 'font-medium text-liquid-deep'
-                            : 'text-liquid-mist'
+                            ? 'font-medium text-glass-primary'
+                            : 'text-glass-muted'
                         )}
                       >
                         {notif.title}
                       </p>
-                      <p className="mt-0.5 text-[11px] text-liquid-mist/60 truncate">
+                      <p className="mt-0.5 text-[11px] text-glass-muted/60 truncate">
                         {notif.content}
                       </p>
                     </div>
-                    <span className="flex-shrink-0 text-[11px] text-liquid-mist/60">
+                    <span className="flex-shrink-0 text-[11px] text-glass-muted/60">
                       {formatRelativeTime(notif.createdAt)}
                     </span>
                     {!notif.isRead && (
-                      <div className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-liquid-ocean" />
+                      <div className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-glass-primary" />
                     )}
                   </Link>
                 )
@@ -475,8 +475,8 @@ export default function PortalProfilePage() {
           <Link href="/admin/dashboard">
             <GlassCard intensity="light" hover className="flex items-center gap-3 p-4 rounded-xl">
               <span className="text-lg">🖥️</span>
-              <span className="text-[14px] text-liquid-deep">进入 ERP 管理后台</span>
-              <svg className="ml-auto h-4 w-4 text-liquid-mist/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <span className="text-[14px] text-glass-primary">进入 ERP 管理后台</span>
+              <svg className="ml-auto h-4 w-4 text-glass-muted/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
               </svg>
             </GlassCard>
@@ -486,8 +486,8 @@ export default function PortalProfilePage() {
         <Link href="/portal/orders">
           <GlassCard intensity="light" hover className="flex items-center gap-3 p-4 rounded-xl">
             <span className="text-lg">📋</span>
-            <span className="text-[14px] text-liquid-deep">我的订单</span>
-            <svg className="ml-auto h-4 w-4 text-liquid-mist/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <span className="text-[14px] text-glass-primary">我的订单</span>
+            <svg className="ml-auto h-4 w-4 text-glass-muted/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
             </svg>
           </GlassCard>
@@ -496,13 +496,13 @@ export default function PortalProfilePage() {
         <Link href="/portal/notifications">
           <GlassCard intensity="light" hover className="flex items-center gap-3 p-4 rounded-xl">
             <span className="text-lg">💬</span>
-            <span className="text-[14px] text-liquid-deep">消息中心</span>
+            <span className="text-[14px] text-glass-primary">消息中心</span>
             {unreadCount > 0 && (
-              <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-liquid-ruby px-1 text-[10px] font-medium text-white">
+              <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-glass-danger px-1 text-[10px] font-medium text-white">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
-            <svg className="ml-auto h-4 w-4 text-liquid-mist/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="ml-auto h-4 w-4 text-glass-muted/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
             </svg>
           </GlassCard>
@@ -512,10 +512,10 @@ export default function PortalProfilePage() {
         <button onClick={() => setShowPwForm(!showPwForm)} className="w-full">
           <GlassCard intensity="light" hover className="flex items-center gap-3 p-4 rounded-xl">
             <span className="text-lg">🔒</span>
-            <span className="text-[14px] text-liquid-deep">修改密码</span>
+            <span className="text-[14px] text-glass-primary">修改密码</span>
             <svg
               className={cn(
-                'ml-auto h-4 w-4 text-liquid-mist/60 transition-transform duration-200',
+                'ml-auto h-4 w-4 text-glass-muted/60 transition-transform duration-200',
                 showPwForm && 'rotate-90'
               )}
               fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
@@ -529,7 +529,7 @@ export default function PortalProfilePage() {
         <button onClick={handleLogout} className="w-full">
           <GlassCard intensity="light" hover className="flex items-center gap-3 p-4 rounded-xl">
             <span className="text-lg">🚪</span>
-            <span className="text-[14px] text-liquid-ruby">退出登录</span>
+            <span className="text-[14px] text-glass-danger">退出登录</span>
           </GlassCard>
         </button>
       </section>
@@ -571,7 +571,7 @@ export default function PortalProfilePage() {
             <button
               onClick={handleChangePassword}
               disabled={isSaving}
-              className="w-full rounded-xl bg-gradient-to-r from-liquid-ocean/40 to-liquid-ocean/20 py-2.5 text-sm font-medium text-liquid-deep backdrop-blur-sm transition-all hover:from-liquid-ocean/55 hover:to-liquid-ocean/35 disabled:opacity-50"
+              className="w-full glass-button glass-button-hover py-2.5 text-sm font-medium text-white disabled:opacity-50"
             >
               {isSaving ? '提交中...' : '确认修改'}
             </button>
@@ -606,7 +606,7 @@ function PasswordInput({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs text-liquid-mist">{label}</label>
+      <label className="mb-1 block text-xs text-glass-muted">{label}</label>
       <div className="relative">
         <input
           type={show ? 'text' : 'password'}
@@ -614,16 +614,16 @@ function PasswordInput({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           className={cn(
-            'w-full rounded-xl border bg-liquid-ocean/5 px-4 py-2.5 pr-10 text-sm text-liquid-deep backdrop-blur-sm transition-all placeholder:text-liquid-mist/60 focus:outline-none',
+            'glass-input w-full rounded-xl border px-4 py-2.5 pr-10 text-sm text-glass-primary transition-all placeholder:text-glass-muted/60 focus:outline-none',
             error
-              ? 'border-liquid-ruby/50 focus:shadow-[0_0_0_3px_rgba(184,124,124,0.15)]'
-              : 'border-liquid-ocean/8 focus:border-liquid-ocean/50 focus:shadow-[0_0_0_3px_rgba(124,141,166,0.15)]'
+              ? 'border-glass-danger focus:shadow-[0_0_0_3px_rgba(184,124,124,0.15)]'
+              : 'border-glass-border focus:border-glass-primary focus:shadow-[0_0_0_3px_rgba(168,184,200,0.15)]'
           )}
         />
         <button
           type="button"
           onClick={onToggle}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-liquid-mist/60 transition-colors hover:text-liquid-mist"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-glass-muted/60 transition-colors hover:text-glass-muted"
         >
           {show ? (
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -637,7 +637,7 @@ function PasswordInput({
           )}
         </button>
       </div>
-      {error && <p className="mt-1 text-[10px] text-liquid-ruby">{error}</p>}
+      {error && <p className="mt-1 text-[10px] text-glass-danger">{error}</p>}
     </div>
   )
 }

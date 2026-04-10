@@ -1,10 +1,12 @@
 'use client'
 import { apiFetch } from '@shared/lib/api-client'
 import { useEffect, useState, useCallback } from 'react'
-import { LiquidCard } from '@design-system/components/liquid-card'
+import { Card, CardContent } from '@shared/ui/card'
 import { PageHeader } from '@shared/components/layout/page-header'
 import { useToast } from '@shared/ui/toast'
 import { useAuth } from '@shared/hooks/use-auth'
+import { Button } from '@shared/ui/button'
+import { Input } from '@shared/ui/input'
 
 interface TemplateItem {
   name: string
@@ -33,7 +35,6 @@ export default function TemplatesPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  // 表单状态
   const [formName, setFormName] = useState('')
   const [formCountry, setFormCountry] = useState('')
   const [formVisaType, setFormVisaType] = useState('')
@@ -164,178 +165,172 @@ export default function TemplatesPage() {
         title="签证模板"
         description="管理签证资料清单模板"
         action={canManage ? (
-          <button
+          <Button
+            variant="primary"
+            size="md"
             onClick={() => { resetForm(); setShowForm(true) }}
-            className="glass-btn-primary flex items-center gap-2 px-4 py-2.5 text-sm font-medium"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             新建模板
-          </button>
+          </Button>
         ) : undefined}
       />
 
-      {/* 创建/编辑表单 */}
       {showForm && (
-        <LiquidCard className="p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-liquid-deep">
-            {editingId ? '编辑模板' : '新建模板'}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs text-liquid-mist mb-1 block">模板名称</label>
-              <input
+        <Card padding="lg">
+          <CardContent className="space-y-4">
+            <h3 className="text-lg font-semibold text-glass-primary">
+              {editingId ? '编辑模板' : '新建模板'}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Input
+                label="模板名称"
+                placeholder="如：法国旅游签证材料清单"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder="如：法国旅游签证材料清单"
-                className="w-full glass-input text-sm"
               />
-            </div>
-            <div>
-              <label className="text-xs text-liquid-mist mb-1 block">国家</label>
-              <input
+              <Input
+                label="国家"
+                placeholder="如：法国"
                 value={formCountry}
                 onChange={(e) => setFormCountry(e.target.value)}
-                placeholder="如：法国"
-                className="w-full glass-input text-sm"
               />
-            </div>
-            <div>
-              <label className="text-xs text-liquid-mist mb-1 block">签证类型</label>
-              <input
+              <Input
+                label="签证类型"
+                placeholder="如：旅游"
                 value={formVisaType}
                 onChange={(e) => setFormVisaType(e.target.value)}
-                placeholder="如：旅游"
-                className="w-full glass-input text-sm"
               />
             </div>
-          </div>
 
-          {/* 资料项列表 */}
-          <div className="space-y-2">
-            <label className="text-xs text-liquid-mist">资料清单</label>
-            {formItems.map((item, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <input
-                  value={item.name}
-                  onChange={(e) => updateItem(i, 'name', e.target.value)}
-                  placeholder="资料名称"
-                  className="flex-1 glass-input text-sm"
-                />
-                <input
-                  value={item.description ?? ''}
-                  onChange={(e) => updateItem(i, 'description', e.target.value)}
-                  placeholder="说明（可选）"
-                  className="flex-1 glass-input text-sm"
-                />
-                <label className="flex items-center gap-1 text-xs text-liquid-mist whitespace-nowrap">
-                  <input
-                    type="checkbox"
-                    checked={item.required}
-                    onChange={(e) => updateItem(i, 'required', e.target.checked)}
-                    className="rounded"
+            <div className="space-y-2">
+              <label className="text-xs text-glass-muted">资料清单</label>
+              {formItems.map((item, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input
+                    className="flex-1"
+                    placeholder="资料名称"
+                    value={item.name}
+                    onChange={(e) => updateItem(i, 'name', e.target.value)}
                   />
-                  必填
-                </label>
-                <button
-                  onClick={() => removeItem(i)}
-                  disabled={formItems.length <= 1}
-                  className="text-liquid-ruby text-sm disabled:opacity-30"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-            <button
-              onClick={addItem}
-              className="text-xs text-liquid-oceanLight hover:text-liquid-deep transition-colors"
-            >
-              + 添加资料项
-            </button>
-          </div>
+                  <Input
+                    className="flex-1"
+                    placeholder="说明（可选）"
+                    value={item.description ?? ''}
+                    onChange={(e) => updateItem(i, 'description', e.target.value)}
+                  />
+                  <label className="flex items-center gap-1 text-xs text-glass-muted whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={item.required}
+                      onChange={(e) => updateItem(i, 'required', e.target.checked)}
+                      className="rounded"
+                    />
+                    必填
+                  </label>
+                  <button
+                    onClick={() => removeItem(i)}
+                    disabled={formItems.length <= 1}
+                    className="text-glass-error text-sm disabled:opacity-30"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={addItem}
+                className="text-xs text-glass-primary hover:text-glass-primary/80 transition-colors"
+              >
+                + 添加资料项
+              </button>
+            </div>
 
-          <div className="flex gap-3 justify-end">
-            <button onClick={resetForm} className="px-4 py-2 text-sm text-liquid-mist hover:text-liquid-deep transition-colors">
-              取消
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="glass-btn-primary px-6 py-2 text-sm font-medium disabled:opacity-50"
-            >
-              {isSaving ? '保存中...' : '保存'}
-            </button>
-          </div>
-        </LiquidCard>
+            <div className="flex gap-3 justify-end">
+              <Button variant="ghost" size="md" onClick={resetForm}>
+                取消
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                isLoading={isSaving}
+                onClick={handleSave}
+              >
+                {isSaving ? '保存中...' : '保存'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      {/* 模板列表 */}
       {isLoading ? (
         <div className="text-center py-12">
-          <div className="inline-block w-6 h-6 border-2 border-liquid-ocean/30 border-t-liquid-ocean rounded-full animate-spin" />
+          <div className="inline-block w-6 h-6 border-2 border-glass-primary/30 border-t-glass-primary rounded-full animate-spin" />
         </div>
       ) : templates.length === 0 ? (
-        <LiquidCard className="p-12 text-center">
-          <p className="text-liquid-mist">暂无模板</p>
-        </LiquidCard>
+        <Card padding="lg" className="text-center">
+          <p className="text-glass-muted">暂无模板</p>
+        </Card>
       ) : (
         <div className="space-y-3">
           {templates.map((t) => (
-            <LiquidCard key={t.id} className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-liquid-ocean/10 flex items-center justify-center text-sm">
-                    🌍
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-liquid-deep">{t.name}</span>
-                      {t.isSystem && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-liquid-ocean/15 text-liquid-ocean">系统</span>
-                      )}
+            <Card key={t.id} padding="md">
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-glass-primary/10 flex items-center justify-center text-sm">
+                      🌍
                     </div>
-                    <span className="text-xs text-liquid-mist/60">
-                      {t.country} · {t.visaType} · {Array.isArray(t.items) ? t.items.length : 0} 项
-                    </span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-glass-primary">{t.name}</span>
+                        {t.isSystem && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-glass-primary/15 text-glass-primary">系统</span>
+                        )}
+                      </div>
+                      <span className="text-xs text-glass-muted/60">
+                        {t.country} · {t.visaType} · {Array.isArray(t.items) ? t.items.length : 0} 项
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
+                    >
+                      {expandedId === t.id ? '收起' : '展开'}
+                    </Button>
+                    {canManage && !t.isSystem && (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(t)}>
+                          编辑
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(t.id)} className="text-glass-error hover:text-glass-error/80">
+                          删除
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
-                    className="text-xs text-liquid-mist hover:text-liquid-deep px-2 py-1 rounded bg-liquid-ocean/5"
-                  >
-                    {expandedId === t.id ? '收起' : '展开'}
-                  </button>
-                  {canManage && !t.isSystem && (
-                    <>
-                      <button onClick={() => handleEdit(t)} className="text-xs text-liquid-oceanLight hover:text-liquid-deep px-2 py-1 rounded bg-liquid-ocean/5">
-                        编辑
-                      </button>
-                      <button onClick={() => handleDelete(t.id)} className="text-xs text-liquid-ruby hover:text-liquid-ruby/80 px-2 py-1 rounded bg-liquid-ruby/10">
-                        删除
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
 
-              {/* 展开的资料项 */}
-              {expandedId === t.id && Array.isArray(t.items) && (
-                <div className="mt-4 pl-13 space-y-1.5 border-t border-liquid-ocean/10 pt-3">
-                  {t.items.map((item: TemplateItem, i: number) => (
-                    <div key={i} className="flex items-center gap-2 text-xs">
-                      <span className={`w-1.5 h-1.5 rounded-full ${item.required ? 'bg-liquid-ruby' : 'bg-liquid-mist/40'}`} />
-                      <span className="text-liquid-deep">{item.name}</span>
-                      {item.description && (
-                        <span className="text-liquid-mist/60">— {item.description}</span>
-                      )}
-                      {item.required && <span className="text-liquid-ruby text-[10px]">必填</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </LiquidCard>
+                {expandedId === t.id && Array.isArray(t.items) && (
+                  <div className="mt-4 pl-13 space-y-1.5 border-t border-glass-border pt-3">
+                    {t.items.map((item: TemplateItem, i: number) => (
+                      <div key={i} className="flex items-center gap-2 text-xs">
+                        <span className={`w-1.5 h-1.5 rounded-full ${item.required ? 'bg-glass-error' : 'bg-glass-muted/40'}`} />
+                        <span className="text-glass-primary">{item.name}</span>
+                        {item.description && (
+                          <span className="text-glass-muted/60">— {item.description}</span>
+                        )}
+                        {item.required && <span className="text-glass-error text-[10px]">必填</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

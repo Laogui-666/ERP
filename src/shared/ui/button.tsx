@@ -12,31 +12,27 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', isLoading, disabled, children, ...props }, ref) => {
     const baseStyles = cn(
-      'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200',
-      'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent',
+      'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200',
+      'focus:outline-none',
       'disabled:opacity-50 disabled:cursor-not-allowed',
       'active:scale-[0.97]',
     )
 
     const variants = {
       primary: cn(
-        'bg-primary text-white hover:bg-primary-600 focus:ring-primary/30',
-        'shadow-md hover:shadow-lg',
+        'glass-button glass-button-hover text-white',
       ),
       secondary: cn(
-        'bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-gray-300',
-        'shadow-sm hover:shadow-md',
+        'glass-card glass-card-hover text-glass-primary',
       ),
       ghost: cn(
-        'bg-transparent text-gray-600 hover:bg-gray-100 focus:ring-gray-200',
+        'glass-button-hover text-glass-muted hover:text-glass-primary',
       ),
       danger: cn(
-        'bg-danger text-white hover:bg-danger-600 focus:ring-danger/30',
-        'shadow-md hover:shadow-lg',
+        'bg-glass-danger/90 border border-glass-danger/30 text-white hover:bg-glass-danger hover:border-glass-danger/50 shadow-lg',
       ),
       success: cn(
-        'bg-success text-white hover:bg-success-600 focus:ring-success/30',
-        'shadow-md hover:shadow-lg',
+        'bg-glass-success/90 border border-glass-success/30 text-white hover:bg-glass-success hover:border-glass-success/50 shadow-lg',
       ),
     }
 

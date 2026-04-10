@@ -13,10 +13,10 @@ import { DynamicBackground } from '@shared/ui/dynamic-bg'
 
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen bg-gray-50">
+    <div className="relative min-h-screen glass-background">
       <DynamicBackground />
       <AppNavbar />
-      <main className="pb-[calc(68px+env(safe-area-inset-bottom))]">
+      <main className="pb-[calc(68px+env(safe-area-inset-bottom))] glass-container">
         <HeroSection />
         <DestinationCards />
         <ToolShowcase />

@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { LiquidCard } from '@design-system/components/liquid-card'
+import { Card } from '@shared/ui/card'
+import { Button } from '@shared/ui/button'
 
 export default function AdminError({
   error,
@@ -21,36 +22,38 @@ export default function AdminError({
 
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <LiquidCard className="p-8 max-w-md text-center">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-liquid-ruby/15 flex items-center justify-center text-2xl">
+      <Card padding="lg" className="max-w-md text-center">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-glass-error/15 flex items-center justify-center text-2xl">
           ⚠️
         </div>
-        <h2 className="text-lg font-semibold text-liquid-deep mb-2">
+        <h2 className="text-lg font-semibold text-glass-primary mb-2">
           页面加载失败
         </h2>
-        <p className="text-sm text-liquid-mist mb-6">
+        <p className="text-sm text-glass-muted mb-6">
           该页面在渲染时发生了错误。你可以尝试重新加载，或者返回上一页。
         </p>
         <div className="flex justify-center gap-3">
-          <button
+          <Button
+            variant="ghost"
+            size="md"
             onClick={() => window.history.back()}
-            className="px-4 py-2 text-sm rounded-xl bg-liquid-ocean/5 text-liquid-mist hover:bg-liquid-ocean/10 transition-all"
           >
             返回上一页
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
             onClick={reset}
-            className="glass-btn-primary px-6 py-2 text-sm font-medium"
           >
             重新加载
-          </button>
+          </Button>
         </div>
         {error.digest && (
-          <p className="mt-4 text-xs text-liquid-mist/60">
+          <p className="mt-4 text-xs text-glass-muted/60">
             错误编号: {error.digest}
           </p>
         )}
-      </LiquidCard>
+      </Card>
     </div>
   )
 }

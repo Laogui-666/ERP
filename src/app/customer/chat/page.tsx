@@ -10,11 +10,10 @@ import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { apiFetch } from '@shared/lib/api-client'
 import { StatusBadge } from '@erp/components/orders/status-badge'
-import { LiquidChatCard } from '@design-system/components/liquid-chat-card'
-import { LiquidCard } from '@design-system/components/liquid-card'
+import { Card } from '@shared/ui/card'
 import { ChatPanel } from '@erp/components/chat/chat-panel'
 import { useChatStore } from '@erp/stores/chat-store'
-import { formatDate } from '@shared/lib/utils'
+
 import { liquidSpringConfig } from '@design-system/theme/animations'
 import type { Order, OrderStatus } from '@erp/types/order'
 
@@ -87,53 +86,74 @@ export default function CustomerChatPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={liquidSpringConfig.gentle}
         >
-          <h2 className="text-lg font-semibold text-liquid-deep">
+          <h2 className="text-lg font-semibold text-glass-primary">
             消息
           </h2>
-          <p className="text-xs text-liquid-mist mt-1">
+          <p className="text-xs text-glass-muted mt-1">
             点击订单卡片，与工作人员在线沟通
           </p>
         </motion.div>
 
         {/* 加载状态 */}
         {isLoading ? (
-          <LiquidCard padding="xl" variant="liquid" className="text-center">
+          <Card padding="lg" className="text-center">
             <motion.div
-              className="inline-block w-6 h-6 border-2 border-liquid-ocean/30 border-t-liquid-ocean rounded-full"
+              className="inline-block w-6 h-6 border-2 border-glass-primary/30 border-t-glass-primary rounded-full"
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
             />
-            <p className="mt-3 text-sm text-liquid-mist">加载中...</p>
-          </LiquidCard>
+            <p className="mt-3 text-sm text-glass-muted">加载中...</p>
+          </Card>
         ) : chatSummaries.length === 0 ? (
           /* 空状态 */
-          <LiquidCard padding="xl" variant="liquid" className="text-center">
+          <Card padding="lg" className="text-center">
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={liquidSpringConfig.bouncy}
             >
               <span className="text-4xl block mb-3">💬</span>
-              <p className="text-liquid-mist">暂无会话</p>
-              <p className="text-xs text-liquid-silver mt-1">有订单后即可与工作人员沟通</p>
+              <p className="text-glass-muted">暂无会话</p>
+              <p className="text-xs text-glass-muted/60 mt-1">有订单后即可与工作人员沟通</p>
             </motion.div>
-          </LiquidCard>
+          </Card>
         ) : (
           /* 聊天列表 */
           <div className="space-y-3">
             {chatSummaries.map((chat, i) => (
-              <div key={chat.orderId} onClick={() => setActiveOrderId(chat.orderId)}>
-                <LiquidChatCard
-                  orderNo={chat.orderNo}
-                  status={<StatusBadge status={chat.status} />}
-                  country={chat.targetCountry}
-                  visaType={chat.visaType}
-                  lastMessage={chat.lastMessage}
-                  lastMessageAt={chat.lastMessageAt ? formatDate(chat.lastMessageAt) : null}
-                  unreadCount={chat.unreadCount}
-                  delay={i}
-                />
-              </div>
+              <motion.div
+                key={chat.orderId}
+                onClick={() => setActiveOrderId(chat.orderId)}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...liquidSpringConfig.gentle, delay: i * 0.1 }}
+                className="glass-card glass-card-hover rounded-xl overflow-hidden cursor-pointer"
+              >
+                <div className="p-5">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-glass-primary">{chat.orderNo}</h3>
+                      <p className="text-xs text-glass-muted mt-1">{chat.targetCountry} · {chat.visaType}</p>
+                    </div>
+                    {chat.status && <StatusBadge status={chat.status} />}
+                  </div>
+                  {chat.lastMessage && (
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-glass-muted truncate">{chat.lastMessage}</p>
+                      <div className="flex items-center gap-2">
+                        {chat.lastMessageAt && (
+                          <span className="text-xs text-glass-muted/60">{chat.lastMessageAt}</span>
+                        )}
+                        {chat.unreadCount > 0 && (
+                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-glass-danger px-1.5 text-[10px] font-medium text-white">
+                            {chat.unreadCount > 9 ? '9+' : chat.unreadCount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
             ))}
           </div>
         )}
@@ -145,14 +165,14 @@ export default function CustomerChatPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] bg-liquid-deep/98"
+          className="fixed inset-0 z-[60] glass-background"
           style={{ display: 'flex', flexDirection: 'column' }}
         >
           {/* 会话顶栏 */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.06]">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-glass-border">
             <motion.button
               onClick={() => setActiveOrderId(null)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl text-liquid-mist hover:bg-white/[0.06] active:scale-90 transition-all"
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-glass-muted hover:text-glass-primary hover:bg-glass-primary/5 active:scale-90 transition-all"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -161,10 +181,10 @@ export default function CustomerChatPage() {
               </svg>
             </motion.button>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">
+              <p className="text-sm font-semibold text-glass-primary truncate">
                 {chatSummaries.find(c => c.orderId === activeOrderId)?.orderNo ?? '会话'}
               </p>
-              <p className="text-[10px] text-liquid-silver">
+              <p className="text-[10px] text-glass-muted">
                 {chatSummaries.find(c => c.orderId === activeOrderId)?.targetCountry} · {chatSummaries.find(c => c.orderId === activeOrderId)?.visaType}
               </p>
             </div>

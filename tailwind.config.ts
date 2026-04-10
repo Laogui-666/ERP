@@ -12,119 +12,69 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // 原有颜色系统保留
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
-          950: '#082f49',
-        },
-        success: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
-          950: '#052e16',
-        },
-        warning: {
-          50: '#fffbeb',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#f59e0b',
-          600: '#d97706',
-          700: '#b45309',
-          800: '#92400e',
-          900: '#78350f',
-          950: '#451a03',
-        },
-        danger: {
-          50: '#fef2f2',
-          100: '#fee2e2',
-          200: '#fecaca',
-          300: '#fca5a5',
-          400: '#f87171',
-          500: '#ef4444',
-          600: '#dc2626',
-          700: '#b91c1c',
-          800: '#991b1b',
-          900: '#7f1d1d',
-          950: '#450a0a',
-        },
-        gray: {
-          50: '#f9fafb',
-          100: '#f3f4f6',
-          200: '#e5e7eb',
-          300: '#d1d5db',
-          400: '#9ca3af',
-          500: '#6b7280',
-          600: '#4b5563',
-          700: '#374151',
-          800: '#1f2937',
-          900: '#111827',
-          950: '#030712',
-        },
-        // 液态玻璃设计系统颜色 - 莫兰迪浅色系
-        liquid: {
-          // 主色调 - 莫兰迪粉
-          ocean: '#E8D5C4',
-          oceanLight: '#F5ECE4',
-          oceanDark: '#D4BDA8',
+        // 莫兰迪色系 - 玻璃拟态主题
+        glass: {
+          // 主色调 - 莫兰迪蓝灰
+          primary: '#A8B8C8',
+          primaryLight: '#C8D8E8',
+          primaryDark: '#8898A8',
           
-          // 辅助色 - 莫兰迪蓝
-          sand: '#D6E0E5',
-          sandLight: '#E7F0F5',
-          sandDark: '#B8C6CC',
+          // 辅助色 - 莫兰迪粉
+          secondary: '#E8D8C8',
+          secondaryLight: '#F8E8D8',
+          secondaryDark: '#D8C8B8',
           
           // 莫兰迪绿
-          emerald: '#D8E0D0',
-          emeraldLight: '#E8F0E0',
-          emeraldDark: '#B8C6B0',
+          accent: '#C8D8C8',
+          accentLight: '#D8E8D8',
+          accentDark: '#B8C8B8',
           
           // 莫兰迪黄
-          amber: '#E8E0D4',
-          amberLight: '#F5F0E8',
-          amberDark: '#D4C8B8',
+          warning: '#E8E8C8',
+          warningLight: '#F8F8D8',
+          warningDark: '#D8D8B8',
           
           // 莫兰迪红
-          ruby: '#E0D4D4',
-          rubyLight: '#F0E8E8',
-          rubyDark: '#C8B8B8',
+          danger: '#E8C8C8',
+          dangerLight: '#F8D8D8',
+          dangerDark: '#D8B8B8',
           
           // 中性色
-          mist: '#A8A29E',
-          mistLight: '#E7E5E4',
-          mistDark: '#78716C',
+          neutral: {
+            50: '#F8F8F8',
+            100: '#F0F0F0',
+            200: '#E8E8E8',
+            300: '#D8D8D8',
+            400: '#C8C8C8',
+            500: '#A8A8A8',
+            600: '#888888',
+            700: '#686868',
+            800: '#484848',
+            900: '#282828',
+          },
           
           // 背景色
-          light: '#FDFCFB',
-          cream: '#F8F7F6',
-          surface: '#FFFFFF',
+          bg: {
+            primary: '#F8F8F8',
+            secondary: '#F0F0F0',
+            card: 'rgba(255, 255, 255, 0.8)',
+            modal: 'rgba(255, 255, 255, 0.9)',
+          },
           
           // 文字色
-          deep: '#292524',
-          text: '#57534E',
-          muted: '#78716C',
-          inverse: '#FFFFFF',
+          text: {
+            primary: '#282828',
+            secondary: '#484848',
+            muted: '#686868',
+            light: '#888888',
+          },
           
           // 边框色
-          border: '#D6D3D1',
-          borderLight: '#E7E5E4',
-          borderDark: '#A8A29E',
+          border: {
+            light: 'rgba(255, 255, 255, 0.5)',
+            medium: 'rgba(255, 255, 255, 0.3)',
+            dark: 'rgba(255, 255, 255, 0.1)',
+          },
         },
       },
       fontFamily: {
@@ -142,10 +92,6 @@ const config: Config = {
         '3xl': ['1.875rem', { lineHeight: '2.25rem', letterSpacing: '-0.02em' }],
         '4xl': ['2.25rem', { lineHeight: '2.5rem', letterSpacing: '-0.03em' }],
         '5xl': ['3rem', { lineHeight: '3.5rem', letterSpacing: '-0.03em' }],
-        '6xl': ['3.75rem', { lineHeight: '4.25rem', letterSpacing: '-0.04em' }],
-        '7xl': ['4.5rem', { lineHeight: '5rem', letterSpacing: '-0.04em' }],
-        '8xl': ['6rem', { lineHeight: '6.5rem', letterSpacing: '-0.05em' }],
-        '9xl': ['8rem', { lineHeight: '8.5rem', letterSpacing: '-0.05em' }],
       },
       spacing: {
         '0.5': '0.125rem',
@@ -191,9 +137,9 @@ const config: Config = {
         '2xl': '1rem',
         '3xl': '1.5rem',
         '4xl': '2rem',
-        'liquid': '1.75rem',
-        'liquid-sm': '1.25rem',
-        'liquid-lg': '2.25rem',
+        'glass': '1.75rem',
+        'glass-sm': '1.25rem',
+        'glass-lg': '2.25rem',
         full: '9999px',
       },
       boxShadow: {
@@ -203,19 +149,12 @@ const config: Config = {
         lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
         xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
         '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-        '3xl': '0 35px 60px -15px rgb(0 0 0 / 0.3)',
-        'elevation-1': '0 2px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)',
-        'elevation-2': '0 4px 8px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04)',
-        'elevation-3': '0 8px 16px rgba(0, 0, 0, 0.10), 0 4px 8px rgba(0, 0, 0, 0.04)',
-        'elevation-4': '0 16px 24px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.04)',
-        'elevation-5': '0 24px 48px rgba(0, 0, 0, 0.15), 0 12px 24px rgba(0, 0, 0, 0.04)',
-        inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
-        none: 'none',
-        // 液态玻璃阴影系统
-        'liquid-soft': '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
-        'liquid-medium': '0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04)',
-        'liquid-strong': '0 16px 48px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)',
-        'liquid-glow': '0 0 0 1px rgba(255, 255, 255, 0.5) inset, 0 8px 32px rgba(0, 0, 0, 0.10)',
+        // 玻璃拟态阴影
+        'glass-soft': '0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04)',
+        'glass-medium': '0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06)',
+        'glass-strong': '0 16px 32px rgba(0, 0, 0, 0.16), 0 8px 16px rgba(0, 0, 0, 0.08)',
+        'glass-inset': 'inset 2px 2px 4px rgba(255, 255, 255, 0.7), inset -2px -2px 4px rgba(0, 0, 0, 0.1)',
+        'glass-glow': '0 0 20px rgba(255, 255, 255, 0.5), 0 4px 12px rgba(0, 0, 0, 0.1)',
       },
       backdropBlur: {
         none: '0',
@@ -226,17 +165,10 @@ const config: Config = {
         xl: '24px',
         '2xl': '40px',
         '3xl': '64px',
-        // 液态玻璃模糊
-        'liquid-sm': '12px',
-        'liquid': '20px',
-        'liquid-lg': '28px',
-      },
-      scrollbar: {
-        none: {
-          '&::-webkit-scrollbar': { display: 'none' },
-          '-ms-overflow-style': 'none',
-          'scrollbar-width': 'none',
-        },
+        // 玻璃拟态模糊
+        'glass-sm': '12px',
+        'glass': '20px',
+        'glass-lg': '28px',
       },
       transitionTimingFunction: {
         'ease-default': 'cubic-bezier(0.2, 0.8, 0.4, 1)',
@@ -245,8 +177,6 @@ const config: Config = {
         'ease-in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
         'ease-spring': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
         'ease-damping': 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-        'ease-smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
-        'ease-bounce': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
       },
       transitionDuration: {
         '75': '75ms',
@@ -267,25 +197,10 @@ const config: Config = {
         'spring-in': 'springIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
         'pulse-glow': 'pulseGlow 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite',
         'shimmer': 'shimmer 1.8s ease-in-out infinite',
-        'shake': 'shake 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         'float': 'float 6s ease-in-out infinite',
-        'gradient-drift-1': 'gradientDrift1 25s ease-in-out infinite',
-        'gradient-drift-2': 'gradientDrift2 30s ease-in-out infinite',
-        'gradient-drift-3': 'gradientDrift3 20s ease-in-out infinite',
-        'shimmer-sweep': 'shimmerSweep 4s ease-in-out infinite',
-        'spring-in-up': 'springInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-        'draw-line': 'drawLine 1s ease-out forwards',
         'slide-up': 'slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
         'fade-in': 'fadeIn 0.3s ease-out forwards',
         'fade-out': 'fadeOut 0.3s ease-in forwards',
-        'slide-in-up': 'slideInUp 0.4s ease-out forwards',
-        'slide-in-down': 'slideInDown 0.4s ease-out forwards',
-        'slide-in-left': 'slideInLeft 0.4s ease-out forwards',
-        'slide-in-right': 'slideInRight 0.4s ease-out forwards',
-        'zoom-in': 'zoomIn 0.3s ease-out forwards',
-        'zoom-out': 'zoomOut 0.3s ease-out forwards',
-        'spin-slow': 'spin 3s linear infinite',
-        'bounce-subtle': 'bounceSubtle 2s ease-in-out infinite',
       },
       keyframes: {
         fadeInUp: {
@@ -315,19 +230,12 @@ const config: Config = {
           '100%': { transform: 'scale(1) translateY(0)' },
         },
         pulseGlow: {
-          '0%, 100%': { boxShadow: '0 0 0 0 rgba(91, 123, 122, 0.3)' },
-          '50%': { boxShadow: '0 0 0 12px rgba(91, 123, 122, 0)' },
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(168, 184, 200, 0.3)' },
+          '50%': { boxShadow: '0 0 0 12px rgba(168, 184, 200, 0)' },
         },
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
-        },
-        shake: {
-          '0%, 100%': { transform: 'translateX(0)' },
-          '20%': { transform: 'translateX(-6px)' },
-          '40%': { transform: 'translateX(6px)' },
-          '60%': { transform: 'translateX(-4px)' },
-          '80%': { transform: 'translateX(4px)' },
         },
         float: {
           '0%, 100%': { transform: 'translateY(0)' },
@@ -341,33 +249,9 @@ const config: Config = {
           '0%': { opacity: '1' },
           '100%': { opacity: '0' },
         },
-        slideInUp: {
+        slideUp: {
           '0%': { transform: 'translateY(100%)' },
           '100%': { transform: 'translateY(0)' },
-        },
-        slideInDown: {
-          '0%': { transform: 'translateY(-100%)' },
-          '100%': { transform: 'translateY(0)' },
-        },
-        slideInLeft: {
-          '0%': { transform: 'translateX(-100%)' },
-          '100%': { transform: 'translateX(0)' },
-        },
-        slideInRight: {
-          '0%': { transform: 'translateX(100%)' },
-          '100%': { transform: 'translateX(0)' },
-        },
-        zoomIn: {
-          '0%': { opacity: '0', transform: 'scale(0.9)' },
-          '100%': { opacity: '1', transform: 'scale(1)' },
-        },
-        zoomOut: {
-          '0%': { opacity: '1', transform: 'scale(1)' },
-          '100%': { opacity: '0', transform: 'scale(0.9)' },
-        },
-        bounceSubtle: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-4px)' },
         },
       },
     },

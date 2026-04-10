@@ -95,21 +95,21 @@ export function Sidebar() {
   )
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 z-40 flex flex-col bg-background/80 backdrop-blur-md border-r border-border md:block hidden">
+    <aside className="fixed left-0 top-0 h-full w-64 z-40 flex flex-col glass-sidebar md:block hidden">
       {/* Logo */}
-      <div className="h-16 flex items-center px-6 border-b border-border">
+      <div className="h-16 flex items-center px-6 border-b border-glass-border-light">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center border border-border">
-            <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-8 h-8 rounded-glass-sm bg-glass-primary/10 flex items-center justify-center border border-glass-border-light">
+            <svg className="w-4 h-4 text-glass-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
             </svg>
           </div>
-          <span className="text-base font-bold text-foreground tracking-tight">Visa ERP</span>
+          <span className="text-base font-bold text-glass-text-primary tracking-tight">Visa ERP</span>
         </div>
       </div>
 
       {/* 导航 */}
-      <nav className="flex-1 mt-5 px-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 mt-5 px-3 space-y-1 overflow-y-auto glass-scrollbar">
         {visibleItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
           return (
@@ -117,21 +117,21 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200',
+                'flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-glass-sm transition-all duration-300 glass-hover',
                 isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                  ? 'bg-glass-primary/10 text-glass-primary border border-glass-primary/30'
+                  : 'text-glass-text-muted hover:bg-glass-bg-card hover:text-glass-text-primary border border-transparent hover:border-glass-border-light',
               )}
             >
               <span className={cn(
                 'transition-colors duration-300',
-                isActive ? 'text-primary' : 'text-muted-foreground'
+                isActive ? 'text-glass-primary' : 'text-glass-text-muted'
               )}>
                 {item.icon}
               </span>
               <span>{item.label}</span>
               {isActive && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-glass-primary" />
               )}
             </Link>
           )
@@ -139,17 +139,17 @@ export function Sidebar() {
       </nav>
 
       {/* 底部用户信息 */}
-      <div className="p-4 border-t border-border">
-        <div className="bg-card px-4 py-3 rounded-xl border border-border">
-          <div className="text-xs text-muted-foreground mb-2 tracking-wide uppercase">
+      <div className="p-4 border-t border-glass-border-light">
+        <div className="glass-card p-4 rounded-glass-sm">
+          <div className="text-xs text-glass-text-muted mb-2 tracking-wide uppercase">
             {user?.company?.name ?? '未关联公司'}
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary border border-border">
+            <div className="w-8 h-8 rounded-glass-sm bg-glass-primary/10 flex items-center justify-center text-xs font-semibold text-glass-primary border border-glass-border-light">
               {user?.realName?.[0] ?? '?'}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm text-foreground font-medium truncate">{user?.realName ?? '未知'}</div>
+              <div className="text-sm text-glass-text-primary font-medium truncate">{user?.realName ?? '未知'}</div>
             </div>
           </div>
         </div>

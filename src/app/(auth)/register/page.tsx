@@ -3,9 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LiquidCard, LiquidCardContent } from '@design-system/components/liquid-card'
-import { LiquidInput } from '@design-system/components/liquid-input'
-import { LiquidButton } from '@design-system/components/liquid-button'
+import { DynamicBackground } from '@shared/ui/dynamic-bg'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -63,76 +61,77 @@ export default function RegisterPage() {
   ]
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 bg-gradient-liquid">
-      <div className="w-full max-w-[420px]">
+    <div className="flex min-h-screen items-center justify-center px-4 glass-background">
+      <DynamicBackground />
+      <div className="relative z-10 w-full max-w-[420px]">
         {/* 标题 */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-liquid-deep tracking-tight">
+          <h1 className="text-3xl font-bold text-glass-text-primary tracking-tight glass-text-gradient glass-text-animate">
             公司入驻
           </h1>
-          <p className="mt-2 text-liquid-mist text-sm">
+          <p className="mt-2 text-glass-text-muted text-sm glass-text-animate">
             注册账号，开启便捷签证之旅
           </p>
         </div>
 
         {/* 注册表单 */}
-        <LiquidCard padding="lg" variant="liquid-elevated">
-          <LiquidCardContent className="space-y-6">
+        <div className="glass-card p-6 rounded-glass-lg shadow-glass-medium glass-card-animate">
+          <div className="space-y-6">
             <form onSubmit={handleSubmit} className="space-y-4">
-            {fields.map((field) => (
-              <LiquidInput
-                key={field.key}
-                label={field.label}
-                type={field.type}
-                value={form[field.key as keyof typeof form]}
-                onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-                placeholder={field.placeholder}
-                required
-                minLength={field.key === 'username' ? 3 : field.key === 'password' ? 8 : undefined}
-                pattern={field.pattern}
-                maxLength={field.key === 'phone' ? 11 : undefined}
-                leftIcon={
-                  <svg className="w-4 h-4 text-liquid-mist" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={field.icon} />
-                  </svg>
-                }
-              />
-            ))}
-
-            {error && (
-              <div className="rounded-2xl bg-red-500/10 border border-red-400/30 px-4 py-3 text-sm text-red-500 animate-shake">
-                <div className="flex items-center gap-2.5">
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {error}
+              {fields.map((field) => (
+                <div key={field.key} className="space-y-2">
+                  <label className="block text-sm font-medium text-glass-text-secondary">{field.label}</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <svg className="w-4 h-4 text-glass-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={field.icon} />
+                      </svg>
+                    </div>
+                    <input
+                      type={field.type}
+                      value={form[field.key as keyof typeof form]}
+                      onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
+                      placeholder={field.placeholder}
+                      required
+                      minLength={field.key === 'username' ? 3 : field.key === 'password' ? 8 : undefined}
+                      pattern={field.pattern}
+                      maxLength={field.key === 'phone' ? 11 : undefined}
+                      className="glass-input w-full pl-10"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              ))}
 
-            <LiquidButton
-              type="submit"
-              disabled={loading}
-              isLoading={loading}
-              width="full"
-              size="lg"
-              variant="primary"
-              className="mt-2"
-            >
-              {loading ? '注册中...' : '立即入驻'}
-            </LiquidButton>
-          </form>
+              {error && (
+                <div className="glass-error p-4 rounded-glass-sm shadow-glass-soft glass-fade-in">
+                  <div className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4 shrink-0 text-glass-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {error}
+                  </div>
+                </div>
+              )}
 
-          <p className="mt-6 text-center text-sm text-liquid-mist">
-            已有账号？
-            <Link href="/login" className="ml-1.5 text-liquid-ocean hover:text-liquid-oceanLight transition-colors duration-200 font-medium">
-              直接登录
-            </Link>
-          </p>
-          </LiquidCardContent>
-        </LiquidCard>
+              <button
+                type="submit"
+                disabled={loading}
+                className="glass-button-primary w-full py-3 rounded-glass-sm font-medium transition-all duration-300 hover:shadow-glass-medium hover:-translate-y-0.5 active:shadow-glass-soft active:translate-y-0 glass-button-animate mt-2"
+              >
+                {loading ? '注册中...' : '立即入驻'}
+              </button>
+            </form>
 
-        <p className="mt-8 text-center text-xs text-liquid-mist opacity-60 tracking-wide">
+            <p className="mt-6 text-center text-sm text-glass-text-muted">
+              已有账号？
+              <Link href="/login" className="ml-1.5 text-glass-primary hover:text-glass-primaryLight transition-colors duration-200 font-medium">
+                直接登录
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-8 text-center text-xs text-glass-text-muted opacity-60 tracking-wide glass-text-animate">
           华夏签证 v0.1.0 · 华夏签证 © 2026
         </p>
       </div>

@@ -6,11 +6,17 @@ import { AppNavbar } from '@/components/portal/app-navbar'
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col glass-background">
       <DynamicBackground />
       <AppNavbar />
       {/* 内容区（顶部导航56px + 底部 Tab 68px） */}
-      <main className="flex-1 pt-14 pb-[68px]">{children}</main>
+      <main className="flex-1 pt-14 pb-[68px]">
+        <div className="p-4 md:p-6 glass-container">
+          <div className="glass-card p-6 rounded-glass-lg shadow-glass-medium">
+            {children}
+          </div>
+        </div>
+      </main>
       <AppBottomTab />
     </div>
   )

@@ -48,10 +48,10 @@ const iconMap: Record<ToastType, ReactNode> = {
 }
 
 const colorMap: Record<ToastType, string> = {
-  success: 'bg-liquid-emerald/15 border-liquid-emerald/20 text-liquid-emerald',
-  error: 'bg-liquid-ruby/15 border-liquid-ruby/20 text-liquid-ruby',
-  warning: 'bg-liquid-amber/15 border-liquid-amber/20 text-liquid-amber',
-  info: 'bg-liquid-ocean/15 border-liquid-ocean/20 text-liquid-ocean',
+  success: 'bg-glass-accent/10 border-glass-accent/30 text-glass-accent',
+  error: 'bg-glass-danger/10 border-glass-danger/30 text-glass-danger',
+  warning: 'bg-glass-warning/10 border-glass-warning/30 text-glass-warning',
+  info: 'bg-glass-primary/10 border-glass-primary/30 text-glass-primary',
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -80,12 +80,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <div
                 key={t.id}
                 className={cn(
-                  'flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-xl shadow-xl animate-fade-in-right min-w-[260px]',
+                  'flex items-center gap-3 px-4 py-3 rounded-glass-sm border backdrop-blur-glass shadow-glass-medium animate-fade-in-right min-w-[260px] glass-card',
                   colorMap[t.type],
                 )}
               >
                 <span className="shrink-0">{iconMap[t.type]}</span>
-                <span className="text-[13px] font-medium leading-snug">{t.message}</span>
+                <span className="text-[13px] font-medium leading-snug text-glass-text-primary">{t.message}</span>
               </div>
             ))}
           </div>,

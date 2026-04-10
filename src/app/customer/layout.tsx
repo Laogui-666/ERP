@@ -89,20 +89,20 @@ export default function CustomerLayout({
   }, [isConnected, fetchUnreadCount, fetchRooms])
 
   return (
-    <div className="min-h-screen pb-[68px]">
+    <div className="min-h-screen pb-[68px] glass-background">
       {/* 顶部导航 */}
-      <header className="glass-topbar sticky top-0 z-50 px-4 py-3.5">
+      <header className="glass-navbar sticky top-0 z-50 px-4 py-3.5">
         <div className="mx-auto flex max-w-lg items-center justify-between">
-          <h1 className="text-[15px] font-bold text-liquid-deep tracking-tight">
+          <h1 className="text-[15px] font-bold text-glass-text-primary tracking-tight glass-text-gradient">
             华夏签证
           </h1>
           <div className="flex items-center gap-3">
-            <span className="text-[12px] text-liquid-mist font-medium">
+            <span className="text-[12px] text-glass-text-muted font-medium">
               {user?.realName ?? ''}
             </span>
             <button
               onClick={() => { void logout() }}
-              className="text-[11px] text-liquid-mist/60 active:text-liquid-ruby transition-colors px-2 py-1 rounded-lg active:bg-liquid-ruby/10"
+              className="text-[11px] text-glass-text-muted/60 active:text-glass-danger transition-colors px-2 py-1 rounded-glass-sm active:bg-glass-danger/10 glass-button-hover"
             >
               退出
             </button>
@@ -112,13 +112,13 @@ export default function CustomerLayout({
 
       {/* 内容区域 */}
       <main className="mx-auto max-w-lg px-4 py-4">
-        <div className="anim-initial animate-fade-in-up">
+        <div className="glass-card p-6 rounded-glass-lg shadow-glass-medium glass-fade-in">
           {children}
         </div>
       </main>
 
       {/* 底部Tab栏 */}
-      <nav className="glass-topbar fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
+      <nav className="glass-navbar fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
         <div className="mx-auto flex max-w-lg justify-around py-2">
           {TABS.map((tab) => {
             const isActive = pathname === tab.href || pathname.startsWith(tab.href + '/')
@@ -139,28 +139,28 @@ export default function CustomerLayout({
                   key={tab.href}
                   onClick={() => setShowNotificationPopup(true)}
                   className={cn(
-                    'relative flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-xl transition-all duration-200 active:scale-90',
+                    'relative flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-glass-sm transition-all duration-300 active:scale-90 glass-hover',
                     isActive
-                      ? 'text-liquid-oceanLight'
-                      : 'text-liquid-mist/60',
+                      ? 'text-glass-primary'
+                      : 'text-glass-text-muted/60',
                   )}
                 >
                   <span className="relative">
                     <span className="text-[18px]">{tab.icon}</span>
                     {showBadge && (
-                      <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 rounded-full bg-liquid-ruby text-[10px] text-white flex items-center justify-center px-1 font-medium shadow-sm shadow-liquid-ruby/30">
+                      <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 rounded-full bg-glass-danger text-[10px] text-glass-text-primary flex items-center justify-center px-1 font-medium shadow-glass-soft">
                         {badgeCount > 9 ? '9+' : badgeCount}
                       </span>
                     )}
                   </span>
                   <span className={cn(
                     'text-[11px] font-medium transition-colors',
-                    isActive ? 'text-liquid-oceanLight' : 'text-liquid-mist/60'
+                    isActive ? 'text-glass-primary' : 'text-glass-text-muted/60'
                   )}>
                     {tab.label}
                   </span>
                   {isActive && (
-                    <span className="absolute -bottom-0.5 w-5 h-[2px] rounded-full bg-liquid-ocean" />
+                    <span className="absolute -bottom-0.5 w-5 h-[2px] rounded-full bg-glass-primary" />
                   )}
                 </button>
               )
@@ -171,28 +171,28 @@ export default function CustomerLayout({
                 key={tab.href}
                 href={tab.href}
                 className={cn(
-                  'relative flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-xl transition-all duration-200 active:scale-90',
+                  'relative flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-glass-sm transition-all duration-300 active:scale-90 glass-hover',
                   isActive
-                    ? 'text-liquid-oceanLight'
-                    : 'text-liquid-mist/60',
+                    ? 'text-glass-primary'
+                    : 'text-glass-text-muted/60',
                 )}
               >
                 <span className="relative">
                   <span className="text-[18px]">{tab.icon}</span>
                   {showBadge && (
-                    <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 rounded-full bg-liquid-ruby text-[10px] text-white flex items-center justify-center px-1 font-medium shadow-sm shadow-liquid-ruby/30">
+                    <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 rounded-full bg-glass-danger text-[10px] text-glass-text-primary flex items-center justify-center px-1 font-medium shadow-glass-soft">
                       {badgeCount > 9 ? '9+' : badgeCount}
                     </span>
                   )}
                 </span>
                 <span className={cn(
                   'text-[11px] font-medium transition-colors',
-                  isActive ? 'text-liquid-oceanLight' : 'text-liquid-mist/60'
+                  isActive ? 'text-glass-primary' : 'text-glass-text-muted/60'
                 )}>
                   {tab.label}
                 </span>
                 {isActive && (
-                  <span className="absolute -bottom-0.5 w-5 h-[2px] rounded-full bg-liquid-ocean" />
+                  <span className="absolute -bottom-0.5 w-5 h-[2px] rounded-full bg-glass-primary" />
                 )}
               </Link>
             )

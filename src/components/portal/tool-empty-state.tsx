@@ -13,7 +13,7 @@ interface ToolEmptyStateProps {
 export function ToolEmptyState({ icon, title, description, action }: ToolEmptyStateProps) {
   return (
     <motion.div 
-      className="flex flex-col items-center gap-4 p-12 rounded-3xl bg-gradient-to-br from-liquid-card/80 to-liquid-card/40 backdrop-blur-xl border border-liquid-ocean/10 shadow-lg shadow-liquid-ocean/5"
+      className="flex flex-col items-center gap-4 p-12 rounded-3xl bg-gradient-to-br from-glass-card/80 to-glass-card/40 backdrop-blur-xl border border-glass-border shadow-lg shadow-glass-primary/5"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={liquidSpringConfig.gentle}
@@ -25,8 +25,8 @@ export function ToolEmptyState({ icon, title, description, action }: ToolEmptySt
       >
         {icon}
       </motion.span>
-      <p className="text-lg font-semibold text-liquid-deep">{title}</p>
-      <p className="text-sm text-liquid-mist text-center max-w-sm">{description}</p>
+      <p className="text-lg font-semibold text-glass-primary">{title}</p>
+      <p className="text-sm text-glass-muted text-center max-w-sm">{description}</p>
       {action && (
         <div className="mt-2">
           {action}

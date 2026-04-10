@@ -45,23 +45,23 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', className
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="glass-modal-overlay absolute inset-0"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
       {/* Content */}
       <div
         className={cn(
-          'relative w-full glass-modal p-6',
+          'relative w-full glass-modal p-6 glass-modal-animate',
           sizes[size],
           className,
         )}
       >
         {title && (
           <div className="flex items-center justify-between mb-5">
-            <h3 className="text-[16px] font-semibold text-liquid-deep tracking-wide">{title}</h3>
+            <h3 className="text-[16px] font-semibold text-glass-text-primary tracking-wide glass-text-gradient">{title}</h3>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-liquid-mist/60 hover:text-liquid-deep hover:bg-liquid-ocean/5 active:scale-90 transition-all duration-200"
+              className="p-1.5 rounded-glass-sm text-glass-text-muted/60 hover:text-glass-text-primary hover:bg-glass-primary/5 active:scale-90 transition-all duration-200 glass-button-hover"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />

@@ -34,7 +34,7 @@ function AnimatedNumber({ value, suffix }: { value: number; suffix: string }) {
   }, [hasAnimated, value])
 
   return (
-    <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-liquid-ocean tabular-nums">
+    <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-glass-primary tabular-nums">
       {typeof display === 'number' && display % 1 !== 0 ? display.toFixed(1) : display.toLocaleString()}
       <span className="text-lg md:text-xl ml-0.5">{suffix}</span>
     </span>
@@ -43,11 +43,11 @@ function AnimatedNumber({ value, suffix }: { value: number; suffix: string }) {
 
 export function StatsSection() {
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-b from-slate-50/50 to-white relative overflow-hidden">
+    <section className="py-16 md:py-24 relative overflow-hidden">
       {/* 背景装饰 */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-liquid-ocean/5 to-transparent rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-tl from-liquid-sand/5 to-transparent rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-glass-primary/5 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-tl from-glass-secondary/5 to-transparent rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 md:px-8">
@@ -61,8 +61,10 @@ export function StatsSection() {
               transition={{ ...liquidSpringConfig.gentle, delay: i * 0.1 }}
               className="text-center"
             >
-              <AnimatedNumber value={stat.value} suffix={stat.suffix} />
-              <p className="mt-2 text-sm text-liquid-mist">{stat.label}</p>
+              <div className="p-6 rounded-glass-lg glass-card shadow-glass-medium">
+                <AnimatedNumber value={stat.value} suffix={stat.suffix} />
+                <p className="mt-2 text-sm text-glass-text-muted">{stat.label}</p>
+              </div>
             </motion.div>
           ))}
         </div>

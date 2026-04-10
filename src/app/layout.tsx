@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import '@shared/styles/globals.css'
 import '@shared/styles/glassmorphism.css'
 import '@shared/styles/liquid-globals.css'
+import '@shared/styles/glass-morphism.css'
 import { ToastProvider } from '@shared/ui/toast'
 import { DynamicBackground } from '@shared/ui/dynamic-bg'
 
@@ -17,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN">
-      <body className="min-h-screen antialiased">
+      <body className="min-h-screen antialiased glass-background">
         <DynamicBackground />
         <div className="relative z-10">
           <ToastProvider>

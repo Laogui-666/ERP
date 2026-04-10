@@ -79,7 +79,7 @@ export function NotificationBell({ externalOpen, onExternalClose, hideTrigger = 
         <button
           onClick={() => { void handleToggle() }}
           disabled={loading}
-          className="relative p-2 rounded-lg text-liquid-mist hover:text-liquid-deep hover:bg-liquid-ocean/5 active:scale-90 transition-all duration-200 disabled:opacity-50"
+          className="relative p-2 rounded-glass-sm text-glass-text-muted hover:text-glass-text-primary hover:bg-glass-primary/10 active:scale-90 transition-all duration-200 disabled:opacity-50 glass-button-hover"
         >
           {loading ? (
             <svg className="w-[18px] h-[18px] animate-spin" fill="none" viewBox="0 0 24 24">
@@ -92,7 +92,7 @@ export function NotificationBell({ externalOpen, onExternalClose, hideTrigger = 
             </svg>
           )}
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-liquid-ruby text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 shadow-sm shadow-liquid-ruby/30">
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-glass-danger text-glass-text-primary text-[10px] font-bold rounded-full flex items-center justify-center px-1 shadow-glass-soft">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
@@ -106,34 +106,29 @@ export function NotificationBell({ externalOpen, onExternalClose, hideTrigger = 
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" style={{ animationDuration: '200ms' }} />
           {/* 卡片 */}
           <div
-            className="relative w-full max-w-md max-h-[80vh] flex flex-col rounded-2xl border border-liquid-ocean/10 shadow-2xl animate-scale-in overflow-hidden"
-            style={{
-              background: 'rgba(32, 38, 54, 0.96)',
-              backdropFilter: 'blur(40px)',
-              animationDuration: '300ms',
-            }}
+            className="relative w-full max-w-md max-h-[80vh] flex flex-col rounded-glass-lg border border-glass-border-light shadow-glass-strong animate-scale-in overflow-hidden glass-modal glass-modal-animate"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 标题栏 */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-liquid-ocean/10 shrink-0">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-glass-border-light shrink-0">
               <div className="flex items-center gap-2">
-                <span className="text-[15px] font-semibold text-white">通知</span>
+                <span className="text-[15px] font-semibold text-glass-text-primary glass-text-gradient">通知</span>
                 {unreadCount > 0 && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-liquid-ruby text-white font-medium">{unreadCount}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-glass-danger text-glass-text-primary font-medium">{unreadCount}</span>
                 )}
               </div>
               <div className="flex items-center gap-3">
                 {unreadCount > 0 && (
                   <button
                     onClick={() => { void markAllAsRead() }}
-                    className="text-[11px] text-liquid-ocean hover:text-liquid-oceanLight transition-colors font-medium"
+                    className="text-[11px] text-glass-primary hover:text-glass-primaryLight transition-colors font-medium"
                   >
                     全部已读
                   </button>
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-liquid-mist/60 hover:text-liquid-mist hover:bg-liquid-ocean/10 transition-all"
+                  className="w-7 h-7 rounded-glass-sm flex items-center justify-center text-glass-text-muted/60 hover:text-glass-text-primary hover:bg-glass-primary/10 transition-all glass-button-hover"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -143,19 +138,19 @@ export function NotificationBell({ externalOpen, onExternalClose, hideTrigger = 
             </div>
 
             {/* 通知列表 */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto glass-scrollbar">
               {notifications.length === 0 ? (
                 <div className="py-16 text-center">
                   <div className="text-[36px] mb-3 opacity-40">🔔</div>
-                  <p className="text-[14px] text-liquid-mist/60">暂无通知</p>
-                  <p className="text-[12px] text-liquid-mist/60 mt-1 opacity-60">订单状态变更时会通知您</p>
+                  <p className="text-[14px] text-glass-text-muted/60">暂无通知</p>
+                  <p className="text-[12px] text-glass-text-muted/60 mt-1 opacity-60">订单状态变更时会通知您</p>
                 </div>
               ) : (
                 notifications.map((n) => (
                   <div
                     key={n.id}
-                    className={`px-5 py-3.5 border-b border-liquid-ocean/5 cursor-pointer transition-all duration-200 hover:bg-liquid-ocean/5 active:bg-liquid-ocean/10 ${
-                      !n.isRead ? 'bg-liquid-ocean/5' : ''
+                    className={`px-5 py-3.5 border-b border-glass-border-light cursor-pointer transition-all duration-200 hover:bg-glass-bg-card active:bg-glass-primary/10 ${
+                      !n.isRead ? 'bg-glass-primary/5' : ''
                     }`}
                     onClick={() => {
                       void markAsRead(n.id)
@@ -165,16 +160,16 @@ export function NotificationBell({ externalOpen, onExternalClose, hideTrigger = 
                   >
                     <div className="flex items-start gap-3">
                       <span className="text-[16px] shrink-0 mt-0.5">{NOTIFICATION_ICONS[n.type] ?? '🔔'}</span>
-                      {!n.isRead && <span className="w-[6px] h-[6px] bg-liquid-ocean rounded-full mt-2 shrink-0" />}
+                      {!n.isRead && <span className="w-[6px] h-[6px] bg-glass-primary rounded-full mt-2 shrink-0" />}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-[13px] text-white font-medium leading-snug truncate">{n.title}</p>
-                          {!n.isRead && <span className="w-1.5 h-1.5 rounded-full bg-liquid-ocean shrink-0" />}
+                          <p className="text-[13px] text-glass-text-primary font-medium leading-snug truncate">{n.title}</p>
+                          {!n.isRead && <span className="w-1.5 h-1.5 rounded-full bg-glass-primary shrink-0" />}
                         </div>
                         {n.content && (
-                          <p className="text-[12px] text-liquid-mist mt-0.5 line-clamp-2 leading-relaxed">{n.content}</p>
+                          <p className="text-[12px] text-glass-text-muted mt-0.5 line-clamp-2 leading-relaxed">{n.content}</p>
                         )}
-                        <p className="text-[11px] text-liquid-mist/60 mt-1">{formatDateTime(n.createdAt)}</p>
+                        <p className="text-[11px] text-glass-text-muted/60 mt-1">{formatDateTime(n.createdAt)}</p>
                       </div>
                     </div>
                   </div>
@@ -184,7 +179,7 @@ export function NotificationBell({ externalOpen, onExternalClose, hideTrigger = 
 
             {/* 底部：查看全部 */}
             {notifications.length > 0 && (
-              <div className="shrink-0 px-5 py-3 border-t border-liquid-ocean/10">
+              <div className="shrink-0 px-5 py-3 border-t border-glass-border-light">
                 <button
                   onClick={() => {
                     setIsOpen(false)
@@ -192,7 +187,7 @@ export function NotificationBell({ externalOpen, onExternalClose, hideTrigger = 
                     const isCustomer = user?.role === 'CUSTOMER'
                     router.push(isCustomer ? '/customer/notifications' : '/admin/workspace')
                   }}
-                  className="w-full py-2.5 rounded-xl text-[12px] text-liquid-ocean hover:text-liquid-oceanLight hover:bg-liquid-ocean/5 transition-all font-medium"
+                  className="w-full py-2.5 rounded-glass-sm text-[12px] text-glass-primary hover:text-glass-primaryLight hover:bg-glass-primary/10 transition-all font-medium glass-button-hover"
                 >
                   查看全部通知 →
                 </button>

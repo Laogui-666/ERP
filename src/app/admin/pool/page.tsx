@@ -5,8 +5,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@shared/hooks/use-auth'
 import { StatusBadge } from '@erp/components/orders/status-badge'
-import { LiquidPoolCard } from '@design-system/components/liquid-pool-card'
-import { LiquidCard } from '@design-system/components/liquid-card'
+import { Card } from '@shared/ui/card'
+import { Button } from '@shared/ui/button'
 import { useToast } from '@shared/ui/toast'
 import { formatDateTime } from '@shared/lib/utils'
 import { liquidSpringConfig } from '@design-system/theme/animations'
@@ -74,34 +74,34 @@ export default function PoolPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={liquidSpringConfig.gentle}
       >
-        <h1 className="text-2xl font-bold text-liquid-deep tracking-tight">
+        <h1 className="text-2xl font-bold text-glass-primary tracking-tight">
           公共池
         </h1>
-        <p className="mt-1 text-sm text-liquid-mist">
+        <p className="mt-1 text-sm text-glass-muted">
           {poolTitle} · 共 {total} 条
         </p>
       </motion.div>
 
       {/* 加载状态 */}
       {isLoading ? (
-        <LiquidCard padding="xl" variant="liquid" className="text-center">
+        <Card padding="lg" className="text-center">
           <motion.div
-            className="inline-block w-6 h-6 border-2 border-liquid-ocean/30 border-t-liquid-ocean rounded-full"
+            className="inline-block w-6 h-6 border-2 border-glass-primary/30 border-t-glass-primary rounded-full"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           />
-          <p className="mt-3 text-sm text-liquid-mist">加载中...</p>
-        </LiquidCard>
+          <p className="mt-3 text-sm text-glass-muted">加载中...</p>
+        </Card>
       ) : orders.length === 0 ? (
         /* 空状态 */
-        <LiquidCard padding="xl" variant="liquid" className="text-center">
+        <Card padding="lg" className="text-center">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={liquidSpringConfig.bouncy}
           >
             <motion.div
-              className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-liquid-ocean/10 flex items-center justify-center"
+              className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-glass-primary/10 flex items-center justify-center"
               animate={{ 
                 scale: [1, 1.05, 1],
                 rotate: [0, 5, -5, 0]
@@ -112,31 +112,62 @@ export default function PoolPage() {
                 ease: "easeInOut"
               }}
             >
-              <svg className="w-8 h-8 text-liquid-ocean" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-8 h-8 text-glass-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
             </motion.div>
-            <p className="text-lg text-liquid-deep font-semibold">暂无待接单订单</p>
-            <p className="text-sm text-liquid-mist mt-1">当前公共池没有需要处理的订单</p>
+            <p className="text-lg text-glass-primary font-semibold">暂无待接单订单</p>
+            <p className="text-sm text-glass-muted mt-1">当前公共池没有需要处理的订单</p>
           </motion.div>
-        </LiquidCard>
+        </Card>
       ) : (
         /* 订单卡片网格 */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {orders.map((order, i) => (
-            <LiquidPoolCard
+            <motion.div
               key={order.id}
-              orderNo={order.orderNo}
-              customerName={order.customerName}
-              status={<StatusBadge status={order.status} />}
-              country={order.targetCountry}
-              visaType={order.visaType}
-              amount={Number(order.amount)}
-              createdAt={formatDateTime(order.createdAt)}
-              isClaiming={claiming === order.id}
-              onClaim={() => handleClaim(order.id, order.orderNo)}
-              delay={i}
-            />
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...liquidSpringConfig.gentle, delay: i * 0.1 }}
+              className="glass-card glass-card-hover rounded-xl overflow-hidden"
+            >
+              <div className="p-5">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-glass-primary">{order.orderNo}</h3>
+                    <p className="text-xs text-glass-muted mt-1">{order.customerName}</p>
+                  </div>
+                  {order.status && <StatusBadge status={order.status} />}
+                </div>
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-glass-muted">国家</span>
+                    <span className="text-glass-primary">{order.targetCountry}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-glass-muted">签证类型</span>
+                    <span className="text-glass-primary">{order.visaType}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-glass-muted">金额</span>
+                    <span className="text-glass-primary font-medium">¥{Number(order.amount).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-glass-muted">创建时间</span>
+                    <span className="text-glass-muted">{formatDateTime(order.createdAt)}</span>
+                  </div>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="w-full"
+                  isLoading={claiming === order.id}
+                  onClick={() => handleClaim(order.id, order.orderNo)}
+                >
+                  接单
+                </Button>
+              </div>
+            </motion.div>
           ))}
         </div>
       )}
@@ -149,27 +180,25 @@ export default function PoolPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...liquidSpringConfig.gentle, delay: 0.3 }}
         >
-          <motion.button
+          <Button
+            variant="secondary"
+            size="sm"
             disabled={page <= 1}
             onClick={() => { setPage(page - 1); fetchPool(page - 1) }}
-            whileHover={page > 1 ? { scale: 1.05 } : {}}
-            whileTap={page > 1 ? { scale: 0.95 } : {}}
-            className="px-4 py-2.5 text-sm rounded-xl bg-white/60 backdrop-blur-xl text-liquid-mist hover:bg-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-white/40 shadow-liquid-soft"
           >
             上一页
-          </motion.button>
-          <span className="px-4 py-2.5 text-sm text-liquid-mist bg-white/40 backdrop-blur-xl rounded-xl border border-white/30">
+          </Button>
+          <span className="px-4 py-2.5 text-sm text-glass-muted glass-card rounded-xl">
             第 {page} 页
           </span>
-          <motion.button
+          <Button
+            variant="secondary"
+            size="sm"
             disabled={page * 20 >= total}
             onClick={() => { setPage(page + 1); fetchPool(page + 1) }}
-            whileHover={page * 20 < total ? { scale: 1.05 } : {}}
-            whileTap={page * 20 < total ? { scale: 0.95 } : {}}
-            className="px-4 py-2.5 text-sm rounded-xl bg-white/60 backdrop-blur-xl text-liquid-mist hover:bg-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-white/40 shadow-liquid-soft"
           >
             下一页
-          </motion.button>
+          </Button>
         </motion.div>
       )}
     </div>

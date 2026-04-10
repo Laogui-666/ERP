@@ -3,9 +3,7 @@
 import { useState, useEffect, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { LiquidCard, LiquidCardContent } from '@design-system/components/liquid-card'
-import { LiquidInput } from '@design-system/components/liquid-input'
-import { LiquidButton } from '@design-system/components/liquid-button'
+import { DynamicBackground } from '@shared/ui/dynamic-bg'
 
 function ResetPasswordForm() {
   const router = useRouter()
@@ -100,135 +98,138 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 bg-gradient-liquid">
-      <div className="w-full max-w-[400px]">
+    <div className="flex min-h-screen items-center justify-center px-4 glass-background">
+      <DynamicBackground />
+      <div className="relative z-10 w-full max-w-[400px]">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-5 flex h-[60px] w-[60px] items-center justify-center rounded-3xl bg-white/60 backdrop-blur-2xl border border-white/50 shadow-liquid-medium">
-            <svg className="w-7 h-7 text-liquid-ocean" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="mx-auto mb-5 flex h-[60px] w-[60px] items-center justify-center rounded-glass-lg bg-glass-bg-card backdrop-blur-glass border border-glass-border-light shadow-glass-medium glass-card-animate">
+            <svg className="w-7 h-7 text-glass-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-liquid-deep tracking-tight">
+          <h1 className="text-2xl font-bold text-glass-text-primary tracking-tight glass-text-gradient glass-text-animate">
             首次登录 · 设置密码
           </h1>
-          <p className="mt-2 text-liquid-mist text-sm">
+          <p className="mt-2 text-glass-text-muted text-sm glass-text-animate">
             验证身份后设置您的登录密码
           </p>
         </div>
 
-        <LiquidCard padding="lg" variant="liquid-elevated">
-          <LiquidCardContent className="space-y-6">
+        <div className="glass-card p-6 rounded-glass-lg shadow-glass-medium glass-card-animate">
+          <div className="space-y-6">
             <form onSubmit={handleSubmit} className="space-y-4">
-            {/* 用户名 */}
-            <div>
-              <label className="mb-2 block text-sm font-medium text-liquid-deep">
-                用户名
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={form.username}
-                  onChange={(e) => setForm({ ...form, username: e.target.value })}
-                  className="flex-1 w-full px-5 py-4 md:py-3.5 rounded-3xl transition-all duration-300 focus:outline-none text-base md:text-sm bg-white/55 backdrop-blur-xl border border-white/50 focus:bg-white/70 focus:border-liquid-ocean/60 hover:border-liquid-ocean/40 shadow-liquid-soft focus:shadow-liquid-medium"
-                  placeholder="请输入用户名（客服已创建）"
-                  required
-                  readOnly={usernameLocked}
-                />
-                {usernameLocked && (
-                  <button
-                    type="button"
-                    onClick={() => setUsernameLocked(false)}
-                    className="shrink-0 px-3 py-3 rounded-2xl text-sm text-liquid-ocean bg-liquid-ocean/10 hover:bg-liquid-ocean/20 transition-colors"
-                  >
-                    修改
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* 手机号 */}
-            <div>
-              <label className="mb-2 block text-sm font-medium text-liquid-deep">
-                手机号
-                {fetchingUser && (
-                  <span className="ml-2 text-liquid-mist normal-case font-normal">加载中...</span>
-                )}
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="flex-1 w-full px-5 py-4 md:py-3.5 rounded-3xl transition-all duration-300 focus:outline-none text-base md:text-sm bg-white/55 backdrop-blur-xl border border-white/50 focus:bg-white/70 focus:border-liquid-ocean/60 hover:border-liquid-ocean/40 shadow-liquid-soft focus:shadow-liquid-medium"
-                  placeholder="请输入注册时的手机号"
-                  required
-                  readOnly={phoneLocked}
-                />
-                {phoneLocked && (
-                  <button
-                    type="button"
-                    onClick={() => setPhoneLocked(false)}
-                    className="shrink-0 px-3 py-3 rounded-2xl text-sm text-liquid-ocean bg-liquid-ocean/10 hover:bg-liquid-ocean/20 transition-colors"
-                  >
-                    修改
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* 新密码 */}
-            <LiquidInput
-              label="新密码"
-              type="password"
-              value={form.newPassword}
-              onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
-              placeholder="至少8位，含大小写+数字"
-              required
-              minLength={8}
-            />
-
-            {/* 确认密码 */}
-            <LiquidInput
-              label="确认密码"
-              type="password"
-              value={form.confirmPassword}
-              onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-              placeholder="再次输入新密码"
-              required
-            />
-
-            {error && (
-              <div className="rounded-2xl bg-red-500/10 border border-red-400/30 px-4 py-3 text-sm text-red-500 animate-shake">
-                <div className="flex items-center gap-2.5">
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {error}
+              {/* 用户名 */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-glass-text-secondary">
+                  用户名
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={form.username}
+                    onChange={(e) => setForm({ ...form, username: e.target.value })}
+                    className="glass-input flex-1 w-full"
+                    placeholder="请输入用户名（客服已创建）"
+                    required
+                    readOnly={usernameLocked}
+                  />
+                  {usernameLocked && (
+                    <button
+                      type="button"
+                      onClick={() => setUsernameLocked(false)}
+                      className="shrink-0 px-3 py-2 rounded-glass-sm text-sm text-glass-primary bg-glass-primary/10 hover:bg-glass-primary/20 transition-colors glass-button-hover"
+                    >
+                      修改
+                    </button>
+                  )}
                 </div>
               </div>
-            )}
 
-            <LiquidButton
-              type="submit"
-              disabled={loading}
-              isLoading={loading}
-              width="full"
-              size="lg"
-              variant="primary"
-              className="mt-2"
-            >
-              {loading ? '设置中...' : '设置密码并登录'}
-            </LiquidButton>
-          </form>
+              {/* 手机号 */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-glass-text-secondary">
+                  手机号
+                  {fetchingUser && (
+                    <span className="ml-2 text-glass-text-muted normal-case font-normal">加载中...</span>
+                  )}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    className="glass-input flex-1 w-full"
+                    placeholder="请输入注册时的手机号"
+                    required
+                    readOnly={phoneLocked}
+                  />
+                  {phoneLocked && (
+                    <button
+                      type="button"
+                      onClick={() => setPhoneLocked(false)}
+                      className="shrink-0 px-3 py-2 rounded-glass-sm text-sm text-glass-primary bg-glass-primary/10 hover:bg-glass-primary/20 transition-colors glass-button-hover"
+                    >
+                      修改
+                    </button>
+                  )}
+                </div>
+              </div>
 
-          <p className="mt-6 text-center text-sm text-liquid-mist">
-            已有密码？
-            <Link href="/login" className="ml-1.5 text-liquid-ocean hover:text-liquid-oceanLight transition-colors duration-200 font-medium">
-              直接登录
-            </Link>
-          </p>
-          </LiquidCardContent>
-        </LiquidCard>
+              {/* 新密码 */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-glass-text-secondary">新密码</label>
+                <input
+                  type="password"
+                  value={form.newPassword}
+                  onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
+                  placeholder="至少8位，含大小写+数字"
+                  required
+                  minLength={8}
+                  className="glass-input w-full"
+                />
+              </div>
+
+              {/* 确认密码 */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-glass-text-secondary">确认密码</label>
+                <input
+                  type="password"
+                  value={form.confirmPassword}
+                  onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                  placeholder="再次输入新密码"
+                  required
+                  className="glass-input w-full"
+                />
+              </div>
+
+              {error && (
+                <div className="glass-error p-4 rounded-glass-sm shadow-glass-soft glass-fade-in">
+                  <div className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4 shrink-0 text-glass-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {error}
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="glass-button-primary w-full py-3 rounded-glass-sm font-medium transition-all duration-300 hover:shadow-glass-medium hover:-translate-y-0.5 active:shadow-glass-soft active:translate-y-0 glass-button-animate mt-2"
+              >
+                {loading ? '设置中...' : '设置密码并登录'}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-glass-text-muted">
+              已有密码？
+              <Link href="/login" className="ml-1.5 text-glass-primary hover:text-glass-primaryLight transition-colors duration-200 font-medium">
+                直接登录
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -237,8 +238,8 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-liquid-mist/60 text-[13px] animate-pulse">加载中...</div>
+      <div className="flex min-h-screen items-center justify-center glass-background">
+        <div className="text-glass-text-muted/60 text-[13px] animate-pulse">加载中...</div>
       </div>
     }>
       <ResetPasswordForm />

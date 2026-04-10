@@ -21,16 +21,16 @@ interface NotificationItem {
 }
 
 const NOTIFICATION_ICONS: Record<string, { emoji: string; color: string }> = {
-  ORDER_NEW: { emoji: '📬', color: 'text-liquid-ocean' },
-  ORDER_CREATED: { emoji: '📋', color: 'text-liquid-ocean' },
-  STATUS_CHANGE: { emoji: '🔄', color: 'text-liquid-amber' },
-  DOC_REVIEWED: { emoji: '📄', color: 'text-liquid-ocean' },
-  MATERIAL_UPLOADED: { emoji: '📎', color: 'text-liquid-emerald' },
-  MATERIAL_FEEDBACK: { emoji: '💬', color: 'text-liquid-ocean' },
-  APPOINTMENT_REMIND: { emoji: '⏰', color: 'text-liquid-amber' },
-  DOCS_SUBMITTED: { emoji: '✅', color: 'text-liquid-emerald' },
-  CHAT_MESSAGE: { emoji: '💬', color: 'text-liquid-ocean' },
-  SYSTEM: { emoji: '🔔', color: 'text-liquid-mist' },
+  ORDER_NEW: { emoji: '📬', color: 'text-glass-primary' },
+  ORDER_CREATED: { emoji: '📋', color: 'text-glass-primary' },
+  STATUS_CHANGE: { emoji: '🔄', color: 'text-glass-warning' },
+  DOC_REVIEWED: { emoji: '📄', color: 'text-glass-primary' },
+  MATERIAL_UPLOADED: { emoji: '📎', color: 'text-glass-accent' },
+  MATERIAL_FEEDBACK: { emoji: '💬', color: 'text-glass-primary' },
+  APPOINTMENT_REMIND: { emoji: '⏰', color: 'text-glass-warning' },
+  DOCS_SUBMITTED: { emoji: '✅', color: 'text-glass-accent' },
+  CHAT_MESSAGE: { emoji: '💬', color: 'text-glass-primary' },
+  SYSTEM: { emoji: '🔔', color: 'text-glass-muted' },
 }
 
 function formatRelativeTime(dateStr: string): string {
@@ -106,7 +106,7 @@ export default function NotificationsPage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-liquid-mist">加载中...</p>
+        <p className="text-glass-muted">加载中...</p>
       </div>
     )
   }
@@ -118,15 +118,15 @@ export default function NotificationsPage() {
         <div className="flex items-center gap-2">
           <Link
             href="/portal/profile"
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-liquid-ocean/6 transition-colors hover:bg-liquid-ocean/10"
+            className="glass-button-hover flex h-8 w-8 items-center justify-center rounded-xl text-glass-muted hover:text-glass-primary"
           >
-            <svg className="h-4 w-4 text-liquid-mist" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
-          <h1 className="text-[18px] font-semibold text-liquid-deep">通知中心</h1>
+          <h1 className="text-[18px] font-semibold text-glass-primary">通知中心</h1>
           {unreadCount > 0 && (
-            <span className="flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-liquid-ruby px-1.5 text-[11px] font-medium text-white">
+            <span className="flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-glass-danger px-1.5 text-[11px] font-medium text-white">
               {unreadCount}
             </span>
           )}
@@ -134,7 +134,7 @@ export default function NotificationsPage() {
         {unreadCount > 0 && (
           <button
             onClick={handleMarkAllRead}
-            className="rounded-lg bg-liquid-ocean/6 px-3 py-1.5 text-[12px] text-liquid-ocean transition-colors hover:bg-liquid-ocean/10"
+            className="glass-button-hover rounded-xl px-3 py-1.5 text-[12px] text-glass-primary"
           >
             全部已读
           </button>
@@ -157,8 +157,8 @@ export default function NotificationsPage() {
       ) : notifications.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-16">
           <span className="text-4xl">🔔</span>
-          <p className="text-[14px] font-medium text-liquid-mist">暂无通知</p>
-          <p className="text-[12px] text-liquid-mist/60">有新消息时会在这里提醒你</p>
+          <p className="text-[14px] font-medium text-glass-muted">暂无通知</p>
+          <p className="text-[12px] text-glass-muted/60">有新消息时会在这里提醒你</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -180,13 +180,13 @@ export default function NotificationsPage() {
                   hover
                   className={cn(
                     'flex items-start gap-3 p-4 transition-all',
-                    !notif.isRead && 'border-l-2 border-l-liquid-ocean/50 bg-liquid-ocean/4'
+                    !notif.isRead && 'border-l-2 border-l-glass-primary/50 bg-glass-primary/4'
                   )}
                 >
                   <div
                     className={cn(
                       'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl',
-                      !notif.isRead ? 'bg-liquid-ocean/15' : 'bg-liquid-ocean/5'
+                      !notif.isRead ? 'bg-glass-primary/15' : 'bg-glass-primary/5'
                     )}
                   >
                     <span className={cn('text-base', iconInfo.color)}>{iconInfo.emoji}</span>
@@ -196,21 +196,21 @@ export default function NotificationsPage() {
                       className={cn(
                         'text-[14px]',
                         !notif.isRead
-                          ? 'font-medium text-liquid-deep'
-                          : 'text-liquid-mist'
+                          ? 'font-medium text-glass-primary'
+                          : 'text-glass-muted'
                       )}
                     >
                       {notif.title}
                     </p>
-                    <p className="mt-1 text-[12px] text-liquid-mist/60 line-clamp-2">
+                    <p className="mt-1 text-[12px] text-glass-muted/60 line-clamp-2">
                       {notif.content}
                     </p>
-                    <p className="mt-1 text-[11px] text-liquid-mist/60">
+                    <p className="mt-1 text-[11px] text-glass-muted/60">
                       {formatRelativeTime(notif.createdAt)}
                     </p>
                   </div>
                   {!notif.isRead && (
-                    <div className="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-liquid-ocean" />
+                    <div className="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-glass-primary" />
                   )}
                 </GlassCard>
               </div>
@@ -221,7 +221,7 @@ export default function NotificationsPage() {
             <button
               onClick={handleLoadMore}
               disabled={loadingMore}
-              className="w-full py-3 text-center text-[13px] text-liquid-ocean transition-colors hover:text-liquid-oceanLight disabled:opacity-50"
+              className="w-full py-3 text-center text-[13px] text-glass-primary transition-colors hover:text-glass-primary/80 disabled:opacity-50"
             >
               {loadingMore ? '加载中...' : '加载更多'}
             </button>

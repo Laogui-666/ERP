@@ -5,10 +5,9 @@ import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useToast } from '@shared/ui/toast'
 import { useAuth } from '@shared/hooks/use-auth'
-import { LiquidTeamCard } from '@design-system/components/liquid-team-card'
-import { LiquidCard, LiquidCardContent } from '@design-system/components/liquid-card'
-import { LiquidButton } from '@design-system/components/liquid-button'
-import { LiquidInput } from '@design-system/components/liquid-input'
+import { Button } from '@shared/ui/button'
+import { Card, CardContent } from '@shared/ui/card'
+import { Input } from '@shared/ui/input'
 import { liquidSpringConfig } from '@design-system/theme/animations'
 
 interface Employee {
@@ -46,7 +45,6 @@ export default function TeamPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
 
-  // 表单
   const [formUsername, setFormUsername] = useState('')
   const [formPhone, setFormPhone] = useState('')
   const [formRealName, setFormRealName] = useState('')
@@ -128,7 +126,6 @@ export default function TeamPage() {
 
   const canCreate = user?.role && ['SUPER_ADMIN', 'COMPANY_OWNER'].includes(user.role)
 
-  // 按角色分组
   const grouped = employees.reduce((acc, emp) => {
     const group = emp.role.includes('CS') || emp.role === 'CUSTOMER_SERVICE' ? '客服部' : '签证部'
     if (!acc[group]) acc[group] = []
@@ -136,7 +133,6 @@ export default function TeamPage() {
     return acc
   }, {} as Record<string, Employee[]>)
 
-  // 获取部门名称
   const getDepartmentName = (deptId: string | null) => {
     if (!deptId) return undefined
     return departments.find(d => d.id === deptId)?.name
@@ -144,7 +140,6 @@ export default function TeamPage() {
 
   return (
     <div className="space-y-6">
-      {/* 标题 */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -152,30 +147,27 @@ export default function TeamPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-2xl font-bold text-liquid-deep tracking-tight">
+          <h1 className="text-2xl font-bold text-glass-primary tracking-tight">
             团队管理
           </h1>
-          <p className="mt-1 text-sm text-liquid-mist">
+          <p className="mt-1 text-sm text-glass-muted">
             管理员工与部门 · 共 {employees.length} 人
           </p>
         </div>
         {canCreate && (
-          <LiquidButton
+          <Button
             variant="primary"
             size="md"
-            leftIcon={
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            }
             onClick={() => setShowForm(true)}
           >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
             添加员工
-          </LiquidButton>
+          </Button>
         )}
       </motion.div>
 
-      {/* 创建表单 */}
       {showForm && (
         <motion.div
           initial={{ opacity: 0, y: -20, height: 0 }}
@@ -183,29 +175,29 @@ export default function TeamPage() {
           exit={{ opacity: 0, y: -20, height: 0 }}
           transition={liquidSpringConfig.medium}
         >
-          <LiquidCard padding="lg" variant="liquid-elevated">
-            <LiquidCardContent>
-              <h3 className="text-lg font-semibold text-liquid-deep mb-4">添加员工</h3>
+          <Card padding="lg">
+            <CardContent>
+              <h3 className="text-lg font-semibold text-glass-primary mb-4">添加员工</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <LiquidInput
+                <Input
                   label="用户名"
                   placeholder="登录用户名"
                   value={formUsername}
                   onChange={(e) => setFormUsername(e.target.value)}
                 />
-                <LiquidInput
+                <Input
                   label="姓名"
                   placeholder="真实姓名"
                   value={formRealName}
                   onChange={(e) => setFormRealName(e.target.value)}
                 />
-                <LiquidInput
+                <Input
                   label="手机号"
                   placeholder="手机号"
                   value={formPhone}
                   onChange={(e) => setFormPhone(e.target.value)}
                 />
-                <LiquidInput
+                <Input
                   label="密码"
                   type="password"
                   placeholder="至少8位，含大小写+数字"
@@ -213,11 +205,11 @@ export default function TeamPage() {
                   onChange={(e) => setFormPassword(e.target.value)}
                 />
                 <div>
-                  <label className="text-sm font-semibold text-liquid-deep mb-2 block">角色</label>
+                  <label className="text-sm font-semibold text-glass-primary mb-2 block">角色</label>
                   <select
                     value={formRole}
                     onChange={(e) => setFormRole(e.target.value)}
-                    className="w-full px-5 py-3.5 rounded-3xl bg-white/55 backdrop-blur-xl border border-white/50 text-liquid-deep text-sm focus:outline-none focus:bg-white/70 focus:border-liquid-ocean/60 hover:border-liquid-ocean/40 shadow-liquid-soft focus:shadow-liquid-medium transition-all"
+                    className="w-full px-4 py-2.5 rounded-xl bg-glass-card/80 backdrop-blur-xl border border-glass-border text-glass-primary text-sm focus:outline-none focus:ring-2 focus:ring-glass-primary/30 focus:border-glass-primary/50 hover:border-glass-primary/30 transition-all"
                   >
                     {Object.entries(ROLE_LABELS).map(([val, label]) => (
                       <option key={val} value={val}>{label}</option>
@@ -225,11 +217,11 @@ export default function TeamPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-liquid-deep mb-2 block">部门</label>
+                  <label className="text-sm font-semibold text-glass-primary mb-2 block">部门</label>
                   <select
                     value={formDepartmentId}
                     onChange={(e) => setFormDepartmentId(e.target.value)}
-                    className="w-full px-5 py-3.5 rounded-3xl bg-white/55 backdrop-blur-xl border border-white/50 text-liquid-deep text-sm focus:outline-none focus:bg-white/70 focus:border-liquid-ocean/60 hover:border-liquid-ocean/40 shadow-liquid-soft focus:shadow-liquid-medium transition-all"
+                    className="w-full px-4 py-2.5 rounded-xl bg-glass-card/80 backdrop-blur-xl border border-glass-border text-glass-primary text-sm focus:outline-none focus:ring-2 focus:ring-glass-primary/30 focus:border-glass-primary/50 hover:border-glass-primary/30 transition-all"
                   >
                     <option value="">不指定</option>
                     {departments.map((d) => (
@@ -239,53 +231,52 @@ export default function TeamPage() {
                 </div>
               </div>
               <div className="flex gap-3 justify-end mt-6">
-                <LiquidButton
+                <Button
                   variant="ghost"
                   size="md"
                   onClick={resetForm}
                 >
                   取消
-                </LiquidButton>
-                <LiquidButton
+                </Button>
+                <Button
                   variant="primary"
                   size="md"
                   isLoading={isSaving}
                   onClick={handleCreate}
                 >
                   创建
-                </LiquidButton>
+                </Button>
               </div>
-            </LiquidCardContent>
-          </LiquidCard>
+            </CardContent>
+          </Card>
         </motion.div>
       )}
 
-      {/* 员工列表 */}
       {isLoading ? (
-        <LiquidCard padding="xl" variant="liquid" className="text-center">
+        <Card padding="lg" className="text-center">
           <motion.div
-            className="inline-block w-6 h-6 border-2 border-liquid-ocean/30 border-t-liquid-ocean rounded-full"
+            className="inline-block w-6 h-6 border-2 border-glass-primary/30 border-t-glass-primary rounded-full"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           />
-          <p className="mt-3 text-sm text-liquid-mist">加载中...</p>
-        </LiquidCard>
+          <p className="mt-3 text-sm text-glass-muted">加载中...</p>
+        </Card>
       ) : employees.length === 0 ? (
-        <LiquidCard padding="xl" variant="liquid" className="text-center">
+        <Card padding="lg" className="text-center">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={liquidSpringConfig.bouncy}
           >
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-liquid-ocean/10 flex items-center justify-center">
-              <svg className="w-8 h-8 text-liquid-ocean" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-glass-primary/10 flex items-center justify-center">
+              <svg className="w-8 h-8 text-glass-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
-            <p className="text-lg text-liquid-deep font-semibold">暂无员工</p>
-            <p className="text-sm text-liquid-mist mt-1">点击&quot;添加员工&quot;按钮创建第一个员工</p>
+            <p className="text-lg text-glass-primary font-semibold">暂无员工</p>
+            <p className="text-sm text-glass-muted mt-1">点击&quot;添加员工&quot;按钮创建第一个员工</p>
           </motion.div>
-        </LiquidCard>
+        </Card>
       ) : (
         <div className="space-y-6">
           {Object.entries(grouped).map(([group, members], groupIndex) => (
@@ -297,21 +288,21 @@ export default function TeamPage() {
               className="space-y-3"
             >
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-liquid-mist">{group}</h3>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-liquid-ocean/10 text-liquid-ocean">
+                <h3 className="text-sm font-semibold text-glass-muted">{group}</h3>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-glass-primary/10 text-glass-primary">
                   {members.length} 人
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {members.map((emp, index) => (
-                  <LiquidTeamCard
+                  <EmployeeCard
                     key={emp.id}
                     name={emp.realName}
                     role={emp.role}
                     phone={emp.phone}
                     status={emp.status}
                     email={emp.email}
-                    department={getDepartmentName(emp.departmentId)}
+                    department={getDepartmentName(emp.departmentId) ?? ''}
                     delay={index}
                   />
                 ))}
@@ -321,5 +312,63 @@ export default function TeamPage() {
         </div>
       )}
     </div>
+  )
+}
+
+function EmployeeCard({
+  name,
+  role,
+  phone,
+  status,
+  email,
+  department,
+  delay = 0,
+}: {
+  name: string
+  role: string
+  phone: string
+  status: string
+  email?: string | null
+  department: string
+  delay?: number
+}) {
+  const roleLabel = ROLE_LABELS[role] || role
+  const isActive = status === 'ACTIVE'
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ ...liquidSpringConfig.medium, delay: delay * 0.05 }}
+      whileHover={{ y: -4, scale: 1.02 }}
+    >
+      <Card padding="md">
+        <CardContent>
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-glass-primary/20 to-glass-accent/20 flex items-center justify-center flex-shrink-0">
+              <span className="text-lg font-semibold text-glass-primary">{name[0]}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="font-semibold text-glass-primary truncate">{name}</h4>
+                <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
+              </div>
+              <p className="text-xs text-glass-accent mt-1">{roleLabel}</p>
+              {department && <p className="text-xs text-glass-muted mt-0.5">{department}</p>}
+              <div className="mt-3 space-y-1">
+                <p className="text-xs text-glass-muted truncate">
+                  <span className="text-glass-muted/60">📱</span> {phone}
+                </p>
+                {email && (
+                  <p className="text-xs text-glass-muted truncate">
+                    <span className="text-glass-muted/60">✉️</span> {email}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   )
 }

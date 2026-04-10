@@ -14,6 +14,9 @@ const nextConfig = {
     ],
   },
   serverExternalPackages: ['@prisma/client'],
+  turbopack: {
+    root: '/www/wwwroot/ERP',
+  },
 }
 
 module.exports = nextConfig

@@ -29,8 +29,8 @@ const LiquidInput = forwardRef<HTMLInputElement, LiquidInputProps>(
     const baseStyles = 'w-full px-5 py-4 md:py-3.5 rounded-3xl transition-all duration-300 focus:outline-none text-base md:text-sm';
 
     const variants = {
-      liquid: 'bg-white/55 backdrop-blur-xl border border-white/50 focus:bg-white/70 focus:border-liquid-ocean/60 hover:border-liquid-ocean/40 shadow-liquid-soft focus:shadow-liquid-medium',
-      solid: 'bg-white border border-liquid-silver/30 focus:border-liquid-ocean focus:shadow-liquid-medium',
+      liquid: 'bg-liquid-surface/85 backdrop-blur-xl border border-liquid-border/50 focus:bg-liquid-surface/95 focus:border-liquid-ocean/60 hover:border-liquid-ocean/40 shadow-liquid-soft focus:shadow-liquid-medium',
+      solid: 'bg-liquid-surface border border-liquid-border/30 focus:border-liquid-ocean focus:shadow-liquid-medium',
     };
 
     return (

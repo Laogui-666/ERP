@@ -78,19 +78,53 @@ const config: Config = {
           900: '#111827',
           950: '#030712',
         },
-        // 新增液态玻璃设计系统颜色
+        // 液态玻璃设计系统颜色 - 莫兰迪浅色系
         liquid: {
-          ocean: '#5B7B7A',
-          oceanLight: '#7FA0A0',
-          sand: '#A8B8B8',
-          mist: '#6A7A7A',
-          clay: '#6A6D6D',
-          blush: '#C4CCD6',
-          deep: '#1A262E',
-          light: '#F0F4F7',
-          cream: '#E5EBEF',
-          steel: '#4A5A63',
-          silver: '#8A9AA7',
+          // 主色调 - 莫兰迪粉
+          ocean: '#E8D5C4',
+          oceanLight: '#F5ECE4',
+          oceanDark: '#D4BDA8',
+          
+          // 辅助色 - 莫兰迪蓝
+          sand: '#D6E0E5',
+          sandLight: '#E7F0F5',
+          sandDark: '#B8C6CC',
+          
+          // 莫兰迪绿
+          emerald: '#D8E0D0',
+          emeraldLight: '#E8F0E0',
+          emeraldDark: '#B8C6B0',
+          
+          // 莫兰迪黄
+          amber: '#E8E0D4',
+          amberLight: '#F5F0E8',
+          amberDark: '#D4C8B8',
+          
+          // 莫兰迪红
+          ruby: '#E0D4D4',
+          rubyLight: '#F0E8E8',
+          rubyDark: '#C8B8B8',
+          
+          // 中性色
+          mist: '#A8A29E',
+          mistLight: '#E7E5E4',
+          mistDark: '#78716C',
+          
+          // 背景色
+          light: '#FDFCFB',
+          cream: '#F8F7F6',
+          surface: '#FFFFFF',
+          
+          // 文字色
+          deep: '#292524',
+          text: '#57534E',
+          muted: '#78716C',
+          inverse: '#FFFFFF',
+          
+          // 边框色
+          border: '#D6D3D1',
+          borderLight: '#E7E5E4',
+          borderDark: '#A8A29E',
         },
       },
       fontFamily: {

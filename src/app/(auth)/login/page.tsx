@@ -58,11 +58,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 bg-gradient-liquid">
+    <div className="flex min-h-screen items-center justify-center px-4 bg-gradient-to-br from-liquid-light to-liquid-cream">
       <div className="w-full max-w-[400px]">
         {/* Logo 区域 */}
         <div className="mb-10 text-center">
-          <div className="mx-auto mb-5 flex h-[68px] w-[68px] items-center justify-center rounded-3xl bg-white/60 backdrop-blur-2xl border border-white/50 shadow-liquid-medium">
+          <div className="mx-auto mb-5 flex h-[68px] w-[68px] items-center justify-center rounded-3xl bg-liquid-surface/80 backdrop-blur-2xl border border-liquid-border/50 shadow-liquid-medium">
             <svg className="w-8 h-8 text-liquid-ocean" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
             </svg>

@@ -32,15 +32,15 @@ const LiquidButton = forwardRef<HTMLButtonElement, LiquidButtonProps>(
     const baseStyles = 'inline-flex items-center justify-center font-semibold transition-all duration-300 focus:outline-none relative overflow-hidden';
 
     const variants = {
-      primary: 'bg-liquid-ocean text-white hover:bg-liquid-ocean/90 active:bg-liquid-ocean/80',
+      primary: 'bg-liquid-ocean text-liquid-deep hover:bg-liquid-ocean/90 active:bg-liquid-ocean/80',
       secondary: 'bg-liquid-sand text-liquid-deep hover:bg-liquid-sand/90 active:bg-liquid-sand/80',
       ghost: 'bg-transparent text-liquid-deep hover:bg-liquid-cream active:bg-liquid-cream/80',
-      liquid: 'bg-white/60 backdrop-blur-xl border border-white/50 text-liquid-deep hover:bg-white/70 active:bg-white/65',
-      'liquid-fill': 'bg-white/75 backdrop-blur-2xl border border-white/60 text-liquid-deep hover:bg-white/85 active:bg-white/80',
+      liquid: 'bg-liquid-surface/80 backdrop-blur-xl border border-liquid-border/50 text-liquid-deep hover:bg-liquid-surface/90 active:bg-liquid-surface/85',
+      'liquid-fill': 'bg-liquid-surface/90 backdrop-blur-2xl border border-liquid-border/60 text-liquid-deep hover:bg-liquid-surface/95 active:bg-liquid-surface/90',
     };
 
     const glowStyles = withGlow ? {
-      primary: 'shadow-[0_0_0_1px_rgba(255,255,255,0.2)_inset,0_8px_24px_rgba(91,123,122,0.25)]',
+      primary: 'shadow-[0_0_0_1px_rgba(232,213,196,0.3)_inset,0_8px_24px_rgba(232,213,196,0.25)]',
       liquid: 'shadow-liquid-glow',
       'liquid-fill': 'shadow-liquid-glow',
     } : {};
@@ -87,7 +87,7 @@ const LiquidButton = forwardRef<HTMLButtonElement, LiquidButtonProps>(
         {/* 光泽效果层 */}
         {(variant === 'liquid' || variant === 'liquid-fill') && (
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent rounded-t-[inherit]" />
+            <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-liquid-ocean/20 to-transparent rounded-t-[inherit]" />
           </div>
         )}
 

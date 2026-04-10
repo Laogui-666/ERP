@@ -8,43 +8,43 @@
 
 :root {
   /* ============================================================
-     液态玻璃设计系统 - CSS变量映射
+     液态玻璃设计系统 - 莫兰迪浅色系 CSS变量映射
      注意：新项目请直接使用 Tailwind 类名 liquid-*
      以下变量仅用于向后兼容和CSS自定义属性场景
      ============================================================ */
 
-  /* 液态海洋色系 - 主色调 */
-  --color-primary: #7C8DA6;
-  --color-primary-dark: #5A6A7D;
-  --color-primary-light: #9BAEC4;
-  --color-primary-glow: rgba(124, 141, 166, 0.15);
-  --color-secondary: #7FA87A;
-  --color-accent: #9B8EC4;
-  --color-accent-glow: rgba(155, 142, 196, 0.15);
+  /* 莫兰迪主色调 */
+  --color-primary: #E8D5C4;
+  --color-primary-dark: #D4BDA8;
+  --color-primary-light: #F5ECE4;
+  --color-primary-glow: rgba(232, 213, 196, 0.15);
+  --color-secondary: #D6E0E5;
+  --color-accent: #D8E0D0;
+  --color-accent-glow: rgba(216, 224, 208, 0.15);
 
-  /* 液态状态色 */
-  --color-success: #7FA87A;
-  --color-warning: #C4A97D;
-  --color-error: #B87C7C;
-  --color-info: #7C8DA6;
+  /* 莫兰迪状态色 */
+  --color-success: #D8E0D0;
+  --color-warning: #E8E0D4;
+  --color-error: #E0D4D4;
+  --color-info: #D6E0E5;
 
-  /* 液态背景 - 深色玻璃态 */
-  --color-bg-primary: #0B0E14;
-  --color-bg-secondary: #161B29;
-  --color-bg-tertiary: #202636;
-  --color-bg-overlay: rgba(0, 0, 0, 0.7);
+  /* 莫兰迪背景 - 浅色系 */
+  --color-bg-primary: #FDFCFB;
+  --color-bg-secondary: #F8F7F6;
+  --color-bg-tertiary: #F3F2F1;
+  --color-bg-overlay: rgba(0, 0, 0, 0.1);
 
-  /* 液态文字层级 */
-  --color-text-primary: #F0F4F8;
-  --color-text-secondary: #A0AEC0;
-  --color-text-tertiary: #64748B;
-  --color-text-placeholder: #475569;
-  --color-text-inverse: #0B0E14;
+  /* 莫兰迪文字层级 */
+  --color-text-primary: #292524;
+  --color-text-secondary: #57534E;
+  --color-text-tertiary: #78716C;
+  --color-text-placeholder: #A8A29E;
+  --color-text-inverse: #FFFFFF;
 
-  /* 液态边框 */
-  --color-border: rgba(124, 141, 166, 0.12);
-  --color-border-light: rgba(124, 141, 166, 0.08);
-  --color-border-dark: rgba(124, 141, 166, 0.2);
+  /* 莫兰迪边框 */
+  --color-border: #D6D3D1;
+  --color-border-light: #E7E5E4;
+  --color-border-dark: #A8A29E;
 
   /* 阴影 */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -104,20 +104,12 @@
   --font-bold: 700;
 }
 
-/* 深色模式 - 液态玻璃默认就是深色主题 */
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* 液态玻璃设计系统已经是深色主题，保持与主定义一致 */
-    /* 这些变量确保在系统深色模式下保持一致性 */
-  }
-}
-
 /* ==================== 全局基础 ==================== */
 
 body {
-  background: linear-gradient(135deg, #0B0E14 0%, #161B29 50%, #0B0E14 100%);
+  background: linear-gradient(135deg, #FDFCFB 0%, #F8F7F6 50%, #FDFCFB 100%);
   background-attachment: fixed;
-  color: #F0F4F8;
+  color: #292524;
   font-family: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -232,7 +224,7 @@ body {
   }
 }
 
-/* ==================== 滚动条 - 液态玻璃风格 ==================== */
+/* ==================== 滚动条 - 莫兰迪风格 ==================== */
 
 ::-webkit-scrollbar {
   width: 6px;
@@ -240,24 +232,24 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(124, 141, 166, 0.05);
+  background: rgba(232, 213, 196, 0.05);
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(124, 141, 166, 0.2);
+  background: rgba(232, 213, 196, 0.3);
   border-radius: var(--radius-full);
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(124, 141, 166, 0.35);
+  background: rgba(232, 213, 196, 0.45);
 }
 
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(124, 141, 166, 0.2) rgba(124, 141, 166, 0.05);
+  scrollbar-color: rgba(232, 213, 196, 0.3) rgba(232, 213, 196, 0.05);
 }
 
 /* ==================== 入场动效 ==================== */
@@ -420,12 +412,12 @@ body {
 
 /* ==================== M8 工具类 ==================== */
 
-/* 文字扫光效果 - 液态玻璃风格 */
+/* 文字扫光效果 - 莫兰迪风格 */
 .shimmer-text {
   background: linear-gradient(120deg,
-    #F0F4F8 0%, #F0F4F8 40%,
-    #9BAEC4 50%,
-    #F0F4F8 60%, #F0F4F8 100%);
+    #292524 0%, #292524 40%,
+    #E8D5C4 50%,
+    #292524 60%, #292524 100%);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -446,16 +438,16 @@ body {
 .bottom-sheet {
   position: fixed; bottom: 0; left: 0; right: 0;
   max-height: 85vh;
-  background: rgba(32, 38, 54, 0.96);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(40px);
   border-radius: 20px 20px 0 0;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid #D6D3D1;
   animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .bottom-sheet::before {
   content: ''; display: block;
   width: 36px; height: 4px; border-radius: 2px;
-  background: rgba(255,255,255,0.2); margin: 12px auto;
+  background: #D6D3D1; margin: 12px auto;
 }
 
 /* ==================== 动效工具类 ==================== */
@@ -520,9 +512,9 @@ body {
 .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.03) 25%,
-    rgba(255, 255, 255, 0.07) 50%,
-    rgba(255, 255, 255, 0.03) 75%
+    rgba(232, 213, 196, 0.3) 25%,
+    rgba(232, 213, 196, 0.5) 50%,
+    rgba(232, 213, 196, 0.3) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.8s ease-in-out infinite;
@@ -539,7 +531,7 @@ body {
 .ripple-container .ripple-circle {
   position: absolute;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(232, 213, 196, 0.3);
   transform: scale(0);
   animation: ripple 0.6s ease-out;
   pointer-events: none;

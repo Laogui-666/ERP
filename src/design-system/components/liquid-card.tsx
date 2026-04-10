@@ -30,27 +30,27 @@ const LiquidCard = forwardRef<HTMLDivElement, LiquidCardProps>(
 
     const intensityConfig = {
       light: {
-        bg: 'bg-white/45',
+        bg: 'bg-liquid-surface/85',
         blur: 'backdrop-blur-lg',
-        border: 'border-white/35',
+        border: 'border-liquid-borderLight/50',
         shadow: 'shadow-liquid-soft',
       },
       medium: {
-        bg: 'bg-white/60',
+        bg: 'bg-liquid-surface/90',
         blur: 'backdrop-blur-xl',
-        border: 'border-white/50',
+        border: 'border-liquid-border/60',
         shadow: 'shadow-liquid-medium',
       },
       strong: {
-        bg: 'bg-white/72',
+        bg: 'bg-liquid-surface/95',
         blur: 'backdrop-blur-2xl',
-        border: 'border-white/60',
+        border: 'border-liquid-border/70',
         shadow: 'shadow-liquid-strong',
       },
       ultra: {
-        bg: 'bg-white/80',
+        bg: 'bg-liquid-surface/98',
         blur: 'backdrop-blur-3xl',
-        border: 'border-white/70',
+        border: 'border-liquid-border/80',
         shadow: 'shadow-liquid-glow',
       },
     };
@@ -71,8 +71,8 @@ const LiquidCard = forwardRef<HTMLDivElement, LiquidCardProps>(
         'shadow-liquid-glow',
         'transform-gpu'
       ),
-      solid: 'bg-white shadow-liquid-medium',
-      outlined: 'bg-transparent border border-liquid-silver/30',
+      solid: 'bg-liquid-surface shadow-liquid-medium',
+      outlined: 'bg-transparent border border-liquid-border/30',
     };
 
     const paddings = {
@@ -103,8 +103,8 @@ const LiquidCard = forwardRef<HTMLDivElement, LiquidCardProps>(
         {/* 顶部光泽效果 */}
         {(variant === 'liquid' || variant === 'liquid-elevated') && withGloss && (
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 left-0 right-0 h-2/5 bg-gradient-to-b from-white/30 via-white/10 to-transparent rounded-t-liquid" />
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-2/5 bg-gradient-to-b from-liquid-ocean/20 via-liquid-ocean/10 to-transparent rounded-t-liquid" />
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-liquid-ocean/30 to-transparent" />
           </div>
         )}
 
@@ -135,7 +135,7 @@ LiquidCardContent.displayName = 'LiquidCardContent';
 
 const LiquidCardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, ...props }, ref) => (
-    <div ref={ref} className={cn('mt-5 pt-5 border-t border-white/20', className)} {...props}>{children}</div>
+    <div ref={ref} className={cn('mt-5 pt-5 border-t border-liquid-borderLight/50', className)} {...props}>{children}</div>
   )
 );
 LiquidCardFooter.displayName = 'LiquidCardFooter';

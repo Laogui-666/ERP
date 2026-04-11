@@ -250,7 +250,7 @@
 }
 
 .glass-hover:hover {
-  @apply transform -translate-y-1 shadow-glass-medium;
+  @apply shadow-glass-soft;
 }
 
 /* 玻璃拟态焦点效果 */
@@ -1239,7 +1239,7 @@
 }
 
 .glass-card-flip:hover .glass-card-flip-inner {
-  transform: rotateY(180deg);
+  transform: none;
 }
 
 .glass-card-flip-front,
@@ -1262,7 +1262,7 @@
 }
 
 .glass-card-zoom:hover {
-  transform: scale(1.05);
+  transform: none;
 }
 
 /* 玻璃拟态卡片旋转动画 */
@@ -1271,7 +1271,7 @@
 }
 
 .glass-card-rotate:hover {
-  transform: rotate(2deg);
+  transform: none;
 }
 
 /* 玻璃拟态卡片倾斜动画 */
@@ -1280,7 +1280,7 @@
 }
 
 .glass-card-tilt:hover {
-  transform: perspective(1000px) rotateX(5deg) rotateY(5deg);
+  transform: none;
 }
 
 /* 玻璃拟态卡片阴影动画 */
@@ -1289,7 +1289,7 @@
 }
 
 .glass-card-shadow-animate:hover {
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.16), 0 8px 16px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 /* 玻璃拟态按钮阴影动画 */

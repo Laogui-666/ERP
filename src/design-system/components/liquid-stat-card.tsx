@@ -67,12 +67,9 @@ const LiquidStatCard = forwardRef<HTMLDivElement, LiquidStatCardProps>(
           'bg-white/60 backdrop-blur-xl',
           'border border-white/50',
           'shadow-liquid-soft',
-          'transition-all duration-300',
-          'hover:shadow-liquid-medium hover:-translate-y-0.5',
           className
         )}
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.99 }}
+
         transition={liquidSpringConfig.liquid}
       >
         {/* 顶部光泽效果 */}

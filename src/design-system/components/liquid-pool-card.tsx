@@ -39,14 +39,12 @@ const LiquidPoolCard = forwardRef<HTMLDivElement, LiquidPoolCardProps>(
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ ...liquidSpringConfig.medium, delay: delay * 0.05 }}
-        whileHover={{ y: -4, scale: 1.01 }}
+
         className={cn(
           'relative overflow-hidden rounded-2xl p-5',
           'bg-white/60 backdrop-blur-xl',
           'border border-white/50',
           'shadow-liquid-soft',
-          'transition-all duration-300',
-          'hover:shadow-liquid-medium',
           className
         )}
       >

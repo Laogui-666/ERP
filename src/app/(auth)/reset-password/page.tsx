@@ -102,48 +102,47 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-900 dark:to-neutral-800">
-      <DynamicBackground />
+    <div className="flex min-h-screen items-center justify-center px-4 bg-gradient-to-br from-morandi-light via-morandi-cream to-morandi-blush">
       <motion.div 
         className="relative z-10 w-full max-w-[400px]" 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+        transition={{ ...liquidSpringConfig.gentle }}
       >
         <div className="mb-8 text-center">
           <motion.div 
-            className="mx-auto mb-5 flex h-[60px] w-[60px] items-center justify-center rounded-2xl bg-white/80 dark:bg-neutral-800/80 backdrop-blur-lg border border-neutral-200 dark:border-neutral-700 shadow-lg"
+            className="mx-auto mb-5 flex h-[60px] w-[60px] items-center justify-center rounded-2xl bg-morandi-ocean shadow-lg"
             whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            transition={liquidSpringConfig.bouncy}
           >
-            <svg className="w-7 h-7 text-violet-600 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
             </svg>
           </motion.div>
           <motion.h1 
-            className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight"
+            className="text-2xl font-bold text-morandi-deep tracking-tight"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
+            transition={{ ...liquidSpringConfig.gentle, delay: 0.1 }}
           >
             首次登录 · 设置密码
           </motion.h1>
           <motion.p 
-            className="mt-2 text-neutral-600 dark:text-neutral-400 text-sm"
+            className="mt-2 text-morandi-mist text-sm"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
+            transition={{ ...liquidSpringConfig.gentle, delay: 0.2 }}
           >
             验证身份后设置您的登录密码
           </motion.p>
         </div>
 
-        <LiquidCard liquidIntensity="light" className="p-6 rounded-2xl">
+        <LiquidCard liquidIntensity="medium" padding="lg" className="shadow-lg">
           <div className="space-y-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* 用户名 */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                <label className="block text-sm font-medium text-morandi-deep">
                   用户名
                 </label>
                 <div className="flex gap-2">
@@ -173,10 +172,10 @@ function ResetPasswordForm() {
 
               {/* 手机号 */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                <label className="block text-sm font-medium text-morandi-deep">
                   手机号
                   {fetchingUser && (
-                    <span className="ml-2 text-neutral-500 dark:text-neutral-500 normal-case font-normal">加载中...</span>
+                    <span className="ml-2 text-morandi-mist normal-case font-normal">加载中...</span>
                   )}
                 </label>
                 <div className="flex gap-2">
@@ -206,7 +205,7 @@ function ResetPasswordForm() {
 
               {/* 新密码 */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">新密码</label>
+                <label className="block text-sm font-medium text-morandi-deep">新密码</label>
                 <LiquidInput
                   type="password"
                   value={form.newPassword}
@@ -220,7 +219,7 @@ function ResetPasswordForm() {
 
               {/* 确认密码 */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">确认密码</label>
+                <label className="block text-sm font-medium text-morandi-deep">确认密码</label>
                 <LiquidInput
                   type="password"
                   value={form.confirmPassword}
@@ -233,14 +232,14 @@ function ResetPasswordForm() {
 
               {error && (
                 <motion.div 
-                  className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800"
+                  className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
+                  transition={liquidSpringConfig.snappy}
                 >
                   <div className="flex items-center gap-2.5">
-                    <svg className="w-4 h-4 shrink-0 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     {error}
                   </div>
@@ -259,13 +258,13 @@ function ResetPasswordForm() {
             </form>
 
             <motion.p 
-              className="mt-6 text-center text-sm text-neutral-600 dark:text-neutral-400"
+              className="mt-6 text-center text-sm text-morandi-mist"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
+              transition={{ ...liquidSpringConfig.gentle, delay: 0.3 }}
             >
               已有密码？
-              <Link href="/login" className="ml-1.5 text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors duration-200 font-medium">
+              <Link href="/login" className="ml-1.5 text-morandi-ocean hover:text-morandi-ocean/80 transition-colors duration-200 font-medium">
                 直接登录
               </Link>
             </motion.p>

@@ -1,37 +1,27 @@
+'use client'
+
 import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { liquidSpringConfig } from '@design-system/theme/animations'
+import { LiquidButton } from '@design-system/components/liquid-button'
 
 export default function NotFound() {
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #1A1F2E, #252B3B)',
-      color: '#E8ECF1',
-      fontFamily: 'Inter, Noto Sans SC, system-ui, sans-serif',
-    }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 72, fontWeight: 700, color: '#7C8DA6', lineHeight: 1 }}>404</div>
-        <p style={{ fontSize: 16, color: '#8E99A8', marginTop: 16, marginBottom: 24 }}>
-          页面不存在或已被移除
-        </p>
-        <Link
-          href="/"
-          style={{
-            display: 'inline-block',
-            padding: '10px 24px',
-            borderRadius: 12,
-            border: '1px solid rgba(124, 141, 166, 0.3)',
-            background: 'linear-gradient(135deg, rgba(124, 141, 166, 0.4), rgba(124, 141, 166, 0.2))',
-            color: '#E8ECF1',
-            fontSize: 14,
-            fontWeight: 500,
-            textDecoration: 'none',
-          }}
+    <div className="flex min-h-screen items-center justify-center px-4 bg-gradient-to-br from-morandi-light via-morandi-cream to-morandi-blush">
+      <div className="text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={liquidSpringConfig.gentle}
         >
-          返回首页
-        </Link>
+          <div className="text-7xl font-bold text-morandi-ocean mb-2">404</div>
+          <p className="text-lg text-morandi-mist mb-6">
+            页面不存在或已被移除
+          </p>
+          <LiquidButton href="/" variant="primary" size="lg">
+            返回首页
+          </LiquidButton>
+        </motion.div>
       </div>
     </div>
   )

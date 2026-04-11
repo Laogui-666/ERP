@@ -9,33 +9,42 @@
 :root {
   /* ============================================================
      液态玻璃设计系统 - 莫兰迪浅色系 CSS变量映射
-     注意：新项目请直接使用 Tailwind 类名 liquid-*
-     以下变量仅用于向后兼容和CSS自定义属性场景
+     集成Panda002设计系统的Morandi配色方案
      ============================================================ */
 
-  /* 莫兰迪主色调 */
-  --color-primary: #E8D5C4;
+  /* Panda002 Morandi 配色系统 */
+  --morandi-ocean: #7A9D96;
+  --morandi-sand: #D6C6B0;
+  --morandi-mist: #B8C5C0;
+  --morandi-clay: #A89888;
+  --morandi-blush: #E8D5D0;
+  --morandi-deep: #2C3E50;
+  --morandi-light: #F5F7FA;
+  --morandi-cream: #F0EDE8;
+
+  /* 莫兰迪主色调 - 兼容现有系统 */
+  --color-primary: var(--morandi-blush);
   --color-primary-dark: #D4BDA8;
   --color-primary-light: #F5ECE4;
   --color-primary-glow: rgba(232, 213, 196, 0.15);
-  --color-secondary: #D6E0E5;
-  --color-accent: #D8E0D0;
+  --color-secondary: var(--morandi-mist);
+  --color-accent: var(--morandi-sand);
   --color-accent-glow: rgba(216, 224, 208, 0.15);
 
   /* 莫兰迪状态色 */
   --color-success: #D8E0D0;
   --color-warning: #E8E0D4;
   --color-error: #E0D4D4;
-  --color-info: #D6E0E5;
+  --color-info: var(--morandi-mist);
 
   /* 莫兰迪背景 - 浅色系 */
-  --color-bg-primary: #FDFCFB;
-  --color-bg-secondary: #F8F7F6;
+  --color-bg-primary: var(--morandi-light);
+  --color-bg-secondary: var(--morandi-cream);
   --color-bg-tertiary: #F3F2F1;
   --color-bg-overlay: rgba(0, 0, 0, 0.1);
 
   /* 莫兰迪文字层级 */
-  --color-text-primary: #292524;
+  --color-text-primary: var(--morandi-deep);
   --color-text-secondary: #57534E;
   --color-text-tertiary: #78716C;
   --color-text-placeholder: #A8A29E;
@@ -107,9 +116,9 @@
 /* ==================== 全局基础 ==================== */
 
 body {
-  background: linear-gradient(135deg, #FDFCFB 0%, #F8F7F6 50%, #FDFCFB 100%);
+  background: linear-gradient(135deg, var(--morandi-light) 0%, var(--morandi-cream) 50%, var(--morandi-light) 100%);
   background-attachment: fixed;
-  color: #292524;
+  color: var(--morandi-deep);
   font-family: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -549,3 +558,68 @@ body {
 /* ==================== 液态玻璃组件 ==================== */
 
 /* 通用玻璃容器 - 由 glassmorphism.css 扩展 */
+
+/* ==================== Panda002 设计系统样式 ==================== */
+
+/* 玻璃拟态基础样式 */
+.glass {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10);
+}
+
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
+  transform: translateY(-2px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 卡片悬停效果 */
+.card-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: scale(1.02) translateY(-4px);
+  box-shadow: 0 16px 48px 0 rgba(31, 38, 135, 0.12);
+}
+
+/* 服务卡片悬停效果 - 丝滑无停顿 */
+.service-card-hover {
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+.service-card-hover:hover {
+  transform: scale(1.03) translateY(-5px);
+  box-shadow: 0 16px 48px 0 rgba(31, 38, 135, 0.12);
+}
+
+/* 弹簧动画基础类 */
+.spring-transition {
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 0.3s ease-out,
+              box-shadow 0.3s ease-out;
+}
+
+/* 渐变背景 */
+.gradient-morandi {
+  background: linear-gradient(135deg, var(--morandi-light) 0%, var(--morandi-blush) 50%, var(--morandi-sand) 100%);
+}
+
+.gradient-ocean {
+  background: linear-gradient(180deg, var(--morandi-ocean) 0%, #5A7D76 100%);
+}
+
+/* 动画延迟类 */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+
+/* 文字选择颜色 */
+::selection {
+  background: var(--morandi-ocean);
+  color: white;
+}

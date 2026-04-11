@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * 客户端订单页 - 液体玻璃设计版
+ * 客户端订单页 - 现代设计版
  *
  * 对接 API：
  * - GET /api/orders (CUSTOMER 角色自动过滤为自己订单)
@@ -12,7 +12,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { apiFetch } from '@shared/lib/api-client'
 import { StatusBadge } from '@erp/components/orders/status-badge'
-import { Card } from '@shared/ui/card'
+import { LiquidCard } from '@design-system/components/liquid-card'
 import { formatDate } from '@shared/lib/utils'
 import { liquidSpringConfig } from '@design-system/theme/animations'
 import type { Order } from '@erp/types/order'
@@ -23,7 +23,6 @@ const STATUS_HINTS: Record<string, string> = {
   PENDING_DELIVERY: '📥 签证材料已制作完成，请下载查看',
   DELIVERED: '📥 签证材料已交付，请确认出签结果',
 }
-
 
 
 export default function CustomerOrdersPage() {
@@ -55,39 +54,39 @@ export default function CustomerOrdersPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={liquidSpringConfig.gentle}
       >
-        <h2 className="text-lg font-semibold text-glass-primary">
+        <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
           我的订单
         </h2>
-        <p className="mt-1 text-xs text-glass-muted">
+        <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
           查看您的签证订单状态
         </p>
       </motion.div>
 
       {/* 加载状态 */}
       {isLoading ? (
-        <Card padding="lg" className="text-center">
+        <LiquidCard liquidIntensity="light" padding="lg" className="text-center">
           <motion.div
-            className="inline-block w-6 h-6 border-2 border-glass-primary/30 border-t-glass-primary rounded-full"
+            className="inline-block w-6 h-6 border-2 border-violet-400/30 border-t-violet-600 rounded-full"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           />
-          <p className="mt-3 text-sm text-glass-muted">加载中...</p>
-        </Card>
+          <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-400">加载中...</p>
+        </LiquidCard>
       ) : orders.length === 0 ? (
         /* 空状态 */
-        <Card padding="lg" className="text-center">
+        <LiquidCard liquidIntensity="light" padding="lg" className="text-center">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={liquidSpringConfig.bouncy}
           >
-            <svg className="w-12 h-12 mx-auto text-glass-muted mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-12 h-12 mx-auto text-neutral-400 dark:text-neutral-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            <p className="text-glass-muted">暂无订单</p>
-            <p className="text-xs text-glass-muted/60 mt-1">客服录入后会自动显示在这里</p>
+            <p className="text-neutral-600 dark:text-neutral-400">暂无订单</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">客服录入后会自动显示在这里</p>
           </motion.div>
-        </Card>
+        </LiquidCard>
       ) : (
         /* 订单列表 */
         <div className="space-y-3">
@@ -95,43 +94,45 @@ export default function CustomerOrdersPage() {
             const hint = STATUS_HINTS[order.status]
 
             return (
-              <Link key={order.id} href={`/customer/orders/${order.id}`}>
+              <Link key={order.id} href={`/customer/orders/${order.id}`} className="block">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ ...liquidSpringConfig.gentle, delay: i * 0.1 }}
-                  className="glass-card glass-card-hover rounded-xl overflow-hidden"
+                  whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
                 >
-                  <div className="p-5">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-sm font-semibold text-glass-primary">{order.orderNo}</h3>
-                        <p className="text-xs text-glass-muted mt-1">{order.customerName}</p>
+                  <LiquidCard liquidIntensity="light" className="rounded-xl overflow-hidden">
+                    <div className="p-5">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{order.orderNo}</h3>
+                          <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">{order.customerName}</p>
+                        </div>
+                        {order.status && <StatusBadge status={order.status} />}
                       </div>
-                      {order.status && <StatusBadge status={order.status} />}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-neutral-600 dark:text-neutral-400">国家</span>
+                          <span className="text-neutral-900 dark:text-white">{order.targetCountry}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-neutral-600 dark:text-neutral-400">签证类型</span>
+                          <span className="text-neutral-900 dark:text-white">{order.visaType}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-neutral-600 dark:text-neutral-400">金额</span>
+                          <span className="text-neutral-900 dark:text-white font-medium">¥{Number(order.amount).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-neutral-600 dark:text-neutral-400">创建时间</span>
+                          <span className="text-neutral-600 dark:text-neutral-400">{formatDate(order.createdAt)}</span>
+                        </div>
+                      </div>
+                      {hint && (
+                        <div className="text-xs text-amber-600 dark:text-amber-400 mb-2">{hint}</div>
+                      )}
                     </div>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-glass-muted">国家</span>
-                        <span className="text-glass-primary">{order.targetCountry}</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-glass-muted">签证类型</span>
-                        <span className="text-glass-primary">{order.visaType}</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-glass-muted">金额</span>
-                        <span className="text-glass-primary font-medium">¥{Number(order.amount).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-glass-muted">创建时间</span>
-                        <span className="text-glass-muted">{formatDate(order.createdAt)}</span>
-                      </div>
-                    </div>
-                    {hint && (
-                      <div className="text-xs text-glass-warning mb-2">{hint}</div>
-                    )}
-                  </div>
+                  </LiquidCard>
                 </motion.div>
               </Link>
             )

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { GlassCard } from '@shared/ui/glass-card'
-import { Button } from '@shared/ui/button'
+import { LiquidCard } from '@design-system/components/liquid-card'
+import { LiquidButton } from '@design-system/components/liquid-button'
 import { useToast } from '@shared/ui/toast'
 import { apiFetch } from '@shared/lib/api-client'
 import { ToolPageHeader } from '@/components/portal/tool-page-header'
@@ -53,32 +53,37 @@ export default function AssessmentPage() {
 
       {step === 0 && (
         <div className="space-y-3">
-          <p className="mb-4 text-[14px] text-liquid-mist">选择目标国家</p>
+          <p className="mb-4 text-[14px] text-neutral-700 dark:text-neutral-300">选择目标国家</p>
           {COUNTRIES.map(c => (
-            <GlassCard key={c} intensity="light" hover className="cursor-pointer p-4" onClick={() => { setCountry(c); setStep(1) }}>
-              <p className="text-[15px] font-medium text-liquid-deep">🌍 {c}</p>
-            </GlassCard>
+            <LiquidCard key={c} liquidIntensity="light" className="cursor-pointer p-4 hover:shadow-lg transition-all duration-300" onClick={() => { setCountry(c); setStep(1) }}>
+              <p className="text-[15px] font-medium text-neutral-900 dark:text-white">🌍 {c}</p>
+            </LiquidCard>
           ))}
         </div>
       )}
 
       {step >= 1 && step <= 4 && (
         <div>
-          <button onClick={() => setStep(s => Math.max(0, s - 1))} className="mb-4 text-[13px] text-liquid-ocean hover:underline">← 上一步</button>
-          <div className="mb-4 flex gap-1">{[1,2,3,4].map(s => <div key={s} className={`h-1 flex-1 rounded-full ${s <= step ? 'bg-liquid-ocean' : 'bg-liquid-ocean/10'}`} />)}</div>
-          <p className="mb-2 text-[11px] text-liquid-mist/60">{country} · 旅游签证</p>
+          <button onClick={() => setStep(s => Math.max(0, s - 1))} className="mb-4 text-[13px] text-violet-600 dark:text-violet-400 hover:underline">← 上一步</button>
+          <div className="mb-4 flex gap-1">{[1,2,3,4].map(s => <div key={s} className={`h-1 flex-1 rounded-full ${s <= step ? 'bg-violet-600' : 'bg-violet-200 dark:bg-violet-800'}`} />)}</div>
+          <p className="mb-2 text-[11px] text-neutral-500 dark:text-neutral-500">{country} · 旅游签证</p>
           {QUESTIONS[step - 1] && (
             <div>
-              <p className="mb-4 text-[16px] font-semibold text-liquid-deep">{QUESTIONS[step - 1].label}</p>
+              <p className="mb-4 text-[16px] font-semibold text-neutral-900 dark:text-white">{QUESTIONS[step - 1].label}</p>
               <div className="space-y-3">
                 {QUESTIONS[step - 1].options.map(opt => (
-                  <GlassCard key={opt.value} intensity={answers[QUESTIONS[step - 1].key] === opt.value ? 'accent' : 'light'} hover className="cursor-pointer p-4" onClick={() => handleAnswer(QUESTIONS[step - 1].key, opt.value)}>
-                    <p className="text-[14px] text-liquid-deep">{opt.label}</p>
-                  </GlassCard>
+                  <LiquidCard 
+                    key={opt.value} 
+                    liquidIntensity={answers[QUESTIONS[step - 1].key] === opt.value ? 'medium' : 'light'} 
+                    className="cursor-pointer p-4 hover:shadow-lg transition-all duration-300"
+                    onClick={() => handleAnswer(QUESTIONS[step - 1].key, opt.value)}
+                  >
+                    <p className="text-[14px] text-neutral-900 dark:text-white">{opt.label}</p>
+                  </LiquidCard>
                 ))}
               </div>
               {step === 4 && Object.keys(answers).length === 4 && (
-                <div className="mt-6"><Button variant="primary" className="w-full" onClick={handleEvaluate}>查看评估结果</Button></div>
+                <div className="mt-6"><LiquidButton variant="primary" className="w-full" onClick={handleEvaluate}>查看评估结果</LiquidButton></div>
               )}
             </div>
           )}
@@ -87,19 +92,19 @@ export default function AssessmentPage() {
 
       {step === 5 && result && (
         <div>
-          <button onClick={() => { setStep(0); setAnswers({}); setResult(null) }} className="mb-4 text-[13px] text-liquid-ocean hover:underline">← 重新评估</button>
-          <GlassCard intensity="medium" className="p-6 text-center">
-            <p className="mb-2 text-[13px] text-liquid-mist">{country} · 旅游签证</p>
+          <button onClick={() => { setStep(0); setAnswers({}); setResult(null) }} className="mb-4 text-[13px] text-violet-600 dark:text-violet-400 hover:underline">← 重新评估</button>
+          <LiquidCard liquidIntensity="medium" className="p-6 text-center">
+            <p className="mb-2 text-[13px] text-neutral-600 dark:text-neutral-400">{country} · 旅游签证</p>
             <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full border-4" style={{ borderColor: levelColors[result.level] }}>
               <span className="text-[32px] font-bold" style={{ color: levelColors[result.level] }}>{result.score}</span>
             </div>
             <p className="mb-4 text-[16px] font-semibold" style={{ color: levelColors[result.level] }}>{levelLabels[result.level]}</p>
             <div className="mt-4 space-y-2 text-left">
-              <p className="text-[13px] font-semibold text-liquid-deep">建议：</p>
-              {result.suggestions.map((s, i) => <p key={i} className="text-[13px] text-liquid-mist">• {s}</p>)}
+              <p className="text-[13px] font-semibold text-neutral-900 dark:text-white">建议：</p>
+              {result.suggestions.map((s, i) => <p key={i} className="text-[13px] text-neutral-600 dark:text-neutral-400">• {s}</p>)}
             </div>
-          </GlassCard>
-          <div className="mt-4 text-center"><p className="text-[12px] text-liquid-mist/60">* 评估结果仅供参考，实际结果以使馆审批为准</p></div>
+          </LiquidCard>
+          <div className="mt-4 text-center"><p className="text-[12px] text-neutral-500 dark:text-neutral-500">* 评估结果仅供参考，实际结果以使馆审批为准</p></div>
         </div>
       )}
     </div>

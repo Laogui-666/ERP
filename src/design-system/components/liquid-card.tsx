@@ -31,28 +31,28 @@ const LiquidCard = forwardRef<HTMLDivElement, LiquidCardProps>(
 
     const intensityConfig = {
       light: {
-        bg: 'bg-liquid-surface/85',
+        bg: 'bg-white/65',
         blur: 'backdrop-blur-lg',
-        border: 'border-liquid-borderLight/50',
-        shadow: 'shadow-liquid-soft',
+        border: 'border-white/40',
+        shadow: 'shadow-[0_4px_16px_0_rgba(31,38,135,0.08)]',
       },
       medium: {
-        bg: 'bg-liquid-surface/90',
+        bg: 'bg-white/75',
         blur: 'backdrop-blur-xl',
-        border: 'border-liquid-border/60',
-        shadow: 'shadow-liquid-medium',
+        border: 'border-white/50',
+        shadow: 'shadow-[0_8px_32px_0_rgba(31,38,135,0.10)]',
       },
       strong: {
-        bg: 'bg-liquid-surface/95',
+        bg: 'bg-white/85',
         blur: 'backdrop-blur-2xl',
-        border: 'border-liquid-border/70',
-        shadow: 'shadow-liquid-strong',
+        border: 'border-white/60',
+        shadow: 'shadow-[0_12px_40px_0_rgba(31,38,135,0.12)]',
       },
       ultra: {
-        bg: 'bg-liquid-surface/98',
+        bg: 'bg-white/95',
         blur: 'backdrop-blur-3xl',
-        border: 'border-liquid-border/80',
-        shadow: 'shadow-liquid-glow',
+        border: 'border-white/70',
+        shadow: 'shadow-[0_16px_48px_0_rgba(31,38,135,0.15)]',
       },
     };
 
@@ -69,11 +69,11 @@ const LiquidCard = forwardRef<HTMLDivElement, LiquidCardProps>(
         config.bg,
         config.blur,
         withBorder && config.border,
-        'shadow-liquid-glow',
+        'shadow-[0_16px_48px_0_rgba(31,38,135,0.15)]',
         'transform-gpu'
       ),
-      solid: 'bg-liquid-surface shadow-liquid-medium',
-      outlined: 'bg-transparent border border-liquid-border/30',
+      solid: 'bg-white shadow-[0_8px_32px_0_rgba(31,38,135,0.10)]',
+      outlined: 'bg-transparent border border-white/30',
     };
 
     const paddings = {
@@ -99,9 +99,9 @@ const LiquidCard = forwardRef<HTMLDivElement, LiquidCardProps>(
           hoverStyles,
           className
         )}
-        whileHover={hoverable ? { scale: 1.015, y: -1 } : {}}
-        whileTap={hoverable ? { scale: 0.985 } : {}}
-        transition={liquidSpringConfig.snappy}
+        whileHover={hoverable ? { scale: 1.02, y: -4, boxShadow: '0 16px 48px 0 rgba(31,38,135,0.12)' } : {}}
+        whileTap={hoverable ? { scale: 0.985, y: 0 } : {}}
+        transition={liquidSpringConfig.liquid}
         {...props as any}
       >
         {/* 顶部光泽效果 */}

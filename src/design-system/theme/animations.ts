@@ -1,41 +1,49 @@
 // 华夏签证 ERP - 液态玻璃动画系统
 // 弹簧物理动画配置
+// 优化后更加丝滑响应，参考Panda002设计风格
 
 export const liquidSpringConfig = {
   // 轻柔弹簧 - 用于大型元素
   gentle: {
     type: 'spring' as const,
-    stiffness: 420,
-    damping: 32,
-    mass: 0.9,
+    stiffness: 450,
+    damping: 35,
+    mass: 0.85,
   },
   // 中等弹簧 - 用于一般元素
   medium: {
     type: 'spring' as const,
-    stiffness: 520,
-    damping: 38,
-    mass: 0.85,
+    stiffness: 550,
+    damping: 40,
+    mass: 0.8,
   },
   // 强力弹簧 - 用于小型交互元素
   snappy: {
     type: 'spring' as const,
-    stiffness: 650,
-    damping: 45,
-    mass: 0.7,
+    stiffness: 700,
+    damping: 48,
+    mass: 0.65,
   },
   // 弹性弹簧 - 用于需要明显回弹效果
   bouncy: {
     type: 'spring' as const,
-    stiffness: 520,
-    damping: 22,
-    mass: 0.85,
+    stiffness: 550,
+    damping: 24,
+    mass: 0.8,
   },
   // 液态弹簧 - 丝滑流畅
   liquid: {
     type: 'spring' as const,
-    stiffness: 500,
-    damping: 35,
-    mass: 0.8,
+    stiffness: 550,
+    damping: 38,
+    mass: 0.75,
+  },
+  // 超快速弹簧 - 用于微交互
+  ultra: {
+    type: 'spring' as const,
+    stiffness: 800,
+    damping: 50,
+    mass: 0.6,
   },
 };
 
@@ -113,17 +121,31 @@ export const staggerItem = {
   },
 };
 
-// 悬停动画
+// 悬停动画 - 优化为更丝滑的效果
 export const hoverScale = {
-  whileHover: { scale: 1.02 },
-  whileTap: { scale: 0.98 },
-  transition: liquidSpringConfig.liquid,
+  whileHover: { scale: 1.015 },
+  whileTap: { scale: 0.985 },
+  transition: liquidSpringConfig.ultra,
 };
 
 export const hoverLift = {
-  whileHover: { y: -4, scale: 1.01 },
-  whileTap: { y: 0, scale: 0.99 },
+  whileHover: { y: -4, scale: 1.01, boxShadow: '0 12px 32px rgba(0,0,0,0.1)' },
+  whileTap: { y: 0, scale: 0.99, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' },
   transition: liquidSpringConfig.liquid,
+};
+
+// 服务卡片悬停动画 - 参考Panda002
+export const serviceCardHover = {
+  whileHover: { y: -6, scale: 1.02, boxShadow: '0 16px 48px rgba(0,0,0,0.12)' },
+  whileTap: { y: 0, scale: 0.99, boxShadow: '0 8px 24px rgba(0,0,0,0.1)' },
+  transition: liquidSpringConfig.snappy,
+};
+
+// 目的地卡片悬停动画
+export const destinationCardHover = {
+  whileHover: { y: -4, scale: 1.02 },
+  whileTap: { y: 0, scale: 0.98 },
+  transition: liquidSpringConfig.snappy,
 };
 
 // 页面过渡动画

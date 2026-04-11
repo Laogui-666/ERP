@@ -29,8 +29,8 @@ const LiquidInput = forwardRef<HTMLInputElement, LiquidInputProps>(
     const baseStyles = 'w-full px-5 py-4 md:py-3.5 rounded-3xl transition-all duration-300 focus:outline-none text-base md:text-sm';
 
     const variants = {
-      liquid: 'bg-liquid-surface/85 backdrop-blur-xl border border-liquid-border/50 focus:bg-liquid-surface/95 focus:border-liquid-ocean/60 hover:border-liquid-ocean/40 shadow-liquid-soft focus:shadow-liquid-medium',
-      solid: 'bg-liquid-surface border border-liquid-border/30 focus:border-liquid-ocean focus:shadow-liquid-medium',
+      liquid: 'bg-white/75 backdrop-blur-xl border border-white/40 focus:bg-white/90 focus:border-morandi-ocean/60 hover:border-morandi-ocean/40 shadow-[0_4px_16px_0_rgba(31,38,135,0.08)] focus:shadow-[0_8px_32px_0_rgba(31,38,135,0.12)]',
+      solid: 'bg-white border border-white/30 focus:border-morandi-ocean focus:shadow-[0_8px_32px_0_rgba(31,38,135,0.12)]',
     };
 
     return (
@@ -38,14 +38,14 @@ const LiquidInput = forwardRef<HTMLInputElement, LiquidInputProps>(
         {label && (
           <label 
             htmlFor={inputId}
-            className="block text-sm font-semibold text-liquid-deep mb-2"
+            className="block text-sm font-semibold text-morandi-deep mb-2"
           >
             {label}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
-            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-liquid-mist">
+            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-morandi-mist">
               {leftIcon}
             </span>
           )}
@@ -63,14 +63,14 @@ const LiquidInput = forwardRef<HTMLInputElement, LiquidInputProps>(
             {...props}
           />
           {rightIcon && (
-            <span className="absolute right-5 top-1/2 -translate-y-1/2 text-liquid-mist">
+            <span className="absolute right-5 top-1/2 -translate-y-1/2 text-morandi-mist">
               {rightIcon}
             </span>
           )}
         </div>
         {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
         {helperText && !error && (
-          <p className="mt-2 text-sm text-liquid-mist">{helperText}</p>
+          <p className="mt-2 text-sm text-morandi-mist">{helperText}</p>
         )}
       </div>
     );

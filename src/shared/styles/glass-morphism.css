@@ -6,11 +6,11 @@
 }
 
 .glass-card:hover {
-  @apply shadow-glass-medium transform -translate-y-1;
+  @apply shadow-glass-soft;
 }
 
 .glass-card:active {
-  @apply shadow-glass-soft transform translate-y-0;
+  @apply shadow-glass-soft;
 }
 
 /* 玻璃拟态按钮 */
@@ -1014,7 +1014,7 @@
 
 /* 玻璃拟态卡片悬停效果 */
 .glass-card-hover {
-  @apply transition-all duration-300 hover:shadow-glass-medium hover:-translate-y-1;
+  @apply transition-all duration-300;
 }
 
 /* 玻璃拟态按钮悬停效果 */

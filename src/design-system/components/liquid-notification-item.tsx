@@ -33,11 +33,11 @@ const LiquidNotificationItem = forwardRef<HTMLDivElement, LiquidNotificationItem
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ ...liquidSpringConfig.medium, delay: delay * 0.02 }}
-        whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.08)' }}
-        whileTap={{ scale: 0.995 }}
+        whileHover={{ scale: 1.01, x: 2 }}
+        whileTap={{ scale: 0.99 }}
         onClick={onClick}
         className={cn(
-          'relative px-4 py-3.5 cursor-pointer transition-all',
+          'relative px-4 py-3.5 cursor-pointer',
           'border-b border-white/[0.04] last:border-b-0',
           !isRead ? 'bg-liquid-ocean/[0.04]' : '',
           className

@@ -79,9 +79,9 @@ const LiquidButton = forwardRef<HTMLButtonElement, LiquidButtonProps>(
           className
         )}
         disabled={disabled || isLoading}
-        whileHover={{ scale: disabled || isLoading ? 1 : 1.02 }}
-        whileTap={{ scale: disabled || isLoading ? 1 : 0.97 }}
-        transition={liquidSpringConfig.liquid}
+        whileHover={{ scale: disabled || isLoading ? 1 : 1.015 }}
+        whileTap={{ scale: disabled || isLoading ? 1 : 0.985 }}
+        transition={liquidSpringConfig.snappy}
         {...props}
       >
         {/* 光泽效果层 */}

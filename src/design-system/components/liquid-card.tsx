@@ -3,6 +3,7 @@
 import { forwardRef, ReactNode, HTMLAttributes } from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
 import { cn } from '@shared/lib/utils';
+import { liquidSpringConfig } from '../theme/animations';
 
 interface LiquidCardProps extends HTMLMotionProps<'div'> {
   variant?: 'liquid' | 'solid' | 'outlined' | 'liquid-elevated';
@@ -84,7 +85,7 @@ const LiquidCard = forwardRef<HTMLDivElement, LiquidCardProps>(
     };
 
     const hoverStyles = hoverable
-      ? 'cursor-pointer hover:scale-[1.02] hover:-translate-y-1 hover:shadow-liquid-strong active:scale-[0.99]'
+      ? 'cursor-pointer'
       : '';
 
     return (
@@ -98,6 +99,9 @@ const LiquidCard = forwardRef<HTMLDivElement, LiquidCardProps>(
           hoverStyles,
           className
         )}
+        whileHover={hoverable ? { scale: 1.015, y: -1 } : {}}
+        whileTap={hoverable ? { scale: 0.985 } : {}}
+        transition={liquidSpringConfig.snappy}
         {...props as any}
       >
         {/* 顶部光泽效果 */}

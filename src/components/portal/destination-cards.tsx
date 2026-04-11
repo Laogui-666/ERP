@@ -15,17 +15,6 @@ const DESTINATIONS = [
 ]
 
 export function DestinationCards() {
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 8
-    const y = ((e.clientY - rect.top) / rect.height - 0.5) * -8
-    e.currentTarget.style.transform = `perspective(1000px) rotateY(${x}deg) rotateX(${y}deg) translateZ(10px)`
-  }
-
-  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.currentTarget.style.transform = 'perspective(1000px) rotateY(0) rotateX(0) translateZ(0)'
-  }
-
   return (
     <section className="py-16 md:py-24 relative overflow-hidden">
       {/* 背景装饰 */}
@@ -66,14 +55,11 @@ export function DestinationCards() {
                 className="flex-shrink-0 snap-start w-[180px] md:w-[220px]"
               >
                 <div
-                  className={`group h-[260px] md:h-[300px] rounded-glass-lg glass-card p-5 flex flex-col cursor-pointer transition-all duration-500 hover:shadow-glass-medium glass-card-hover`}
-                  onMouseMove={handleMouseMove}
-                  onMouseLeave={handleMouseLeave}
-                  style={{ transition: 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s, border-color 0.3s' }}
+                  className={`h-[260px] md:h-[300px] rounded-glass-lg glass-card p-5 flex flex-col cursor-pointer`}
                 >
                   {/* 国旗 */}
                   <div className="flex-1 flex items-center justify-center">
-                    <span className="text-5xl md:text-6xl transition-transform duration-500 group-hover:scale-110">{d.flag}</span>
+                    <span className="text-5xl md:text-6xl">{d.flag}</span>
                   </div>
 
                   {/* 分隔线 */}
@@ -95,8 +81,8 @@ export function DestinationCards() {
                     </p>
                   </div>
 
-                  {/* Hover CTA */}
-                  <div className="mt-3 opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+                  {/* CTA */}
+                  <div className="mt-3">
                     <span className="text-sm text-glass-primary font-medium flex items-center gap-1">
                       立即办理 
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

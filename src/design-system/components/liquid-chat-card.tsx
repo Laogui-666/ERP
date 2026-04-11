@@ -37,16 +37,14 @@ const LiquidChatCard = forwardRef<HTMLDivElement, LiquidChatCardProps>(
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ ...liquidSpringConfig.medium, delay: delay * 0.05 }}
-        whileHover={{ scale: 1.01, y: -2 }}
-        whileTap={{ scale: 0.99 }}
+        whileHover={{ scale: 1.015, y: -1 }}
+        whileTap={{ scale: 0.985 }}
         onClick={onClick}
         className={cn(
           'relative overflow-hidden rounded-2xl p-4',
           'bg-white/60 backdrop-blur-xl',
           'border border-white/50',
           'shadow-liquid-soft',
-          'transition-all duration-300',
-          'hover:shadow-liquid-medium',
           'cursor-pointer',
           className
         )}

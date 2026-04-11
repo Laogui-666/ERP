@@ -5,37 +5,37 @@ export const liquidSpringConfig = {
   // 轻柔弹簧 - 用于大型元素
   gentle: {
     type: 'spring' as const,
-    stiffness: 350,
-    damping: 25,
-    mass: 1,
+    stiffness: 420,
+    damping: 32,
+    mass: 0.9,
   },
   // 中等弹簧 - 用于一般元素
   medium: {
     type: 'spring' as const,
-    stiffness: 450,
-    damping: 30,
-    mass: 1,
+    stiffness: 520,
+    damping: 38,
+    mass: 0.85,
   },
   // 强力弹簧 - 用于小型交互元素
   snappy: {
     type: 'spring' as const,
-    stiffness: 550,
-    damping: 35,
-    mass: 0.8,
+    stiffness: 650,
+    damping: 45,
+    mass: 0.7,
   },
   // 弹性弹簧 - 用于需要明显回弹效果
   bouncy: {
     type: 'spring' as const,
-    stiffness: 450,
-    damping: 18,
-    mass: 1,
+    stiffness: 520,
+    damping: 22,
+    mass: 0.85,
   },
   // 液态弹簧 - 丝滑流畅
   liquid: {
     type: 'spring' as const,
-    stiffness: 400,
-    damping: 28,
-    mass: 0.9,
+    stiffness: 500,
+    damping: 35,
+    mass: 0.8,
   },
 };
 

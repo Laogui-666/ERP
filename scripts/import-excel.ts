@@ -18,6 +18,7 @@
  */
 
 import { PrismaClient } from '@prisma/client'
+import type { Prisma } from '@prisma/client';
 import * as XLSX from 'xlsx'
 import * as path from 'path'
 import * as crypto from 'crypto'
@@ -441,7 +442,7 @@ async function importOrders(orders: ParsedOrder[], companyId: string): Promise<{
           - (order.rejectionInsurance ?? 0)) * 100
       ) / 100
 
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         // 创建订单
         const dbOrder = await tx.order.create({
           data: {

@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useAuth } from '@shared/hooks/use-auth'
 import { motion } from 'framer-motion'
 import { liquidSpringConfig } from '@design-system/theme/animations'

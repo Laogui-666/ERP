@@ -3,10 +3,10 @@
 import { useState, useEffect, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { DynamicBackground } from '@shared/ui/dynamic-bg'
 import { LiquidCard } from '@design-system/components/liquid-card'
 import { LiquidInput } from '@design-system/components/liquid-input'
 import { LiquidButton } from '@design-system/components/liquid-button'
+import { liquidSpringConfig } from '@design-system/theme/animations';
 import { motion } from 'framer-motion'
 
 function ResetPasswordForm() {

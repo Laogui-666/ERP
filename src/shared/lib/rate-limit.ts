@@ -59,8 +59,8 @@ export function rateLimit() {
     ]
 
     if (publicRoutes.some(route => pathname.startsWith(route))) {
-      // 对公开路由应用更严格的限制
-      return applyRateLimit(ip, request, 30, 300) // 每分钟30次，每小时300次
+      // 对公开路由应用合理的限制
+      return applyRateLimit(ip, request, 60, 600) // 每分钟60次，每小时600次
     }
 
     // 对其他路由应用默认限制

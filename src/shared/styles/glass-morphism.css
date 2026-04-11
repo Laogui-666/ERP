@@ -2,28 +2,12 @@
 
 /* 基础玻璃拟态效果 */
 .glass-card {
-  @apply bg-glass-bg-card backdrop-blur-glass rounded-glass border border-glass-border-light shadow-glass-soft transition-all duration-300;
-}
-
-.glass-card:hover {
-  @apply shadow-glass-soft;
-}
-
-.glass-card:active {
-  @apply shadow-glass-soft;
+  @apply bg-glass-bg-card backdrop-blur-glass rounded-glass border border-glass-border-light shadow-glass-soft;
 }
 
 /* 玻璃拟态按钮 */
 .glass-button {
-  @apply bg-glass-bg-card backdrop-blur-glass rounded-glass-sm border border-glass-border-light shadow-glass-soft px-6 py-3 font-medium transition-all duration-300;
-}
-
-.glass-button:hover {
-  @apply shadow-glass-medium transform -translate-y-0.5;
-}
-
-.glass-button:active {
-  @apply shadow-glass-soft transform translate-y-0;
+  @apply bg-glass-bg-card backdrop-blur-glass rounded-glass-sm border border-glass-border-light shadow-glass-soft px-6 py-3 font-medium;
 }
 
 /* 玻璃拟态弹窗 */
@@ -1012,30 +996,7 @@
   @apply glass-text-sm mb-4;
 }
 
-/* 玻璃拟态卡片悬停效果 */
-.glass-card-hover {
-  @apply transition-all duration-300;
-}
 
-/* 玻璃拟态按钮悬停效果 */
-.glass-button-hover {
-  @apply transition-all duration-300 hover:shadow-glass-medium hover:-translate-y-0.5;
-}
-
-/* 玻璃拟态输入框悬停效果 */
-.glass-input-hover {
-  @apply transition-all duration-300 hover:border-glass-primary/30;
-}
-
-/* 玻璃拟态卡片点击效果 */
-.glass-card-active {
-  @apply transition-all duration-200 active:shadow-glass-soft active:translate-y-0;
-}
-
-/* 玻璃拟态按钮点击效果 */
-.glass-button-active {
-  @apply transition-all duration-200 active:shadow-glass-soft active:translate-y-0;
-}
 
 /* 玻璃拟态输入框聚焦效果 */
 .glass-input-focus {

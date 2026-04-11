@@ -9,12 +9,12 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantStyles = {
-  default: 'bg-glass-bg/30 text-glass-muted border-glass-border',
-  success: 'bg-glass-success/20 text-glass-success border-glass-success/30',
-  warning: 'bg-glass-warning/20 text-glass-warning border-glass-warning/30',
-  danger: 'bg-glass-danger/20 text-glass-danger border-glass-danger/30',
-  info: 'bg-glass-primary/20 text-glass-primary border-glass-primary/30',
-  purple: 'bg-glass-accent/20 text-glass-accent border-glass-accent/30',
+  default: 'bg-glass-bg/30 text-glass-text-primary border-glass-border',
+  success: 'bg-green-100/70 text-green-800 border-green-200',
+  warning: 'bg-yellow-100/70 text-yellow-800 border-yellow-200',
+  danger: 'bg-red-100/70 text-red-800 border-red-200',
+  info: 'bg-blue-100/70 text-blue-800 border-blue-200',
+  purple: 'bg-purple-100/70 text-purple-800 border-purple-200',
 }
 
 const sizeStyles = {

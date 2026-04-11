@@ -4,7 +4,7 @@ import '@shared/styles/glassmorphism.css'
 import '@shared/styles/liquid-globals.css'
 import '@shared/styles/glass-morphism.css'
 import { ToastProvider } from '@shared/ui/toast'
-import { DynamicBackground } from '@shared/ui/dynamic-bg'
+
 
 export const metadata: Metadata = {
   title: '华夏签证 - 一站式签证服务平台',
@@ -19,7 +19,6 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="min-h-screen antialiased glass-background">
-        <DynamicBackground />
         <div className="relative z-10">
           <ToastProvider>
             {children}

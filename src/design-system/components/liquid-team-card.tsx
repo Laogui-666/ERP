@@ -1,9 +1,7 @@
 'use client';
 
 import { forwardRef } from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@shared/lib/utils';
-import { liquidSpringConfig } from '../theme/animations';
 import { LiquidRoleBadge } from './liquid-role-badge';
 
 interface LiquidTeamCardProps {
@@ -22,17 +20,14 @@ const LiquidTeamCard = forwardRef<HTMLDivElement, LiquidTeamCardProps>(
     const isActive = status === 'ACTIVE';
 
     return (
-      <motion.div
+      <div
         ref={ref}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...liquidSpringConfig.medium, delay: delay * 0.05 }}
-
         className={cn(
           'relative overflow-hidden rounded-2xl p-4',
-          'bg-white/60 backdrop-blur-xl',
+          'bg-white/60',
           'border border-white/50',
           'shadow-liquid-soft',
+          'animate-enter-scale',
           className
         )}
       >
@@ -46,17 +41,15 @@ const LiquidTeamCard = forwardRef<HTMLDivElement, LiquidTeamCardProps>(
         <div className="relative z-10">
           <div className="flex items-center gap-3">
             {/* 头像 */}
-            <motion.div
+            <div
               className={cn(
                 'w-12 h-12 rounded-xl flex items-center justify-center text-base font-semibold shrink-0',
                 'bg-liquid-ocean/15 text-liquid-ocean',
                 'border border-white/30'
               )}
-              whileHover={{ rotate: 5, scale: 1.05 }}
-              transition={liquidSpringConfig.snappy}
             >
               {name[0]}
-            </motion.div>
+            </div>
 
             {/* 信息 */}
             <div className="flex-1 min-w-0">
@@ -64,20 +57,11 @@ const LiquidTeamCard = forwardRef<HTMLDivElement, LiquidTeamCardProps>(
                 <span className="text-sm font-semibold text-liquid-deep truncate">
                   {name}
                 </span>
-                <motion.span
+                <span
                   className={cn(
                     'w-2 h-2 rounded-full shrink-0',
                     isActive ? 'bg-emerald-500' : 'bg-red-400'
                   )}
-                  animate={isActive ? {
-                    scale: [1, 1.2, 1],
-                    opacity: [1, 0.8, 1]
-                  } : {}}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: 'easeInOut'
-                  }}
                 />
               </div>
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -112,7 +96,7 @@ const LiquidTeamCard = forwardRef<HTMLDivElement, LiquidTeamCardProps>(
             )}
           </div>
         </div>
-      </motion.div>
+      </div>
     );
   }
 );

@@ -12,27 +12,27 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', isLoading, disabled, children, ...props }, ref) => {
     const baseStyles = cn(
-      'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200',
+      'inline-flex items-center justify-center font-medium rounded-xl',
       'focus:outline-none',
       'disabled:opacity-50 disabled:cursor-not-allowed',
-      'active:scale-[0.97]',
+      'button-hover'
     )
 
     const variants = {
       primary: cn(
-        'glass-button glass-button-hover text-white',
+        'bg-morandi-ocean text-white',
       ),
       secondary: cn(
-        'glass-card glass-card-hover text-glass-primary',
+        'bg-morandi-sand text-morandi-deep',
       ),
       ghost: cn(
-        'glass-button-hover text-glass-muted hover:text-glass-primary',
+        'text-morandi-deep',
       ),
       danger: cn(
-        'bg-glass-danger/90 border border-glass-danger/30 text-white hover:bg-glass-danger hover:border-glass-danger/50 shadow-lg',
+        'bg-red-600 text-white shadow-lg',
       ),
       success: cn(
-        'bg-glass-success/90 border border-glass-success/30 text-white hover:bg-glass-success hover:border-glass-success/50 shadow-lg',
+        'bg-green-600 text-white shadow-lg',
       ),
     }
 

@@ -1,9 +1,7 @@
 'use client';
 
 import { forwardRef, ReactNode } from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@shared/lib/utils';
-import { liquidSpringConfig } from '../theme/animations';
 
 interface LiquidChatCardProps {
   orderNo: string;
@@ -32,20 +30,15 @@ const LiquidChatCard = forwardRef<HTMLDivElement, LiquidChatCardProps>(
     delay = 0
   }, ref) => {
     return (
-      <motion.div
+      <div
         ref={ref}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...liquidSpringConfig.medium, delay: delay * 0.05 }}
-        whileHover={{ scale: 1.015, y: -1 }}
-        whileTap={{ scale: 0.985 }}
         onClick={onClick}
         className={cn(
           'relative overflow-hidden rounded-2xl p-4',
-          'bg-white/60 backdrop-blur-xl',
+          'bg-white/60',
           'border border-white/50',
           'shadow-liquid-soft',
-          'cursor-pointer',
+          'cursor-pointer card-hover animate-enter-slide-up',
           className
         )}
       >
@@ -58,17 +51,15 @@ const LiquidChatCard = forwardRef<HTMLDivElement, LiquidChatCardProps>(
         {/* 内容层 */}
         <div className="relative z-10 flex items-start gap-3">
           {/* 图标 */}
-          <motion.div 
+          <div 
             className={cn(
               'flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-lg',
               'bg-liquid-ocean/15 text-liquid-ocean',
               'border border-white/30'
             )}
-            whileHover={{ rotate: 5, scale: 1.05 }}
-            transition={liquidSpringConfig.snappy}
           >
             🎫
-          </motion.div>
+          </div>
 
           <div className="flex-1 min-w-0">
             {/* 顶部行 */}
@@ -100,19 +91,16 @@ const LiquidChatCard = forwardRef<HTMLDivElement, LiquidChatCardProps>(
                 {lastMessage || '点击进入会话'}
               </p>
               {unreadCount > 0 && (
-                <motion.span 
-                  className="flex-shrink-0 min-w-[18px] h-[18px] rounded-full bg-red-500 text-[10px] text-white flex items-center justify-center px-1 font-medium"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={liquidSpringConfig.bouncy}
+                <span 
+                  className="flex-shrink-0 min-w-[18px] h-[18px] rounded-full bg-red-500 text-[10px] text-white flex items-center justify-center px-1 font-medium animate-enter-scale"
                 >
                   {unreadCount > 99 ? '99+' : unreadCount}
-                </motion.span>
+                </span>
               )}
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     );
   }
 );

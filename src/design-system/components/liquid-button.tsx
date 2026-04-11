@@ -1,73 +1,57 @@
 'use client';
 
-import { forwardRef, ReactNode } from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
+import { forwardRef } from 'react';
 import { cn } from '@shared/lib/utils';
-import { liquidSpringConfig } from '../theme/animations';
 
-interface LiquidButtonBaseProps {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'liquid' | 'liquid-fill';
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  width?: 'full' | 'auto' | 'fixed';
-  isLoading?: boolean;
-  leftIcon?: ReactNode;
-  rightIcon?: ReactNode;
-  withGlow?: boolean;
-  href?: string;
-  children: ReactNode;
-}
+const LiquidButton = forwardRef<HTMLButtonElement | HTMLAnchorElement, any>(
+  (props, ref) => {
+    const {
+      children, 
+      variant = 'primary', 
+      size = 'md', 
+      width = 'auto',
+      isLoading = false,
+      leftIcon,
+      rightIcon,
+      withGlow = true,
+      href,
+      className,
+      disabled,
+      ...restProps
+    } = props;
 
-type LiquidButtonProps = LiquidButtonBaseProps & Omit<HTMLMotionProps<'button'>, 'children'>;
+    const baseStyles = 'inline-flex items-center justify-center font-semibold focus:outline-none relative overflow-hidden button-hover';
 
-type LiquidAnchorProps = LiquidButtonBaseProps & Omit<HTMLMotionProps<'a'>, 'children'>;
-
-const LiquidButton = forwardRef<HTMLButtonElement | HTMLAnchorElement, LiquidButtonProps>(
-  ({ 
-    children, 
-    variant = 'primary', 
-    size = 'md', 
-    width = 'auto',
-    isLoading = false,
-    leftIcon,
-    rightIcon,
-    withGlow = true,
-    href,
-    className,
-    disabled,
-    ...props 
-  }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center font-semibold transition-all duration-300 focus:outline-none relative overflow-hidden';
-
-    const variants = {
-      primary: 'bg-morandi-ocean text-white hover:bg-morandi-ocean/90 active:bg-morandi-ocean/80',
-      secondary: 'bg-morandi-sand text-morandi-deep hover:bg-morandi-sand/90 active:bg-morandi-sand/80',
-      ghost: 'bg-transparent text-morandi-deep hover:bg-morandi-cream active:bg-morandi-cream/80',
-      liquid: 'bg-white/65 backdrop-blur-xl border border-white/40 text-morandi-deep hover:bg-white/75 active:bg-white/85',
-      'liquid-fill': 'bg-white/90 backdrop-blur-2xl border border-white/60 text-morandi-deep hover:bg-white/95 active:bg-white/90',
+    const variants: Record<string, string> = {
+      primary: 'bg-morandi-ocean text-white',
+      secondary: 'bg-morandi-sand text-morandi-deep',
+      ghost: 'bg-transparent text-morandi-deep',
+      liquid: 'bg-white/65 backdrop-blur-xl border border-white/40 text-morandi-deep',
+      'liquid-fill': 'bg-white/90 backdrop-blur-2xl border border-white/60 text-morandi-deep',
     };
 
-    const glowStyles = withGlow ? {
+    const glowStyles: Record<string, string> = withGlow ? {
       primary: 'shadow-[0_0_0_1px_rgba(122,157,150,0.3)_inset,0_8px_24px_rgba(122,157,150,0.25)]',
       secondary: 'shadow-[0_0_0_1px_rgba(214,198,176,0.3)_inset,0_8px_24px_rgba(214,198,176,0.25)]',
       liquid: 'shadow-[0_8px_32px_0_rgba(31,38,135,0.10)]',
       'liquid-fill': 'shadow-[0_12px_40px_0_rgba(31,38,135,0.15)]',
     } : {};
 
-    const sizes = {
+    const sizes: Record<string, string> = {
       sm: 'px-5 py-3 text-sm md:py-2.5',
       md: 'px-7 py-4 text-base md:py-3.5',
       lg: 'px-9 py-5 text-lg md:py-4.5',
       xl: 'px-11 py-6 text-xl md:py-5.5',
     };
 
-    const radius = {
+    const radius: Record<string, string> = {
       sm: 'rounded-2xl',
       md: 'rounded-3xl',
       lg: 'rounded-3xl',
       xl: 'rounded-3xl',
     };
 
-    const widthStyles = {
+    const widthStyles: Record<string, string> = {
       full: 'w-full md:w-auto',
       auto: 'w-auto',
       fixed: 'w-full',
@@ -84,25 +68,16 @@ const LiquidButton = forwardRef<HTMLButtonElement | HTMLAnchorElement, LiquidBut
       className
     );
 
-    const commonProps = {
-      className: buttonClassName,
-      whileHover: { scale: disabled || isLoading ? 1 : 1.015 },
-      whileTap: { scale: disabled || isLoading ? 1 : 0.985 },
-      transition: liquidSpringConfig.snappy,
-      ...props
-    };
-
     if (href) {
-      const anchorProps = commonProps as Omit<LiquidAnchorProps, keyof LiquidButtonBaseProps>;
       return (
-        <motion.a
+        <a
           ref={ref as React.Ref<HTMLAnchorElement>}
-          {...anchorProps}
           href={href}
           className={cn(
             buttonClassName,
             (disabled || isLoading) && 'pointer-events-none'
           )}
+          {...restProps}
         >
           {/* 光泽效果层 */}
           {(variant === 'liquid' || variant === 'liquid-fill') && (
@@ -128,16 +103,16 @@ const LiquidButton = forwardRef<HTMLButtonElement | HTMLAnchorElement, LiquidBut
               </>
             )}
           </div>
-        </motion.a>
+        </a>
       );
     }
 
-    const buttonProps = commonProps as Omit<LiquidButtonProps, keyof LiquidButtonBaseProps>;
     return (
-      <motion.button
+      <button
         ref={ref as React.Ref<HTMLButtonElement>}
-        {...buttonProps}
+        className={buttonClassName}
         disabled={disabled || isLoading}
+        {...restProps}
       >
         {/* 光泽效果层 */}
         {(variant === 'liquid' || variant === 'liquid-fill') && (
@@ -163,7 +138,7 @@ const LiquidButton = forwardRef<HTMLButtonElement | HTMLAnchorElement, LiquidBut
             </>
           )}
         </div>
-      </motion.button>
+      </button>
     );
   }
 );

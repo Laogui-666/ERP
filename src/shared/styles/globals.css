@@ -459,46 +459,105 @@ body {
   background: #D6D3D1; margin: 12px auto;
 }
 
-/* ==================== 动效工具类 ==================== */
+/* ==================== 轻量入场动效（性能优化版） ==================== */
 
-.animate-fade-in-up {
-  animation: fadeInUp 0.5s var(--ease-damping) forwards;
+.animate-enter-fade {
+  animation: enterFade 0.2s ease-out forwards;
 }
 
-.animate-fade-in-down {
-  animation: fadeInDown 0.5s var(--ease-damping) forwards;
+.animate-enter-slide-up {
+  animation: enterSlideUp 0.25s ease-out forwards;
 }
 
-.animate-fade-in-left {
-  animation: fadeInLeft 0.5s var(--ease-damping) forwards;
+.animate-enter-slide-down {
+  animation: enterSlideDown 0.25s ease-out forwards;
 }
 
-.animate-fade-in-right {
-  animation: fadeInRight 0.5s var(--ease-damping) forwards;
+.animate-enter-scale {
+  animation: enterScale 0.2s ease-out forwards;
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.4s var(--ease-smooth) forwards;
+.animate-enter-stagger-1 { animation-delay: 0.05s; }
+.animate-enter-stagger-2 { animation-delay: 0.1s; }
+.animate-enter-stagger-3 { animation-delay: 0.15s; }
+.animate-enter-stagger-4 { animation-delay: 0.2s; }
+.animate-enter-stagger-5 { animation-delay: 0.25s; }
+
+@keyframes enterFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.animate-scale-in {
-  animation: scaleIn 0.4s var(--ease-spring) forwards;
+@keyframes enterSlideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(8px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
 }
 
-.animate-spring-in {
-  animation: springIn 0.6s var(--ease-spring) forwards;
+@keyframes enterSlideDown {
+  from { 
+    opacity: 0; 
+    transform: translateY(-8px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
 }
 
-.animate-spring-scale {
-  animation: springInScale 0.5s var(--ease-spring) forwards;
+@keyframes enterScale {
+  from { 
+    opacity: 0; 
+    transform: scale(0.96); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
 }
 
-.animate-pulse-glow {
-  animation: pulseGlow 2.5s var(--ease-smooth) infinite;
+/* ==================== 优化的鼠标交互（快速响应） ==================== */
+
+.interactive-hover {
+  transition: transform 0.1s ease-out, box-shadow 0.1s ease-out, background-color 0.1s ease-out;
 }
 
-.animate-shake {
-  animation: shake 0.4s var(--ease-smooth);
+.interactive-hover:hover {
+  transform: translateY(-1px);
+}
+
+.interactive-hover:active {
+  transform: translateY(0);
+}
+
+.button-hover {
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, background-color 0.08s ease-out;
+}
+
+.button-hover:hover {
+  transform: translateY(-1px);
+}
+
+.button-hover:active {
+  transform: scale(0.98);
+}
+
+.card-hover {
+  transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.card-hover:active {
+  transform: translateY(0);
 }
 
 /* 延迟辅助 */
@@ -568,32 +627,7 @@ body {
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10);
 }
 
-.glass-hover:hover {
-  background: rgba(255, 255, 255, 0.75);
-  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
-  transform: translateY(-2px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
 
-/* 卡片悬停效果 */
-.card-hover {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-hover:hover {
-  transform: scale(1.02) translateY(-4px);
-  box-shadow: 0 16px 48px 0 rgba(31, 38, 135, 0.12);
-}
-
-/* 服务卡片悬停效果 - 丝滑无停顿 */
-.service-card-hover {
-  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
-}
-
-.service-card-hover:hover {
-  transform: scale(1.03) translateY(-5px);
-  box-shadow: 0 16px 48px 0 rgba(31, 38, 135, 0.12);
-}
 
 /* 弹簧动画基础类 */
 .spring-transition {

@@ -1,11 +1,9 @@
 'use client';
 
 import { forwardRef, ReactNode, HTMLAttributes } from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
 import { cn } from '@shared/lib/utils';
-import { liquidSpringConfig } from '../theme/animations';
 
-interface LiquidCardProps extends HTMLMotionProps<'div'> {
+interface LiquidCardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: 'liquid' | 'solid' | 'outlined' | 'liquid-elevated';
   padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   hoverable?: boolean;
@@ -27,7 +25,6 @@ const LiquidCard = forwardRef<HTMLDivElement, LiquidCardProps>(
     className,
     ...props 
   }, ref) => {
-    const baseStyles = 'transition-all duration-400 relative overflow-hidden';
 
     const intensityConfig = {
       light: {
@@ -85,24 +82,21 @@ const LiquidCard = forwardRef<HTMLDivElement, LiquidCardProps>(
     };
 
     const hoverStyles = hoverable
-      ? 'cursor-pointer'
-      : '';
+      ? 'cursor-pointer card-hover'
+      : 'animate-enter-scale';
 
     return (
-      <motion.div
+      <div
         ref={ref}
         className={cn(
-          baseStyles,
+          'relative overflow-hidden',
           'rounded-liquid',
           variants[variant],
           paddings[padding],
           hoverStyles,
           className
         )}
-        whileHover={hoverable ? { scale: 1.02, y: -4, boxShadow: '0 16px 48px 0 rgba(31,38,135,0.12)' } : {}}
-        whileTap={hoverable ? { scale: 0.985, y: 0 } : {}}
-        transition={liquidSpringConfig.liquid}
-        {...props as any}
+        {...props}
       >
         {/* 顶部光泽效果 */}
         {(variant === 'liquid' || variant === 'liquid-elevated') && withGloss && (
@@ -116,7 +110,7 @@ const LiquidCard = forwardRef<HTMLDivElement, LiquidCardProps>(
         <div className="relative z-10">
           {children}
         </div>
-      </motion.div>
+      </div>
     );
   }
 );

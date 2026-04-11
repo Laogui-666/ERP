@@ -1,9 +1,7 @@
 'use client';
 
 import { forwardRef, ReactNode } from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@shared/lib/utils';
-import { liquidSpringConfig } from '../theme/animations';
 
 interface LiquidStatCardProps {
   label: string;
@@ -60,17 +58,16 @@ const LiquidStatCard = forwardRef<HTMLDivElement, LiquidStatCardProps>(
     const c = colorMap[color];
 
     return (
-      <motion.div
+      <div
         ref={ref}
         className={cn(
           'relative overflow-hidden rounded-2xl p-5',
-          'bg-white/60 backdrop-blur-xl',
+          'bg-white/60',
           'border border-white/50',
           'shadow-liquid-soft',
+          'animate-enter-scale',
           className
         )}
-
-        transition={liquidSpringConfig.liquid}
       >
         {/* 顶部光泽效果 */}
         <div className="absolute inset-0 pointer-events-none">
@@ -122,7 +119,7 @@ const LiquidStatCard = forwardRef<HTMLDivElement, LiquidStatCardProps>(
               )}
             </div>
             {icon && (
-              <motion.div
+              <div
                 className={cn(
                   'w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ml-3',
                   'bg-white/50 backdrop-blur-sm',
@@ -130,15 +127,13 @@ const LiquidStatCard = forwardRef<HTMLDivElement, LiquidStatCardProps>(
                   c.text,
                   'border border-white/30'
                 )}
-                whileHover={{ rotate: 5, scale: 1.05 }}
-                transition={liquidSpringConfig.snappy}
               >
                 <span className="opacity-90">{icon}</span>
-              </motion.div>
+              </div>
             )}
           </div>
         </div>
-      </motion.div>
+      </div>
     );
   }
 );

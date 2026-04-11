@@ -1,9 +1,7 @@
 'use client';
 
 import { forwardRef, ReactNode } from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@shared/lib/utils';
-import { liquidSpringConfig } from '../theme/animations';
 
 interface LiquidPoolCardProps {
   orderNo: string;
@@ -34,17 +32,14 @@ const LiquidPoolCard = forwardRef<HTMLDivElement, LiquidPoolCardProps>(
     delay = 0
   }, ref) => {
     return (
-      <motion.div
+      <div
         ref={ref}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...liquidSpringConfig.medium, delay: delay * 0.05 }}
-
         className={cn(
           'relative overflow-hidden rounded-2xl p-5',
-          'bg-white/60 backdrop-blur-xl',
+          'bg-white/60',
           'border border-white/50',
           'shadow-liquid-soft',
+          'card-hover animate-enter-slide-up',
           className
         )}
       >
@@ -70,30 +65,26 @@ const LiquidPoolCard = forwardRef<HTMLDivElement, LiquidPoolCardProps>(
           {/* 信息 */}
           <div className="space-y-2.5 mb-5">
             <div className="flex items-center gap-2 text-sm">
-              <motion.div 
+              <div 
                 className="w-8 h-8 rounded-lg bg-liquid-ocean/10 flex items-center justify-center text-liquid-ocean"
-                whileHover={{ rotate: 5, scale: 1.1 }}
-                transition={liquidSpringConfig.snappy}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
                 </svg>
-              </motion.div>
+              </div>
               <span className="text-liquid-deep font-medium">{country}</span>
               <span className="text-liquid-silver">·</span>
               <span className="text-liquid-mist">{visaType}</span>
             </div>
 
             <div className="flex items-center gap-2 text-sm">
-              <motion.div 
+              <div 
                 className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600"
-                whileHover={{ rotate: 5, scale: 1.1 }}
-                transition={liquidSpringConfig.snappy}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-              </motion.div>
+              </div>
               <span className="text-liquid-deep font-semibold">¥{amount.toLocaleString()}</span>
             </div>
 
@@ -106,17 +97,14 @@ const LiquidPoolCard = forwardRef<HTMLDivElement, LiquidPoolCardProps>(
           </div>
 
           {/* 接单按钮 */}
-          <motion.button
+          <button
             onClick={onClaim}
             disabled={isClaiming}
-            whileHover={{ scale: isClaiming ? 1 : 1.02 }}
-            whileTap={{ scale: isClaiming ? 1 : 0.98 }}
             className={cn(
               'w-full py-3 rounded-xl text-sm font-semibold',
               'bg-liquid-ocean text-white',
               'shadow-lg shadow-liquid-ocean/25',
-              'transition-all duration-300',
-              'hover:bg-liquid-ocean/90 hover:shadow-liquid-ocean/35',
+              'button-hover',
               'disabled:opacity-50 disabled:cursor-not-allowed',
               'relative overflow-hidden'
             )}
@@ -129,10 +117,8 @@ const LiquidPoolCard = forwardRef<HTMLDivElement, LiquidPoolCardProps>(
             <span className="relative z-10 flex items-center justify-center gap-2">
               {isClaiming ? (
                 <>
-                  <motion.span
-                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  <span
+                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
                   />
                   接单中...
                 </>
@@ -145,9 +131,9 @@ const LiquidPoolCard = forwardRef<HTMLDivElement, LiquidPoolCardProps>(
                 </>
               )}
             </span>
-          </motion.button>
+          </button>
         </div>
-      </motion.div>
+      </div>
     );
   }
 );

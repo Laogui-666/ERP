@@ -1,9 +1,7 @@
 'use client';
 
 import { forwardRef, ReactNode } from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@shared/lib/utils';
-import { liquidSpringConfig } from '../theme/animations';
 
 interface LiquidOrderDetailCardProps {
   title: string;
@@ -15,13 +13,10 @@ interface LiquidOrderDetailCardProps {
 }
 
 const LiquidOrderDetailCard = forwardRef<HTMLDivElement, LiquidOrderDetailCardProps>(
-  ({ title, icon, children, action, className, delay = 0 }, ref) => {
+  ({ title, icon, children, action, className }, ref) => {
     return (
-      <motion.div
+      <div
         ref={ref}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...liquidSpringConfig.medium, delay: delay * 0.05 }}
         className={cn(
           'relative overflow-hidden rounded-2xl',
           'bg-white/60 backdrop-blur-xl',
@@ -52,7 +47,7 @@ const LiquidOrderDetailCard = forwardRef<HTMLDivElement, LiquidOrderDetailCardPr
           {/* 内容 */}
           {children}
         </div>
-      </motion.div>
+      </div>
     );
   }
 );

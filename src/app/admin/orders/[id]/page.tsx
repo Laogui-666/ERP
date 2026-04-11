@@ -69,6 +69,9 @@ export default function OrderDetailPage() {
 
   // 多人标签页
   const [activeTab, setActiveTab] = useState(0)
+  
+  // 操作日志时间筛选
+  const [logTimeFilter, setLogTimeFilter] = useState('all') // all, today, week, month
 
   // 解析备注 JSON
   const parseRemarks = useCallback((remarkStr: string | null | undefined): Array<{ content: string; author: string; time: string }> => {
@@ -423,6 +426,21 @@ export default function OrderDetailPage() {
   const canEdit = user?.role && EDIT_ROLES.includes(user.role)
     && !['APPROVED', 'REJECTED', 'PARTIAL'].includes(order.status)
   const isMultiApplicant = order.applicants.length > 1
+
+  // 过滤操作日志
+  const filteredOrderLogs = order.orderLogs.filter(log => {
+    if (logTimeFilter === 'all') return true
+    const logDate = new Date(log.createdAt)
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+    
+    if (logTimeFilter === 'today') return logDate >= today
+    if (logTimeFilter === 'week') return logDate >= weekAgo
+    if (logTimeFilter === 'month') return logDate >= monthAgo
+    return true
+  })
 
   return (
     <div className="space-y-6">
@@ -862,16 +880,30 @@ export default function OrderDetailPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               }
+              action={
+                <div className="flex items-center gap-2">
+                  <select 
+                    value={logTimeFilter} 
+                    onChange={(e) => setLogTimeFilter(e.target.value)}
+                    className="text-xs border border-liquid-ocean/20 rounded-lg px-2 py-1 bg-white/50 text-liquid-deep focus:outline-none focus:border-liquid-ocean/50"
+                  >
+                    <option value="all">全部</option>
+                    <option value="today">今天</option>
+                    <option value="week">本周</option>
+                    <option value="month">本月</option>
+                  </select>
+                </div>
+              }
               delay={0.45}
             >
-              {order.orderLogs.length === 0 ? (
+              {filteredOrderLogs.length === 0 ? (
                 <p className="text-xs text-liquid-mist">暂无日志</p>
               ) : (
-                <div className="space-y-3">
-                  {order.orderLogs.map((log, i) => (
+                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                  {filteredOrderLogs.map((log, i) => (
                     <div key={log.id} className="relative pl-4">
                       <div className="absolute left-0 top-2 w-2 h-2 rounded-full bg-liquid-sand/50" />
-                      {i < order.orderLogs.length - 1 && (
+                      {i < filteredOrderLogs.length - 1 && (
                         <div className="absolute left-[3px] top-4 w-px h-full bg-liquid-ocean/10" />
                       )}
                       <div className="text-xs">
@@ -1246,16 +1278,30 @@ export default function OrderDetailPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               }
+              action={
+                <div className="flex items-center gap-2">
+                  <select 
+                    value={logTimeFilter} 
+                    onChange={(e) => setLogTimeFilter(e.target.value)}
+                    className="text-xs border border-liquid-ocean/20 rounded-lg px-2 py-1 bg-white/50 text-liquid-deep focus:outline-none focus:border-liquid-ocean/50"
+                  >
+                    <option value="all">全部</option>
+                    <option value="today">今天</option>
+                    <option value="week">本周</option>
+                    <option value="month">本月</option>
+                  </select>
+                </div>
+              }
               delay={0.25}
             >
-              {order.orderLogs.length === 0 ? (
+              {filteredOrderLogs.length === 0 ? (
                 <p className="text-xs text-liquid-mist">暂无日志</p>
               ) : (
-                <div className="space-y-3">
-                  {order.orderLogs.map((log, i) => (
+                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                  {filteredOrderLogs.map((log, i) => (
                     <div key={log.id} className="relative pl-4">
                       <div className="absolute left-0 top-2 w-2 h-2 rounded-full bg-liquid-sand/50" />
-                      {i < order.orderLogs.length - 1 && (
+                      {i < filteredOrderLogs.length - 1 && (
                         <div className="absolute left-[3px] top-4 w-px h-full bg-liquid-ocean/10" />
                       )}
                       <div className="text-xs">

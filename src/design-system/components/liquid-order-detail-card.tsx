@@ -27,8 +27,6 @@ const LiquidOrderDetailCard = forwardRef<HTMLDivElement, LiquidOrderDetailCardPr
           'bg-white/60 backdrop-blur-xl',
           'border border-white/50',
           'shadow-liquid-soft',
-          'transition-all duration-300',
-          'hover:shadow-liquid-medium',
           className
         )}
       >

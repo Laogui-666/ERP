@@ -17,12 +17,12 @@ interface CustomerUploadProps {
 }
 
 const STATUS_STYLES: Record<DocReqStatus, { dot: string; bg: string; text: string }> = {
-  PENDING: { dot: 'bg-liquid-mist', bg: 'bg-liquid-ocean/5', text: 'text-liquid-mist' },
-  UPLOADED: { dot: 'bg-liquid-ocean', bg: 'bg-liquid-ocean/5', text: 'text-liquid-ocean' },
-  REVIEWING: { dot: 'bg-liquid-sand', bg: 'bg-liquid-sand/5', text: 'text-liquid-sand' },
-  APPROVED: { dot: 'bg-liquid-emerald', bg: 'bg-liquid-emerald/5', text: 'text-liquid-emerald' },
-  REJECTED: { dot: 'bg-liquid-ruby', bg: 'bg-liquid-ruby/5', text: 'text-liquid-ruby' },
-  SUPPLEMENT: { dot: 'bg-liquid-amber', bg: 'bg-liquid-amber/5', text: 'text-liquid-amber' },
+  PENDING: { dot: 'bg-glass-muted', bg: 'bg-glass-muted/10', text: 'text-glass-text-muted' },
+  UPLOADED: { dot: 'bg-glass-primary', bg: 'bg-glass-primary/10', text: 'text-glass-primary' },
+  REVIEWING: { dot: 'bg-glass-warning', bg: 'bg-glass-warning/10', text: 'text-glass-warning' },
+  APPROVED: { dot: 'bg-glass-success', bg: 'bg-glass-success/10', text: 'text-glass-success' },
+  REJECTED: { dot: 'bg-glass-danger', bg: 'bg-glass-danger/10', text: 'text-glass-danger' },
+  SUPPLEMENT: { dot: 'bg-glass-warning', bg: 'bg-glass-warning/10', text: 'text-glass-warning' },
 }
 
 export function CustomerUpload({ orderId: _orderId, requirements, applicantCount = 1, applicants = [], onRefresh }: CustomerUploadProps) {
@@ -229,16 +229,16 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
     const canOperate = canUpload(req.status)
 
     return (
-      <div key={req.id} className={`rounded-xl border border-liquid-ocean/10 p-4 ${style.bg}`}>
+      <div key={req.id} className={`rounded-glass-sm glass-card p-4 ${style.bg}`}>
         {/* 标题行 */}
           <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${style.dot}`} />
-            <span className="text-sm font-medium text-liquid-deep">
+            <span className="text-sm font-medium text-glass-text-primary">
               {req.name}
             </span>
             {req.isRequired && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-liquid-ruby/15 text-liquid-ruby">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-glass-sm bg-glass-danger/15 text-glass-danger">
                 必填
               </span>
             )}
@@ -250,7 +250,7 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
 
         {/* 说明文字 */}
         {req.description && (
-          <p className="text-xs text-liquid-mist mb-2 ml-4">
+          <p className="text-xs text-glass-text-muted mb-2 ml-4">
             {req.description}
           </p>
         )}
@@ -272,7 +272,7 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
                 {canOperate ? (
                   <button
                     onClick={() => handleDelete(file.id)}
-                    className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-liquid-ruby bg-liquid-ruby/10 hover:bg-liquid-ruby/20 active:scale-90 transition-all"
+                    className="shrink-0 w-7 h-7 rounded-glass-sm flex items-center justify-center text-glass-danger bg-glass-danger/10 hover:bg-glass-danger/20 active:scale-90 transition-all glass-button-hover"
                     title="删除文件"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -280,7 +280,7 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
                     </svg>
                   </button>
                 ) : req.status === 'APPROVED' ? (
-                  <span className="shrink-0 text-[10px] text-liquid-emerald px-1.5 py-0.5 rounded bg-liquid-emerald/10">✓ 已合格</span>
+                  <span className="shrink-0 text-[10px] text-glass-success px-1.5 py-0.5 rounded-glass-sm bg-glass-success/10">✓ 已合格</span>
                 ) : null}
               </div>
             ))}
@@ -290,12 +290,12 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
         {/* 上传进度 */}
         {isUploading && uploadProgress !== null && (
           <div className="ml-4 mb-2">
-            <div className="flex items-center gap-2 text-xs text-liquid-mist mb-1">
+            <div className="flex items-center gap-2 text-xs text-glass-text-muted mb-1">
               <span>上传中... {uploadProgress}%</span>
             </div>
-            <div className="h-1 rounded-full bg-liquid-ocean/10 overflow-hidden">
+            <div className="h-1 rounded-full bg-glass-muted/10 overflow-hidden">
               <div
-                className="h-full bg-liquid-ocean rounded-full transition-all duration-300"
+                className="h-full bg-glass-primary rounded-full transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
@@ -307,13 +307,13 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
           <div className="ml-4 flex gap-2">
             <button
               onClick={() => handleUploadClick(req.id)}
-              className="text-xs px-3 py-1.5 rounded-lg bg-liquid-ocean/15 text-liquid-ocean hover:bg-liquid-ocean/25 transition-colors"
+              className="text-xs px-3 py-1.5 rounded-glass-sm bg-glass-primary/15 text-glass-primary hover:bg-glass-primary/25 transition-colors glass-button-hover"
             >
               📁 上传
             </button>
             <button
               onClick={() => setCameraTargetId(req.id)}
-              className="text-xs px-3 py-1.5 rounded-lg bg-liquid-ocean/5 text-liquid-mist hover:bg-liquid-ocean/10 transition-colors"
+              className="text-xs px-3 py-1.5 rounded-glass-sm bg-glass-muted/10 text-glass-text-muted hover:bg-glass-muted/20 transition-colors glass-button-hover"
             >
               📷 拍照
             </button>
@@ -325,7 +325,7 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
           <div className="ml-4 flex gap-2 mt-2">
             <button
               onClick={() => handleResubmitClick(req.id)}
-              className="text-xs px-3 py-1.5 rounded-lg bg-liquid-amber/15 text-liquid-amber hover:bg-liquid-amber/25 transition-colors"
+              className="text-xs px-3 py-1.5 rounded-glass-sm bg-glass-warning/15 text-glass-warning hover:bg-glass-warning/25 transition-colors glass-button-hover"
             >
               🔄 重新提交
             </button>
@@ -339,11 +339,11 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
     <div className="space-y-3">
       {/* 标题 + 进度 */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-liquid-deep flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-glass-text-primary flex items-center gap-2">
           <span>📤</span>
           <span>我需要上传的资料</span>
         </h3>
-        <span className="text-xs text-liquid-mist">
+        <span className="text-xs text-glass-text-muted">
           {approved}/{total} 已合格
         </span>
       </div>
@@ -353,13 +353,13 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
         <div key={gi}>
           {showGrouped && (
             <div className="flex items-center gap-2 mb-2 mt-3">
-              <div className="w-6 h-6 rounded-full bg-liquid-ocean/15 flex items-center justify-center text-xs font-medium text-liquid-ocean">
+              <div className="w-6 h-6 rounded-full bg-glass-primary/15 flex items-center justify-center text-xs font-medium text-glass-primary">
                 {group.name[0]}
               </div>
-              <span className="text-xs font-medium text-liquid-deep">
+              <span className="text-xs font-medium text-glass-text-primary">
                 {group.name}
               </span>
-              <span className="text-xs text-liquid-mist">
+              <span className="text-xs text-glass-text-muted">
                 {group.items.filter(r => r.status === 'APPROVED').length}/{group.items.length}
               </span>
             </div>
@@ -371,7 +371,7 @@ export function CustomerUpload({ orderId: _orderId, requirements, applicantCount
       ))}
 
       {requirements.length === 0 && (
-        <div className="text-center py-8 text-sm text-liquid-mist">
+        <div className="text-center py-8 text-sm text-glass-text-muted">
           暂无资料需求，请等待资料员发送清单
         </div>
       )}

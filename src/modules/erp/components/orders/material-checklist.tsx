@@ -20,16 +20,16 @@ export function MaterialChecklist({ status, materials }: MaterialChecklistProps)
   if (isMaking) {
     return (
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-liquid-deep flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-glass-text-primary flex items-center gap-2">
           <span>📥</span>
           <span>签证材料（为您制作）</span>
         </h3>
-        <div className="rounded-xl border border-liquid-ocean/10 bg-liquid-ocean/5 p-6 text-center">
-          <div className="inline-block w-6 h-6 border-2 border-liquid-ocean/30 border-t-liquid-ocean rounded-full animate-spin mb-3" />
-          <p className="text-sm text-liquid-mist">
+        <div className="rounded-glass-lg glass-card p-6 text-center">
+          <div className="inline-block w-6 h-6 border-2 border-glass-border border-t-glass-primary rounded-full animate-spin mb-3" />
+          <p className="text-sm text-glass-text-muted">
             签证材料正在制作中，请耐心等待...
           </p>
-          <p className="text-xs text-liquid-mist/60 mt-1">
+          <p className="text-xs text-glass-text-muted/60 mt-1">
             制作完成后会第一时间通知您
           </p>
         </div>
@@ -40,24 +40,24 @@ export function MaterialChecklist({ status, materials }: MaterialChecklistProps)
   // 可下载/预览
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-liquid-deep flex items-center gap-2">
+      <h3 className="text-sm font-semibold text-glass-text-primary flex items-center gap-2">
         <span>📥</span>
         <span>签证材料</span>
-        <span className="text-xs text-liquid-mist font-normal">
+        <span className="text-xs text-glass-text-muted font-normal">
           {materials.length} 份
         </span>
       </h3>
 
       {materials.length === 0 ? (
-        <div className="rounded-xl border border-liquid-ocean/10 bg-liquid-ocean/5 p-6 text-center">
-          <p className="text-sm text-liquid-mist">暂无签证材料</p>
+        <div className="rounded-glass-lg glass-card p-6 text-center">
+          <p className="text-sm text-glass-text-muted">暂无签证材料</p>
         </div>
       ) : (
         <div className="space-y-2">
           {materials.map((mat) => (
             <div
               key={mat.id}
-              className="rounded-xl border border-liquid-ocean/10 bg-liquid-ocean/5 p-4"
+              className="rounded-glass-lg glass-card p-4"
             >
               <div className="flex items-center justify-between gap-3">
                 <FilePreview
@@ -69,18 +69,18 @@ export function MaterialChecklist({ status, materials }: MaterialChecklistProps)
                 />
                 <a
                   href={mat.ossUrl}
-                  className="shrink-0 text-xs px-3 py-1.5 rounded-lg bg-liquid-ocean/15 text-liquid-ocean hover:bg-liquid-ocean/25 transition-colors"
+                  className="shrink-0 text-xs px-3 py-1.5 rounded-glass-sm bg-glass-primary/15 text-glass-primary hover:bg-glass-primary/25 transition-colors glass-button-hover"
                   download={mat.fileName}
                 >
                   下载
                 </a>
               </div>
-              <div className="mt-2 flex items-center gap-3 text-xs text-liquid-mist/60">
+              <div className="mt-2 flex items-center gap-3 text-xs text-glass-text-muted/60">
                 <span>版本 v{mat.version}</span>
                 <span>{formatDateTime(mat.createdAt)}</span>
               </div>
               {mat.remark && (
-                <p className="mt-1 text-xs text-liquid-mist">
+                <p className="mt-1 text-xs text-glass-text-muted">
                   备注：{mat.remark}
                 </p>
               )}

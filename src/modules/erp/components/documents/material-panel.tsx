@@ -68,13 +68,13 @@ export function MaterialPanel({ orderId, materials, userRole, orderStatus, onRef
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-liquid-deep flex items-center gap-2">
-          <svg className="w-4 h-4 text-liquid-sand" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <h3 className="text-sm font-semibold text-glass-text-primary flex items-center gap-2">
+          <svg className="w-4 h-4 text-glass-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
           </svg>
           签证材料
           {materials.length > 0 && (
-            <span className="text-xs text-liquid-mist/60 font-normal">
+            <span className="text-xs text-glass-text-muted/60 font-normal">
               (最新 v{Math.max(...materials.map((m) => m.version))})
             </span>
           )}
@@ -83,7 +83,7 @@ export function MaterialPanel({ orderId, materials, userRole, orderStatus, onRef
 
       {/* 上传表单 */}
       {canUpload && (
-        <div className="p-3 rounded-xl bg-liquid-ocean/5 border border-liquid-ocean/10 space-y-2">
+        <div className="p-3 rounded-glass-sm glass-card space-y-2">
           <textarea
             className="glass-input w-full text-xs resize-none"
             rows={1}
@@ -94,7 +94,7 @@ export function MaterialPanel({ orderId, materials, userRole, orderStatus, onRef
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="w-full glass-btn-primary py-2 text-xs font-medium disabled:opacity-50"
+            className="w-full glass-button glass-button-hover text-white py-2 text-xs font-medium disabled:opacity-50"
           >
             {isUploading ? (
               <span className="flex items-center justify-center gap-2">
@@ -118,24 +118,24 @@ export function MaterialPanel({ orderId, materials, userRole, orderStatus, onRef
 
       {/* 材料列表 — 按版本分组 */}
       {materials.length === 0 ? (
-        <p className="text-xs text-liquid-mist/60 py-2">暂无签证材料</p>
+        <p className="text-xs text-glass-text-muted/60 py-2">暂无签证材料</p>
       ) : (
         <div className="space-y-3">
           {versions.map((version) => (
             <div key={version}>
               {versions.length > 1 && (
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-liquid-sand/15 text-liquid-sand font-medium">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-glass-warning/15 text-glass-warning font-medium">
                     v{version}
                   </span>
                   {version === Math.max(...versions) && (
-                    <span className="text-[10px] text-liquid-emerald">最新</span>
+                    <span className="text-[10px] text-glass-success">最新</span>
                   )}
                 </div>
               )}
               <div className="space-y-2">
                 {groupedByVersion[version]!.map((mat) => (
-                  <div key={mat.id} className="p-3 rounded-xl bg-liquid-ocean/5 border border-liquid-ocean/10">
+                  <div key={mat.id} className="p-3 rounded-glass-sm glass-card">
                     <FilePreview
                       fileName={mat.fileName}
                       fileType={mat.fileType}
@@ -143,11 +143,11 @@ export function MaterialPanel({ orderId, materials, userRole, orderStatus, onRef
                       fileSize={mat.fileSize}
                       compact
                     />
-                    <div className="flex items-center gap-2 mt-1.5 text-xs text-liquid-mist/60 pl-5">
+                    <div className="flex items-center gap-2 mt-1.5 text-xs text-glass-text-muted/60 pl-5">
                       <span>{formatDateTime(mat.createdAt)}</span>
                     </div>
                     {mat.remark && (
-                      <p className="text-xs text-liquid-mist mt-1 pl-5">{mat.remark}</p>
+                      <p className="text-xs text-glass-text-muted mt-1 pl-5">{mat.remark}</p>
                     )}
                   </div>
                 ))}

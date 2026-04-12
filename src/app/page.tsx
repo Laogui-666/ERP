@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { useState, useEffect } from 'react'
 import { AppNavbar } from '@/components/portal/app-navbar'
 import { HeroSection } from '@/components/portal/hero-section'
 import { ToolShowcase } from '@/components/portal/tool-showcase'
@@ -10,39 +9,36 @@ import { AppFooter } from '@/components/portal/app-footer'
 import { AppBottomTab } from '@/components/portal/app-bottom-tab'
 
 export default function HomePage() {
-  const { scrollY } = useScroll()
-  
-  // 背景图片的视差效果
-  const bgY = useTransform(scrollY, [0, 1000], [0, 200])
-  const bgScale = useTransform(scrollY, [0, 500], [1, 1.1])
-  const bgBlur = useTransform(scrollY, [0, 300], [0, 10])
-  const bgOpacity = useTransform(scrollY, [0, 400], [1, 0.7])
-  
-  // 背景遮罩的效果
-  const maskBlur = useTransform(scrollY, [0, 300], [0, 4])
-  const maskOpacity = useTransform(scrollY, [0, 400], [0.3, 0.5])
+  const [scrollY, setScrollY] = useState(0)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   return (
     <div className="relative min-h-screen">
       {/* 背景图片 */}
-      <motion.div 
+      <div 
         className="fixed inset-0 z-0"
         style={{
           backgroundImage: 'url(/background.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          y: bgY,
-          scale: bgScale,
-          filter: bgBlur,
-          opacity: bgOpacity
+          transform: `translateY(${scrollY * 0.5}px)`,
+          opacity: 1
         }}
       />
       {/* 背景遮罩 */}
-      <motion.div 
-        className="fixed inset-0 z-0 bg-white backdrop-blur-sm"
+      <div 
+        className="fixed inset-0 z-0 bg-white/30 backdrop-blur-sm"
         style={{
-          backgroundColor: maskOpacity,
-          backdropFilter: maskBlur
+          backdropFilter: `blur(${Math.min(scrollY / 100, 4)}px)`,
+          backgroundColor: `rgba(255, 255, 255, ${Math.min(0.3 + scrollY / 1000, 0.5)})`
         }}
       />
       

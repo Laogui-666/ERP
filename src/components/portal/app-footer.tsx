@@ -6,11 +6,11 @@ import { liquidSpringConfig } from '@design-system/theme/animations'
 export function AppFooter() {
   return (
     <footer className="relative glass-navbar border-t border-glass-border-light glass-footer-animate">
-      <div className="mx-auto max-w-6xl px-4 md:px-8 py-6 md:py-8">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+      <div className="mx-auto max-w-6xl px-4 md:px-8 py-8 md:py-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {/* 品牌 */}
           <motion.div 
-            className="col-span-2 md:col-span-1"
+            className="col-span-1"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -34,16 +34,16 @@ export function AppFooter() {
             </div>
           </motion.div>
 
-          {/* 签证服务 */}
+          {/* 签证代办 */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ ...liquidSpringConfig.gentle, delay: 0.1 }}
           >
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-glass-text-muted mb-3">签证服务</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-glass-text-muted mb-3">签证代办</h4>
             <ul className="space-y-2">
-              {['申根签证', '美国签证', '日本签证', '韩国签证', '泰国签证'].map((item) => (
+              {['申根签证', '美国签证', '日本签证', '韩国签证', '英国签证'].map((item) => (
                 <li key={item}>
                   <span className="text-sm text-glass-text-primary/80 hover:text-glass-primary transition-colors cursor-pointer hover:translate-x-0.5 inline-block">
                     {item}

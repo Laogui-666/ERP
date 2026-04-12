@@ -114,7 +114,10 @@ export function HeroSection() {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ ...liquidSpringConfig.snappy, delay: 0.9 + index * 0.05 }}
-                  whileHover={{}}
+                  whileHover={{
+                    y: -8,
+                    boxShadow: '0 16px 40px rgba(0,0,0,0.15)'
+                  }}
                   whileTap={{
                     y: 0,
                     scale: 0.98,

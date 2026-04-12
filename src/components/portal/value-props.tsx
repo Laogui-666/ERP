@@ -4,10 +4,10 @@ import { motion } from 'framer-motion'
 import { liquidSpringConfig } from '@design-system/theme/animations'
 
 const PROPS = [
-  { icon: '⚡', title: '极速出签', value: '1天', desc: '最快1个工作日出签，不让等待耽误行程' },
-  { icon: '🔒', title: '安全可靠', value: '0', desc: '零信息泄露，资料加密存储，隐私全面保护' },
+  { icon: '⚡', title: '极速办理', value: '2个工作日', desc: '最快加急1天交付送签材料，不让等待耽误行程' },
+  { icon: '🔒', title: '安全可靠', value: '0', desc: '资料加密存储，隐私全面保护，定期销毁，信息零泄露' },
   { icon: '💰', title: '价格透明', value: '0', desc: '零隐藏收费，所有费用提前公示，明明白白消费' },
-  { icon: '🤖', title: '智能辅助', value: 'AI', desc: 'AI签证评估、智能表格填写、自动化流程驱动' },
+  { icon: '🤖', title: '智能辅助工具', value: 'AI', desc: '自动化流程驱动，智能工具助理签证准备' },
 ]
 
 export function ValueProps() {

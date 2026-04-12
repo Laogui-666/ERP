@@ -41,8 +41,8 @@ export function ValueProps() {
               transition={{ ...liquidSpringConfig.gentle, delay: i * 0.1 }}
               className="group"
             >
-              <div className="h-full p-6 rounded-glass-lg glass-card shadow-glass-medium text-center transition-all duration-200 hover:-translate-y-2 hover:shadow-glass-strong glass-card-hover">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-glass-sm bg-gradient-to-br from-glass-primary/15 to-glass-secondary/10 transition-transform duration-200 group-hover:scale-110">
+              <div className="h-full p-6 rounded-glass-lg glass-card shadow-glass-medium text-center transition-all duration-200 md:hover:-translate-y-2 md:hover:shadow-glass-strong glass-card-hover">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-glass-sm bg-gradient-to-br from-glass-primary/15 to-glass-secondary/10 transition-transform duration-200 md:group-hover:scale-110">
                   <span className="text-2xl">{p.icon}</span>
                 </div>
                 <h3 className="text-base font-semibold text-glass-text-primary mb-1">{p.title}</h3>

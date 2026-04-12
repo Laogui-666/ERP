@@ -28,7 +28,7 @@ export default function HomePage() {
       <motion.div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: 'url(https://images.unsplash.com/photo-1501785888041-af3ef281b398?w=1920&q=80)',
+          backgroundImage: 'url(https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1920&q=80)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           y: bgY,

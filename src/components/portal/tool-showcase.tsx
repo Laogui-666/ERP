@@ -106,8 +106,10 @@ export function ToolShowcase({ id }: ToolShowcaseProps) {
   };
 
   return (
-    <section id={id} className="py-12 -mt-4 bg-gradient-to-br from-slate-50 via-morandi-cream to-morandi-blush/80 backdrop-blur-sm">
+    <section id={id} className="py-12 -mt-4">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6">
+        {/* 玻璃拟态背景 */}
+        <div className="bg-white/30 backdrop-blur-sm rounded-2xl shadow-glass-medium p-6 md:p-8">
         <motion.div
           className="text-center mb-8"
           initial={{ opacity: 0, y: 20 }}
@@ -204,6 +206,7 @@ export function ToolShowcase({ id }: ToolShowcaseProps) {
             </svg>
           </LiquidButton>
         </motion.div>
+        </div>
       </div>
     </section>
   )

@@ -22,23 +22,16 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-screen">
-      {/* 背景图片 */}
+      {/* 背景图片 - 高度3500px，固定显示 */}
       <div 
-        className="fixed inset-0 z-0"
+        className="fixed top-0 left-0 right-0 z-[-1]"
         style={{
-          backgroundImage: 'url(/background.jpg)',
+          height: '3500px',
+          backgroundImage: 'url(/背景图3.png)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          transform: `translateY(${scrollY * 0.5}px)`,
+          backgroundPosition: 'center bottom',
+          backgroundRepeat: 'no-repeat',
           opacity: 1
-        }}
-      />
-      {/* 背景遮罩 */}
-      <div 
-        className="fixed inset-0 z-0 bg-white/30 backdrop-blur-sm"
-        style={{
-          backdropFilter: `blur(${Math.min(scrollY / 100, 4)}px)`,
-          backgroundColor: `rgba(255, 255, 255, ${Math.min(0.3 + scrollY / 1000, 0.5)})`
         }}
       />
       

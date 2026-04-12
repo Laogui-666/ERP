@@ -19,8 +19,8 @@ export default function HomePage() {
   const bgOpacity = useTransform(scrollY, [0, 400], [1, 0.7])
   
   // 背景遮罩的效果
-  const maskBlur = useTransform(scrollY, [0, 300], [0, 8])
-  const maskOpacity = useTransform(scrollY, [0, 400], [0.6, 0.8])
+  const maskBlur = useTransform(scrollY, [0, 300], [0, 4])
+  const maskOpacity = useTransform(scrollY, [0, 400], [0.3, 0.5])
 
   return (
     <div className="relative min-h-screen">

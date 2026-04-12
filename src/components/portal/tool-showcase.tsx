@@ -4,6 +4,11 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { liquidSpringConfig, serviceCardHover } from '@design-system/theme/animations'
 import { LiquidCard } from '@design-system/components/liquid-card'
+import { LiquidButton } from '@design-system/components/liquid-button'
+
+interface ToolShowcaseProps {
+  id?: string;
+}
 
 // 智能服务 - 参考Panda002
 const services = [
@@ -91,7 +96,7 @@ const services = [
   },
 ];
 
-export function ToolShowcase() {
+export function ToolShowcase({ id }: ToolShowcaseProps) {
   const handleServiceClick = (feature: string, href?: string) => {
     if (href) {
       window.location.href = href;
@@ -101,7 +106,7 @@ export function ToolShowcase() {
   };
 
   return (
-    <section className="py-12 -mt-4 bg-gradient-to-br from-slate-50 via-morandi-cream to-morandi-blush">
+    <section id={id} className="py-12 -mt-4 bg-gradient-to-br from-slate-50 via-morandi-cream to-morandi-blush/80 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6">
         <motion.div
           className="text-center mb-8"
@@ -123,34 +128,21 @@ export function ToolShowcase() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ ...liquidSpringConfig.medium, delay: index * 0.08 }}
-              whileHover={serviceCardHover.whileHover}
-              whileTap={serviceCardHover.whileTap}
+              transition={{ ...liquidSpringConfig.gentle, delay: index * 0.1 }}
+              className="group"
             >
               {service.href ? (
                 <Link href={service.href}>
-                  <LiquidCard
-                    variant="liquid"
-                    liquidIntensity="medium"
-                    padding="sm"
-                    hoverable
-                    className="h-full cursor-pointer text-center group relative overflow-hidden"
-                  >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-                    
-                    <div className="relative">
-                      <div className={`w-12 h-12 sm:w-14 sm:h-14 ${service.iconBg} rounded-2xl flex items-center justify-center mx-auto mb-3 text-white shadow-lg ${service.iconBg}/30 group-hover:scale-110 transition-transform duration-300`}>
-                        {service.icon}
-                      </div>
+                  <div className="h-full p-6 rounded-glass-lg glass-card shadow-glass-medium text-center transition-all duration-200 hover:-translate-y-2 hover:shadow-glass-strong glass-card-hover">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-glass-sm bg-gradient-to-br from-glass-primary/15 to-glass-secondary/10 transition-transform duration-200 group-hover:scale-110">
+                      {service.icon}
                     </div>
-                    
-                    <h3 className="text-sm sm:text-base md:text-lg font-bold text-morandi-deep mb-1 sm:mb-2 relative z-10">
+                    <h3 className="text-base font-semibold text-glass-text-primary mb-1">
                       {service.name}
                     </h3>
-                    <p className="text-xs sm:text-sm text-morandi-mist relative z-10">
+                    <p className="text-xs text-glass-text-muted leading-relaxed">
                       {service.description}
                     </p>
-                    
                     {service.status === 'new' && (
                       <span className="absolute top-3 right-3 text-[10px] bg-morandi-ocean text-white px-2 py-0.5 rounded-full">
                         NEW
@@ -161,32 +153,22 @@ export function ToolShowcase() {
                         即将上线
                       </span>
                     )}
-                  </LiquidCard>
+                  </div>
                 </Link>
               ) : (
-                <LiquidCard
-                  variant="liquid"
-                  liquidIntensity="medium"
-                  padding="sm"
-                  hoverable
-                  className="h-full cursor-pointer text-center group relative overflow-hidden"
+                <div 
+                  className="h-full p-6 rounded-glass-lg glass-card shadow-glass-medium text-center transition-all duration-200 hover:-translate-y-2 hover:shadow-glass-strong glass-card-hover cursor-pointer"
                   onClick={() => handleServiceClick(service.name)}
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-                  
-                  <div className="relative">
-                    <div className={`w-12 h-12 sm:w-14 sm:h-14 ${service.iconBg} rounded-2xl flex items-center justify-center mx-auto mb-3 text-white shadow-lg ${service.iconBg}/30 group-hover:scale-110 transition-transform duration-300`}>
-                      {service.icon}
-                    </div>
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-glass-sm bg-gradient-to-br from-glass-primary/15 to-glass-secondary/10 transition-transform duration-200 group-hover:scale-110">
+                    {service.icon}
                   </div>
-                  
-                  <h3 className="text-sm sm:text-base md:text-lg font-bold text-morandi-deep mb-1 sm:mb-2 relative z-10">
+                  <h3 className="text-base font-semibold text-glass-text-primary mb-1">
                     {service.name}
                   </h3>
-                  <p className="text-xs sm:text-sm text-morandi-mist relative z-10">
+                  <p className="text-xs text-glass-text-muted leading-relaxed">
                     {service.description}
                   </p>
-                  
                   {service.status === 'new' && (
                     <span className="absolute top-3 right-3 text-[10px] bg-morandi-ocean text-white px-2 py-0.5 rounded-full">
                       NEW
@@ -197,11 +179,31 @@ export function ToolShowcase() {
                       即将上线
                     </span>
                   )}
-                </LiquidCard>
+                </div>
               )}
             </motion.div>
           ))}
         </div>
+        
+        {/* 更多服务按钮 */}
+        <motion.div
+          className="mt-8 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ ...liquidSpringConfig.medium, delay: 0.5 }}
+        >
+          <LiquidButton
+            variant="liquid"
+            size="md"
+            href="/portal/tools"
+          >
+            更多服务
+            <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </LiquidButton>
+        </motion.div>
       </div>
     </section>
   )

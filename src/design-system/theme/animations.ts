@@ -6,44 +6,44 @@ export const liquidSpringConfig = {
   // 轻柔弹簧 - 用于大型元素
   gentle: {
     type: 'spring' as const,
-    stiffness: 450,
-    damping: 35,
-    mass: 0.85,
+    stiffness: 800,
+    damping: 60,
+    mass: 0.5,
   },
   // 中等弹簧 - 用于一般元素
   medium: {
     type: 'spring' as const,
-    stiffness: 550,
-    damping: 40,
-    mass: 0.8,
+    stiffness: 900,
+    damping: 65,
+    mass: 0.45,
   },
   // 强力弹簧 - 用于小型交互元素
   snappy: {
     type: 'spring' as const,
-    stiffness: 700,
-    damping: 48,
-    mass: 0.65,
+    stiffness: 1000,
+    damping: 70,
+    mass: 0.4,
   },
   // 弹性弹簧 - 用于需要明显回弹效果
   bouncy: {
     type: 'spring' as const,
-    stiffness: 550,
-    damping: 24,
-    mass: 0.8,
+    stiffness: 900,
+    damping: 50,
+    mass: 0.45,
   },
   // 液态弹簧 - 丝滑流畅
   liquid: {
     type: 'spring' as const,
-    stiffness: 550,
-    damping: 38,
-    mass: 0.75,
+    stiffness: 950,
+    damping: 65,
+    mass: 0.42,
   },
   // 超快速弹簧 - 用于微交互
   ultra: {
     type: 'spring' as const,
-    stiffness: 800,
-    damping: 50,
-    mass: 0.6,
+    stiffness: 1100,
+    damping: 75,
+    mass: 0.35,
   },
 };
 
@@ -59,10 +59,10 @@ export const liquidEasing = {
 
 // 动画持续时间
 export const liquidDurations = {
-  fast: 0.15,
-  normal: 0.3,
-  slow: 0.5,
-  slower: 0.7,
+  fast: 0.1,
+  normal: 0.2,
+  slow: 0.25,
+  slower: 0.3,
 };
 
 // 入场动画变体

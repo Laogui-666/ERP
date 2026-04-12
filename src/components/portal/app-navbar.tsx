@@ -196,7 +196,7 @@ export function AppNavbar() {
               >
                 <Link 
                   href="/login" 
-                  className="px-4 md:px-5 py-2 md:py-2.5 text-sm font-medium text-glass-text-primary hover:text-glass-primary transition-colors glass-button-hover"
+                  className="px-4 md:px-6 py-2 md:py-2.5 text-sm font-semibold text-glass-text-primary glass-button glass-button-primary hover:shadow-glass-medium hover:scale-105 transition-all duration-300"
                 >
                   登录
                 </Link>

@@ -26,8 +26,7 @@ const LiquidChatCard = forwardRef<HTMLDivElement, LiquidChatCardProps>(
     lastMessageAt,
     unreadCount = 0,
     className,
-    onClick,
-    delay = 0
+    onClick
   }, ref) => {
     return (
       <div

@@ -3,7 +3,7 @@ import { prisma } from '@shared/lib/prisma'
 import { getCurrentUser } from '@shared/lib/auth'
 import { requirePermission } from '@shared/lib/rbac'
 import { AppError, createSuccessResponse } from '@shared/types/api'
-import { emitToUser } from '@shared/lib/socket'
+import { emitNotificationToUser } from '@shared/lib/socket'
 import { z } from 'zod'
 
 /**
@@ -102,12 +102,16 @@ export async function POST(
     })
 
     // Socket 实时推送
-    emitToUser(targetUser.id, 'notification', {
+    const notification = {
+      id: `temp-${Date.now()}`, // 临时ID，实际ID由数据库生成
       type: 'ORDER_NEW',
       title: '收到转单',
+      content: `${user.username} 将订单 ${order.orderNo} (${order.customerName}) 转交给您${data.reason ? `，原因：${data.reason}` : ''}`,
+      isRead: false,
       orderId: id,
-      orderNo: order.orderNo,
-    })
+      createdAt: new Date().toISOString()
+    }
+    emitNotificationToUser(targetUser.id, notification)
 
     return NextResponse.json(createSuccessResponse({ message: `已转交给 ${targetUser.realName}` }))
   } catch (error) {

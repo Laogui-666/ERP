@@ -8,6 +8,10 @@ import { CameraCapture } from '@shared/ui/camera-capture'
 import { DOC_REQ_STATUS_LABELS } from '@erp/types/order'
 import type { DocumentRequirement, DocReqStatus, DocumentFile } from '@erp/types/order'
 import type { UserRole } from '@shared/types/user'
+import { useAIAnalysis } from '@erp/hooks/use-ai-analysis'
+import { ERPButton } from '@shared/ui/erp-button'
+import { ERPCard } from '@shared/ui/erp-card'
+import { ERPInput, ERPTextarea } from '@shared/ui/erp-input'
 
 interface DocumentPanelProps {
   orderId: string
@@ -41,6 +45,7 @@ interface SelectableItem extends TemplateItem {
 
 export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _orderStatus, applicantCount = 1, applicants = [], onRefresh }: DocumentPanelProps) {
   const { toast } = useToast()
+  const { analyzeDocument, isAnalyzing, analysisResult } = useAIAnalysis()
 
   // 内部资料列表（支持本地乐观更新）
   const [localReqs, setLocalReqs] = useState<DocumentRequirement[]>(requirements)
@@ -474,6 +479,11 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
     }
   }
 
+  // ===== AI 分析 =====
+  const handleAIAnalyze = async (fileId: string) => {
+    await analyzeDocument(fileId, 'quality')
+  }
+
   // ===== 预览弹窗审核 =====
   // 单文件审核 - 更新文件 reviewStatus + 通知父组件刷新
   const handlePreviewReview = async (status: DocReqStatus) => {
@@ -612,13 +622,13 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
                     {showAddMenu && (
                       <div className="absolute right-0 top-full mt-1 w-44 rounded-glass-sm overflow-hidden z-50 shadow-glass-medium glass-card">
                         <button onClick={() => { setShowAddMenu(false); setShowManualForm(true) }}
-                          className="w-full px-4 py-2.5 text-left text-sm text-glass-primary hover:bg-glass-primary/5 transition-colors flex items-center gap-2">
+                          className="w-full px-4 py-2.5 text-left text-sm text-glass-primary hover:bg-glass-primary/5 transition-colors flex items-center gap-2 glass-button-hover">
                           <svg className="w-4 h-4 text-glass-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                           手动添加
                         </button>
                         <div className="border-t border-glass-border-light" />
                         <button onClick={openTemplateModal}
-                          className="w-full px-4 py-2.5 text-left text-sm text-glass-primary hover:bg-glass-primary/5 transition-colors flex items-center gap-2">
+                          className="w-full px-4 py-2.5 text-left text-sm text-glass-primary hover:bg-glass-primary/5 transition-colors flex items-center gap-2 glass-button-hover">
                           <svg className="w-4 h-4 text-glass-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                           从模板添加
                         </button>
@@ -637,28 +647,48 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
             <div className="flex-1 overflow-y-auto p-5 glass-scrollbar">
               {/* 手动添加表单 */}
               {showManualForm && (
-                <div className="mb-4 p-3 rounded-glass-sm glass-card space-y-2">
-                  <input className="glass-input w-full text-sm text-glass-primary placeholder:text-glass-muted" placeholder="资料名称（如：护照、照片）"
-                    value={newItemName} onChange={(e) => setNewItemName(e.target.value)} />
-                  <input className="glass-input w-full text-sm text-glass-primary placeholder:text-glass-muted" placeholder="说明（可选，如：有效期6个月以上）"
-                    value={newItemDesc} onChange={(e) => setNewItemDesc(e.target.value)} />
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 text-xs text-glass-text-muted">
-                      <input type="checkbox" checked={newItemRequired}
-                        onChange={(e) => setNewItemRequired(e.target.checked)}
-                        className="accent-glass-primary" />
-                      必填项
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => setShowManualForm(false)}
-                        className="text-xs px-3 py-1.5 text-glass-text-muted hover:text-glass-text-primary transition-colors">取消</button>
-                      <button onClick={handleAddItem} disabled={isAdding}
-                        className="glass-button glass-button-hover text-white px-3 py-1.5 text-xs font-medium disabled:opacity-50">
-                        {isAdding ? '添加中...' : '确定'}
-                      </button>
+                <ERPCard className="mb-4" title="添加资料需求">
+                  <div className="space-y-3">
+                    <ERPInput
+                      placeholder="资料名称（如：护照、照片）"
+                      value={newItemName}
+                      onChange={(e) => setNewItemName(e.target.value)}
+                      fullWidth
+                    />
+                    <ERPInput
+                      placeholder="说明（可选，如：有效期6个月以上）"
+                      value={newItemDesc}
+                      onChange={(e) => setNewItemDesc(e.target.value)}
+                      fullWidth
+                    />
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-2 text-xs text-glass-text-muted">
+                        <input type="checkbox" checked={newItemRequired}
+                          onChange={(e) => setNewItemRequired(e.target.checked)}
+                          className="accent-glass-primary" />
+                        必填项
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <ERPButton
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowManualForm(false)}
+                        >
+                          取消
+                        </ERPButton>
+                        <ERPButton
+                          size="sm"
+                          loading={isAdding}
+                          loadingText="添加中..."
+                          onClick={handleAddItem}
+                          disabled={isAdding}
+                        >
+                          确定
+                        </ERPButton>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </ERPCard>
               )}
 
               {/* 资料列表 */}
@@ -746,25 +776,165 @@ export function DocumentPanel({ orderId, requirements, userRole, orderStatus: _o
 
       {/* ===== 文件预览弹窗（含审核） ===== */}
       {previewFile && typeof document !== 'undefined' && createPortal(
-        <FilePreviewModal
-          fileId={previewFile.file.id}
-          fileName={previewFile.file.fileName}
-          fileType={previewFile.file.fileType}
-          ossUrl={previewFile.file.ossUrl}
-          fileSize={previewFile.file.fileSize}
-          reqName={previewFile.reqName}
-          reqStatus={previewFile.reqStatus}
-          rejectReason={previewFile.rejectReason}
-          fileReviewStatus={previewFile.reviewStatus}
-          canReview={canReview && ['UPLOADED', 'REVIEWING', 'APPROVED', 'REJECTED', 'SUPPLEMENT'].includes(previewFile.reqStatus)}
-          reviewReason={previewReviewReason}
-          onReviewReasonChange={setPreviewReviewReason}
-          onApprove={() => handlePreviewReview('APPROVED')}
-          onReject={() => handlePreviewReview('REJECTED')}
-          onSupplement={() => handlePreviewReview('SUPPLEMENT')}
-          isReviewing={previewReviewing}
-          onClose={() => { setPreviewFile(null); setPreviewReviewReason('') }}
-        />,
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => { setPreviewFile(null); setPreviewReviewReason('') }}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-4xl max-h-[85vh] flex flex-col rounded-glass-lg glass-modal glass-modal-animate overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-glass-border-light">
+              <h2 className="text-base font-semibold text-glass-text-primary">📄 文件预览</h2>
+              <div className="flex items-center gap-2">
+                {canReview && (
+                  <button 
+                    onClick={() => handleAIAnalyze(previewFile.file.id)}
+                    disabled={isAnalyzing}
+                    className="text-xs px-3 py-1.5 rounded-glass-sm glass-card text-glass-primary hover:shadow-glass-medium transition-colors disabled:opacity-50"
+                  >
+                    {isAnalyzing ? 'AI 分析中...' : '🤖 AI 分析'}
+                  </button>
+                )}
+                <button onClick={() => { setPreviewFile(null); setPreviewReviewReason('') }}
+                  className="w-8 h-8 rounded-glass-sm flex items-center justify-center text-glass-text-muted hover:text-glass-text-primary hover:bg-glass-primary/5 transition-all glass-button-hover">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 glass-scrollbar">
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-glass-text-primary mb-2">{previewFile.file.fileName}</h3>
+                <div className="flex items-center gap-2 text-xs text-glass-text-muted">
+                  <span>类型: {previewFile.file.fileType}</span>
+                  <span>大小: {(previewFile.file.fileSize / 1024 / 1024).toFixed(2)}MB</span>
+                </div>
+              </div>
+              
+              {/* 显示 AI 分析结果 */}
+              {analysisResult && (
+                <div className="mt-3 p-3 rounded-glass-sm bg-glass-primary/5 border border-glass-primary/20 mb-4">
+                  <h4 className="text-sm font-semibold text-glass-primary mb-2">AI 分析结果</h4>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-glass-text-muted">质量评分：</span>
+                      <span className="text-glass-primary font-medium">{analysisResult.score}%</span>
+                    </div>
+                    {analysisResult.issues && analysisResult.issues.length > 0 && (
+                      <div>
+                        <span className="text-glass-text-muted block mb-1">发现问题：</span>
+                        <ul className="list-disc list-inside space-y-1 text-glass-text-primary">
+                          {analysisResult.issues.map((issue: any, index: number) => (
+                            <li key={index}>{issue.message}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {analysisResult.recommendations && analysisResult.recommendations.length > 0 && (
+                      <div>
+                        <span className="text-glass-text-muted block mb-1">建议：</span>
+                        <ul className="list-disc list-inside space-y-1 text-glass-success">
+                          {analysisResult.recommendations.map((rec: string, index: number) => (
+                            <li key={index}>{rec}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* 文件预览内容 */}
+              <div className="border border-glass-border rounded-glass-lg p-4 bg-white/5">
+                {previewFile.file.fileType.startsWith('image/') ? (
+                  <img 
+                    src={previewFile.file.ossUrl} 
+                    alt={previewFile.file.fileName}
+                    className="max-w-full max-h-[50vh] object-contain"
+                  />
+                ) : previewFile.file.fileType === 'application/pdf' ? (
+                  <div className="text-center py-12">
+                    <span className="text-4xl block mb-3">📄</span>
+                    <p className="text-sm text-glass-text-muted">PDF 预览功能开发中</p>
+                    <a 
+                      href={previewFile.file.ossUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-block text-xs text-glass-primary hover:underline"
+                    >
+                      点击下载查看
+                    </a>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <span className="text-4xl block mb-3">📎</span>
+                    <p className="text-sm text-glass-text-muted">不支持的文件类型</p>
+                    <a 
+                      href={previewFile.file.ossUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-block text-xs text-glass-primary hover:underline"
+                    >
+                      点击下载查看
+                    </a>
+                  </div>
+                )}
+              </div>
+              
+              {/* 审核区域 */}
+              {canReview && ['UPLOADED', 'REVIEWING', 'APPROVED', 'REJECTED', 'SUPPLEMENT'].includes(previewFile.reqStatus) && (
+                <ERPCard className="mt-4" title="审核">
+                  {previewFile.rejectReason && (previewFile.reqStatus === 'REJECTED' || previewFile.reqStatus === 'SUPPLEMENT') && (
+                    <div className="text-xs text-glass-danger mb-3">
+                      上次驳回原因：{previewFile.rejectReason}
+                    </div>
+                  )}
+                  <ERPTextarea
+                    value={previewReviewReason}
+                    onChange={(e) => setPreviewReviewReason(e.target.value)}
+                    placeholder="请输入审核意见（可选）"
+                    rows={3}
+                    fullWidth
+                    className="mb-3"
+                  />
+                  <div className="flex gap-2">
+                    <ERPButton
+                      variant="success"
+                      size="sm"
+                      fullWidth
+                      loading={previewReviewing}
+                      loadingText="审核中..."
+                      onClick={() => handlePreviewReview('APPROVED')}
+                      disabled={previewReviewing}
+                    >
+                      ✅ 合格
+                    </ERPButton>
+                    <ERPButton
+                      variant="danger"
+                      size="sm"
+                      fullWidth
+                      loading={previewReviewing}
+                      loadingText="审核中..."
+                      onClick={() => handlePreviewReview('REJECTED')}
+                      disabled={previewReviewing}
+                    >
+                      ❌ 驳回
+                    </ERPButton>
+                    <ERPButton
+                      variant="warning"
+                      size="sm"
+                      fullWidth
+                      loading={previewReviewing}
+                      loadingText="审核中..."
+                      onClick={() => handlePreviewReview('SUPPLEMENT')}
+                      disabled={previewReviewing}
+                    >
+                      ⚠️ 需补充
+                    </ERPButton>
+                  </div>
+                </ERPCard>
+              )}
+            </div>
+          </div>
+        </div>,
         document.body,
       )}
 
@@ -932,27 +1102,53 @@ function DocumentItem({
 
   if (isEditing) {
     return (
-      <div className="p-3 rounded-glass-sm glass-card space-y-2">
-        <input className="glass-input w-full text-sm text-glass-primary placeholder:text-glass-muted" placeholder="资料名称" value={editName} onChange={(e) => onEditNameChange(e.target.value)} />
-        <input className="glass-input w-full text-sm text-glass-primary placeholder:text-glass-muted" placeholder="说明（可选）" value={editDesc} onChange={(e) => onEditDescChange(e.target.value)} />
-        <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-xs text-glass-text-muted">
-            <input type="checkbox" checked={editRequired} onChange={(e) => onEditRequiredChange(e.target.checked)} className="accent-glass-primary" />
-            必填项
-          </label>
-          <div className="flex items-center gap-2">
-            <button onClick={onCancelEdit} className="text-xs px-3 py-1.5 text-glass-text-muted hover:text-glass-text-primary transition-colors">取消</button>
-            <button onClick={onSaveEdit} disabled={isSaving} className="glass-button glass-button-hover text-white px-3 py-1.5 text-xs font-medium disabled:opacity-50">
-              {isSaving ? '保存中...' : '保存'}
-            </button>
+      <ERPCard>
+        <div className="space-y-3">
+          <ERPInput
+            placeholder="资料名称"
+            value={editName}
+            onChange={(e) => onEditNameChange(e.target.value)}
+            fullWidth
+          />
+          <ERPInput
+            placeholder="说明（可选）"
+            value={editDesc}
+            onChange={(e) => onEditDescChange(e.target.value)}
+            fullWidth
+          />
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-xs text-glass-text-muted">
+              <input type="checkbox" checked={editRequired}
+                onChange={(e) => onEditRequiredChange(e.target.checked)}
+                className="accent-glass-primary" />
+              必填项
+            </label>
+            <div className="flex items-center gap-2">
+              <ERPButton
+                variant="outline"
+                size="sm"
+                onClick={onCancelEdit}
+              >
+                取消
+              </ERPButton>
+              <ERPButton
+                size="sm"
+                loading={isSaving}
+                loadingText="保存中..."
+                onClick={onSaveEdit}
+                disabled={isSaving}
+              >
+                保存
+              </ERPButton>
+            </div>
           </div>
         </div>
-      </div>
+      </ERPCard>
     )
   }
 
   return (
-    <div className="p-3 rounded-glass-sm glass-card group">
+    <ERPCard className="group">
       <div className="flex items-start gap-3">
         <span className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${statusColor[req.status]}`} />
         <div className="flex-1 min-w-0">
@@ -1003,14 +1199,22 @@ function DocumentItem({
           <div className="flex items-center gap-2 mt-2">
             {canUpload && (
               <>
-                <button onClick={() => onUpload()} disabled={isUploading}
-                  className="text-xs px-2.5 py-1 rounded-glass-sm glass-card text-glass-primary hover:shadow-glass-medium transition-colors disabled:opacity-50">
+                <ERPButton
+                  variant="outline"
+                  size="sm"
+                  disabled={isUploading}
+                  onClick={() => onUpload()}
+                >
                   {isUploading ? (uploadProgress ? `上传中 (${uploadProgress.current}/${uploadProgress.total})...` : '上传中...') : '📁 上传'}
-                </button>
-                <button onClick={onCamera} disabled={isUploading}
-                  className="text-xs px-2.5 py-1 rounded-glass-sm glass-card text-glass-primary hover:shadow-glass-medium transition-colors disabled:opacity-50">
+                </ERPButton>
+                <ERPButton
+                  variant="outline"
+                  size="sm"
+                  disabled={isUploading}
+                  onClick={onCamera}
+                >
                   📷 拍照
-                </button>
+                </ERPButton>
               </>
             )}
           </div>
@@ -1025,7 +1229,7 @@ function DocumentItem({
           )}
         </div>
       </div>
-    </div>
+    </ERPCard>
   )
 }
 
@@ -1180,235 +1384,4 @@ function ReviewHistoryCard({
   )
 }
 
-// ==================== 文件预览弹窗（含审核） ====================
-function FilePreviewModal({
-  fileId, fileName, fileType, ossUrl, fileSize,
-  reqName, reqStatus, rejectReason, fileReviewStatus,
-  canReview, reviewReason, onReviewReasonChange,
-  onApprove, onReject, onSupplement, isReviewing, onClose,
-}: {
-  fileId: string
-  fileName: string
-  fileType: string
-  ossUrl: string
-  fileSize: number
-  reqName: string
-  reqStatus: DocReqStatus
-  rejectReason?: string | null
-  fileReviewStatus?: string | null
-  canReview: boolean
-  reviewReason: string
-  onReviewReasonChange: (v: string) => void
-  onApprove: () => void
-  onReject: () => void
-  onSupplement: () => void
-  isReviewing: boolean
-  onClose: () => void
-}) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [loadingPreview, setLoadingPreview] = useState(true)
 
-
-  const isImage = fileType.startsWith('image/')
-  const isPdf = fileType === 'application/pdf'
-  const isText = fileType === 'text/plain'
-  const isWord = fileType.includes('word') || fileType.includes('document') || fileName.endsWith('.doc') || fileName.endsWith('.docx')
-  const isExcel = fileType.includes('excel') || fileType.includes('sheet') || fileName.endsWith('.xls') || fileName.endsWith('.xlsx')
-  const canPreview = isImage || isPdf || isText || isWord || isExcel
-
-  // 通过预览 API 获取带 inline disposition 的新鲜签名 URL
-  useEffect(() => {
-    let cancelled = false
-    async function fetchPreviewUrl() {
-      try {
-        const res = await apiFetch(`/api/documents/files/${fileId}/preview`)
-        const json = await res.json()
-        if (!cancelled && json.success) {
-          setPreviewUrl(json.data.url)
-        } else if (!cancelled) {
-          // fallback: 直接用存储的 URL
-          setPreviewUrl(ossUrl)
-        }
-      } catch {
-        if (!cancelled) setPreviewUrl(ossUrl)
-      } finally {
-        if (!cancelled) setLoadingPreview(false)
-      }
-    }
-    fetchPreviewUrl()
-    return () => { cancelled = true }
-  }, [fileId, ossUrl])
-
-
-
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes}B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
-  }
-
-  const statusLabel = DOC_REQ_STATUS_LABELS[reqStatus]
-  const statusColorMap: Record<DocReqStatus, string> = {
-    PENDING: 'text-glass-text-muted',
-    UPLOADED: 'text-glass-primary',
-    REVIEWING: 'text-glass-primary',
-    APPROVED: 'text-glass-success',
-    REJECTED: 'text-glass-danger',
-    SUPPLEMENT: 'text-glass-warning',
-  }
-
-  return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-glass-lg border border-glass-border glass-modal glass-modal-animate overflow-hidden">
-
-        {/* 顶栏 */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-glass-border-light">
-          <div className="flex items-center gap-3 min-w-0">
-            <span className={`text-xs px-2 py-0.5 rounded-glass-sm bg-glass-muted/10 ${statusColorMap[reqStatus]}`}>{statusLabel}</span>
-            <div className="min-w-0">
-              <h3 className="text-sm font-medium text-glass-text-primary truncate">{reqName}</h3>
-              <p className="text-xs text-glass-text-muted truncate">{fileName} · {formatSize(fileSize)}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <a href={previewUrl || ossUrl} target="_blank" rel="noopener noreferrer"
-              className="p-2 rounded-glass-sm glass-card glass-card-hover text-glass-text-primary transition-all" title="下载">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </a>
-            <button onClick={onClose} className="p-2 rounded-glass-sm glass-card glass-card-hover text-glass-text-primary transition-all glass-button-hover">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-        </div>
-
-        {/* 驳回原因提示条（仅已驳回/需补充时显示） */}
-        {rejectReason && (
-          <div className={`px-5 py-3 border-b border-glass-border-light ${
-            reqStatus === 'REJECTED'
-              ? 'bg-glass-danger/8'
-              : 'bg-glass-warning/8'
-          }`}>
-            <div className="flex items-start gap-2">
-              <span className="text-sm shrink-0">{reqStatus === 'REJECTED' ? '❌' : '⚠️'}</span>
-              <div>
-                <span className={`text-xs font-medium ${
-                  reqStatus === 'REJECTED' ? 'text-glass-danger' : 'text-glass-warning'
-                }`}>
-                  {reqStatus === 'REJECTED' ? '驳回原因' : '补充说明'}
-                </span>
-                <p className="text-xs text-glass-text-primary mt-0.5 leading-relaxed">{rejectReason}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 内容区：左侧预览 + 右侧审核 */}
-        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-          {/* 左侧：文件预览 */}
-          <div className="flex-1 min-h-[300px] md:min-h-0 overflow-auto bg-[#12151f]">
-            {loadingPreview ? (
-              <div className="w-full h-full min-h-[300px] flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-glass-border border-t-glass-primary rounded-full animate-spin" />
-              </div>
-            ) : previewUrl && isImage ? (
-              <div className="w-full h-full flex items-center justify-center p-6">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={previewUrl} alt={fileName}
-                  className="max-w-full max-h-[70vh] object-contain rounded-glass-sm"
-                  onError={() => setPreviewUrl(null)} />
-              </div>
-            ) : previewUrl && isPdf ? (
-              <object data={previewUrl} type="application/pdf"
-                className="w-full h-[70vh]">
-                <iframe src={previewUrl} className="w-full h-[70vh] border-0" title={fileName} />
-              </object>
-            ) : previewUrl && isText ? (
-              <iframe src={previewUrl} className="w-full h-[70vh] border-0" title={fileName} />
-            ) : previewUrl && (isWord || isExcel) ? (
-              <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center gap-4 text-glass-text-muted">
-                <span className="text-5xl">{isWord ? '📃' : '📊'}</span>
-                <p className="text-sm">{isWord ? 'Word' : 'Excel'} 文件请下载后查看</p>
-                <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="glass-button glass-button-hover text-white px-4 py-2 text-sm">下载文件</a>
-              </div>
-            ) : (
-              <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center gap-4 text-glass-text-muted">
-                <span className="text-5xl">📎</span>
-                <p className="text-sm">{canPreview ? '预览加载失败' : '此文件类型不支持在线预览'}</p>
-                <a href={previewUrl || ossUrl} target="_blank" rel="noopener noreferrer" className="glass-button glass-button-hover text-white px-4 py-2 text-sm">下载文件</a>
-              </div>
-            )}
-          </div>
-
-          {/* 右侧：审核面板 */}
-          {canReview && (
-            <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-glass-border-light p-5 flex flex-col gap-4 overflow-y-auto glass-scrollbar">
-              {/* 当前状态 */}
-              <div>
-                <h4 className="text-sm font-semibold text-glass-text-primary mb-2">当前状态</h4>
-                <div className="flex items-center gap-2">
-                  {fileReviewStatus === 'APPROVED' && (
-                    <span className="text-xs px-3 py-1.5 rounded-glass-sm bg-glass-success/15 text-glass-success border border-glass-success/20 font-medium">✓ 合格</span>
-                  )}
-                  {fileReviewStatus === 'REJECTED' && (
-                    <span className="text-xs px-3 py-1.5 rounded-glass-sm bg-glass-danger/15 text-glass-danger border border-glass-danger/20 font-medium">✗ 已驳回</span>
-                  )}
-                  {fileReviewStatus === 'SUPPLEMENT' && (
-                    <span className="text-xs px-3 py-1.5 rounded-glass-sm bg-glass-warning/15 text-glass-warning border border-glass-warning/20 font-medium">⚠ 需补充</span>
-                  )}
-                  {(!fileReviewStatus || fileReviewStatus === 'PENDING') && (
-                    <span className="text-xs px-3 py-1.5 rounded-glass-sm bg-glass-muted/10 text-glass-text-muted border border-glass-border-light">⏳ 待审核</span>
-                  )}
-                </div>
-              </div>
-
-              {/* 当前审核原因（仅显示，无历史记录） */}
-              {rejectReason && (fileReviewStatus === 'REJECTED' || fileReviewStatus === 'SUPPLEMENT') && (
-                <div className="p-3 rounded-glass-sm bg-glass-muted/5 border border-glass-border-light glass-card">
-                  <span className="text-[10px] uppercase tracking-wide text-glass-text-muted font-medium">
-                    {fileReviewStatus === 'REJECTED' ? '驳回原因' : '补充说明'}
-                  </span>
-                  <p className="text-xs text-glass-text-primary mt-1.5 leading-relaxed">{rejectReason}</p>
-                </div>
-              )}
-
-              {/* 审核操作 */}
-              <div className="border-t border-glass-border-light pt-4">
-                <h4 className="text-sm font-semibold text-glass-text-primary mb-2">审核操作</h4>
-
-                {/* 审核备注输入 */}
-                <div className="mb-3">
-                  <textarea
-                    className="glass-input w-full text-sm resize-none"
-                    rows={2}
-                    placeholder="驳回/补充时必填，合格可留空..."
-                    value={reviewReason}
-                    onChange={(e) => onReviewReasonChange(e.target.value)}
-                  />
-                </div>
-
-                {/* 操作按钮 */}
-                <div className="flex gap-2">
-                  <button onClick={onApprove} disabled={isReviewing}
-                    className="flex-1 py-2 rounded-glass-sm text-xs font-medium bg-glass-success/15 text-glass-success border border-glass-success/20 hover:bg-glass-success/25 transition-all disabled:opacity-50 glass-button-hover">
-                    {isReviewing ? '...' : '✓ 合格'}
-                  </button>
-                  <button onClick={onReject} disabled={isReviewing || !reviewReason.trim()}
-                    className="flex-1 py-2 rounded-glass-sm text-xs font-medium bg-glass-danger/15 text-glass-danger border border-glass-danger/20 hover:bg-glass-danger/25 transition-all disabled:opacity-50 glass-button-hover">
-                    {isReviewing ? '...' : '✗ 驳回'}
-                  </button>
-                  <button onClick={onSupplement} disabled={isReviewing || !reviewReason.trim()}
-                    className="flex-1 py-2 rounded-glass-sm text-xs font-medium bg-glass-warning/15 text-glass-warning border border-glass-warning/20 hover:bg-glass-warning/25 transition-all disabled:opacity-50 glass-button-hover">
-                    {isReviewing ? '...' : '⚠ 补充'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}

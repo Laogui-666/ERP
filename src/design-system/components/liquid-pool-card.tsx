@@ -28,8 +28,7 @@ const LiquidPoolCard = forwardRef<HTMLDivElement, LiquidPoolCardProps>(
     createdAt,
     isClaiming = false,
     className,
-    onClaim,
-    delay = 0
+    onClaim
   }, ref) => {
     return (
       <div

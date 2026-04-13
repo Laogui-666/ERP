@@ -134,7 +134,7 @@ export function HeroSection() {
           <div className="w-full">
             <div className="md:hidden">
               <div className="flex flex-wrap gap-3 w-full">
-                {currentPageItems.map((dest, index) => (
+                {currentPageItems.map((dest) => (
                   <a 
                     href={`/services?destination=${dest.id}`} 
                     key={dest.id}
@@ -208,7 +208,6 @@ export function HeroSection() {
                     <motion.div
                       initial={{ opacity: 0, y: 30, scale: 0.9 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ ...liquidSpringConfig.snappy, delay: 0.9 + index * 0.05 }}
                       whileHover={{
                         y: -10,
                         scale: 1.03,
@@ -220,11 +219,8 @@ export function HeroSection() {
                         boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
                       }}
                       transition={{
-                        duration: 0.3,
-                        ease: 'easeOut',
-                        type: 'spring',
-                        stiffness: 300,
-                        damping: 20
+                        ...liquidSpringConfig.snappy,
+                        delay: 0.9 + index * 0.05
                       }}
                       className="bg-white rounded-2xl overflow-hidden shadow-glass-medium text-center cursor-pointer hover:shadow-glass-strong"
                     >
@@ -265,7 +261,6 @@ export function HeroSection() {
                     <motion.div
                       initial={{ opacity: 0, y: 30, scale: 0.9 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ ...liquidSpringConfig.snappy, delay: 1.1 + index * 0.05 }}
                       whileHover={{
                         y: -10,
                         scale: 1.03,
@@ -277,11 +272,8 @@ export function HeroSection() {
                         boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
                       }}
                       transition={{
-                        duration: 0.3,
-                        ease: 'easeOut',
-                        type: 'spring',
-                        stiffness: 300,
-                        damping: 20
+                        ...liquidSpringConfig.snappy,
+                        delay: 1.1 + index * 0.05
                       }}
                       className="bg-white rounded-2xl overflow-hidden shadow-glass-medium text-center cursor-pointer hover:shadow-glass-strong"
                     >

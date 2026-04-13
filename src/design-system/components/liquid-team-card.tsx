@@ -16,7 +16,7 @@ interface LiquidTeamCardProps {
 }
 
 const LiquidTeamCard = forwardRef<HTMLDivElement, LiquidTeamCardProps>(
-  ({ name, role, phone, status, department, email, className, delay = 0 }, ref) => {
+  ({ name, role, phone, status, department, email, className }, ref) => {
     const isActive = status === 'ACTIVE';
 
     return (

@@ -85,6 +85,19 @@ function initDispatchers(socket: Socket) {
     }
   })
 
+  // 新的通知事件格式
+  socket.on('notification:new', (data) => {
+    // 调用现有的通知处理器
+    for (const handler of notificationHandlers.values()) {
+      try { handler(data) } catch { /* ignore individual handler errors */ }
+    }
+    // 同时更新通知状态
+    try {
+      const { useNotificationStore } = require('@shared/stores/notification-store')
+      useNotificationStore.getState().addNotification(data)
+    } catch { /* ignore */ }
+  })
+
   socket.on('chat:message', (data: ChatMessageSocketPayload) => {
     for (const handler of chatMessageHandlers.values()) {
       try { handler(data) } catch { /* ignore */ }
@@ -107,6 +120,15 @@ function initDispatchers(socket: Socket) {
     for (const handler of chatErrorHandlers.values()) {
       try { handler(data) } catch { /* ignore */ }
     }
+  })
+
+  // 通知已读确认
+  socket.on('notification:read:ack', (data) => {
+    console.log('Notification read acknowledged:', data)
+  })
+
+  socket.on('notification:mark-all-read:ack', () => {
+    console.log('All notifications read acknowledged')
   })
 }
 

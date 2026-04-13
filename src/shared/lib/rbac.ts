@@ -9,7 +9,7 @@ interface Permission {
   actions: string[]
 }
 
-const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   SUPER_ADMIN: [{ resource: '*', actions: ['*'] }],
 
   COMPANY_OWNER: [

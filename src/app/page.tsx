@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { AppNavbar } from '@/components/portal/app-navbar'
 import { HeroSection } from '@/components/portal/hero-section'
 import { ToolShowcase } from '@/components/portal/tool-showcase'
@@ -9,11 +9,9 @@ import { AppFooter } from '@/components/portal/app-footer'
 import { AppBottomTab } from '@/components/portal/app-bottom-tab'
 
 export default function HomePage() {
-  const [scrollY, setScrollY] = useState(0)
-
   useEffect(() => {
     const handleScroll = () => {
-      setScrollY(window.scrollY)
+      // 可以在这里添加滚动相关的逻辑
     }
 
     window.addEventListener('scroll', handleScroll)

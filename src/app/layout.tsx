@@ -4,6 +4,7 @@ import '@shared/styles/glassmorphism.css'
 import '@shared/styles/liquid-globals.css'
 import '@shared/styles/glass-morphism.css'
 import { ToastProvider } from '@shared/ui/toast'
+import { WebMcpInitializer } from '@/webmcp/WebMcpInitializer'
 
 
 export const metadata: Metadata = {
@@ -21,7 +22,9 @@ export default function RootLayout({
       <body className="min-h-screen antialiased glass-background">
         <div className="relative z-10">
           <ToastProvider>
-            {children}
+            <WebMcpInitializer>
+              {children}
+            </WebMcpInitializer>
           </ToastProvider>
         </div>
       </body>

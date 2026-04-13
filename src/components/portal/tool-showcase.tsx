@@ -2,8 +2,7 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { liquidSpringConfig, serviceCardHover } from '@design-system/theme/animations'
-import { LiquidCard } from '@design-system/components/liquid-card'
+import { liquidSpringConfig } from '@design-system/theme/animations'
 import { LiquidButton } from '@design-system/components/liquid-button'
 
 interface ToolShowcaseProps {

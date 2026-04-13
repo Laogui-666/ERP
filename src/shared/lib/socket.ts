@@ -198,6 +198,29 @@ export function initSocketServer(httpServer: HttpServer): Server {
       }, 3000))
     })
 
+    // ======== 通知事件处理器 ========
+
+    // notification:read — 标记通知已读
+    socket.on('notification:read', async ({ notificationId }: { notificationId: string }) => {
+      try {
+        // 这里可以添加实时更新逻辑
+        // 实际的标记已读操作仍然通过 API 进行
+        socket.emit('notification:read:ack', { notificationId })
+      } catch (err) {
+        logApiError('notification-read', err, { notificationId, userId: user.userId })
+      }
+    })
+
+    // notification:mark-all-read — 标记所有通知已读
+    socket.on('notification:mark-all-read', async () => {
+      try {
+        // 这里可以添加实时更新逻辑
+        socket.emit('notification:mark-all-read:ack')
+      } catch (err) {
+        logApiError('notification-mark-all-read', err, { userId: user.userId })
+      }
+    })
+
     // ======== Disconnect 清理 ========
     socket.on('disconnect', () => {
       // 清理该用户的 typing cooldown
@@ -241,4 +264,30 @@ export function emitToCompany(companyId: string, event: string, data: unknown): 
 /** 向指定房间广播 */
 export function emitToRoom(room: string, event: string, data: unknown): void {
   io?.to(room).emit(event, data)
+}
+
+/** 推送通知给指定用户 */
+export function emitNotificationToUser(userId: string, notification: {
+  id: string
+  type: string
+  title: string
+  content: string | null
+  isRead: boolean
+  orderId: string | null
+  createdAt: string
+}): void {
+  io?.to(`user:${userId}`).emit('notification:new', notification)
+}
+
+/** 推送通知给公司所有用户 */
+export function emitNotificationToCompany(companyId: string, notification: {
+  id: string
+  type: string
+  title: string
+  content: string | null
+  isRead: boolean
+  orderId: string | null
+  createdAt: string
+}): void {
+  io?.to(`company:${companyId}`).emit('notification:new', notification)
 }

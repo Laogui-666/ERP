@@ -27,6 +27,7 @@
 14. [已知技术债务与待办](#14-已知技术债务与待办)
 15. [C 端平台开发规范（M8 起生效）](#15-c-端平台开发规范m8-起生效)
 16. [手机端 UI 开发规范（M8 起全局强制执行）](#16-手机端-ui-开发规范m8-起全局强制执行)
+17. [WebMCP 集成开发规范（M9 起生效）](#17-webmcp-集成开发规范m9-起生效)
 
 ---
 
@@ -1806,6 +1807,350 @@ scrollbar: {
 □ 桌面端4个光球动画正常
 □ 桌面端鼠标跟随光晕正常
 ```
+
+---
+
+## 17. WebMCP 集成开发规范（M9 起生效）
+
+> **文档版本**: V1.0
+> **生成日期**: 2026-04-13
+> **最后更新**: 2026-04-13
+> **适用范围**: 全团队所有开发人员
+
+### 17.1 目录
+
+1. [WebMCP 集成概述](#171-webmcp-集成概述)
+2. [架构特点与影响分析](#172-架构特点与影响分析)
+3. [项目调整时的同步策略](#173-项目调整时的同步策略)
+4. [实际开发建议](#174-实际开发建议)
+5. [WebMCP 工具开发规范](#175-webmcp-工具开发规范)
+
+---
+
+### 17.1 WebMCP 集成概述
+
+本项目已成功集成 OpenTiny NEXT-SDKs 的 WebMCP 功能，使签证 ERP 系统可以被各类 AI 应用（如 VSCode Copilot、Cursor、Trae 等）通过 MCP 协议进行操作。
+
+**核心目标**：
+- 提供标准化的 MCP 接口，让 AI 助手能够与 ERP 系统交互
+- 保持现有代码库的独立性和可维护性
+- 确保 WebMCP 集成不会影响核心业务逻辑的开发
+
+---
+
+### 17.2 架构特点与影响分析
+
+#### 17.2.1 核心架构特点
+
+| 特点 | 说明 |
+|------|------|
+| **独立目录结构** | 所有 WebMCP 相关代码集中在 [src/webmcp/](file:///workspace/ERP/src/webmcp/) 目录下 |
+| **封装性设计** | MCP 工具只是对现有功能的封装，不修改核心业务逻辑 |
+| **可选集成** | WebMCP 可以独立启用或禁用，不影响系统核心功能运行 |
+| **单向引用** | WebMCP 工具仅引用现有代码，不会被现有代码引用 |
+
+**代码引用关系图**：
+```
+现有代码 → 业务逻辑 ← WebMCP 工具（仅调用，不修改）
+```
+
+#### 17.2.2 对项目增删改的影响
+
+**答案：不会影响！**
+
+WebMCP 集成采用了完全松耦合的插件化架构，具有以下优势：
+
+1. **零侵入性**：WebMCP 代码完全独立，不修改任何现有核心文件
+2. **可插拔性**：可以随时移除或禁用 WebMCP，不影响系统功能
+3. **向后兼容**：所有现有 API 接口保持完全兼容
+4. **风险隔离**：WebMCP 相关的任何问题都不会影响核心业务流程
+
+**示例说明**：
+- [order-tools.ts](file:///workspace/ERP/src/webmcp/tools/order-tools.ts) 只是调用了：
+  - [auth-store](file:///workspace/ERP/src/shared/stores/auth-store.ts) - 权限检查
+  - [rbac.ts](file:///workspace/ERP/src/shared/lib/rbac.ts) - 权限验证
+  - 现有的业务 API（目前是模拟实现）
+
+---
+
+### 17.3 项目调整时的同步策略
+
+#### 17.3.1 场景分析表
+
+| 项目调整类型 | 是否需要同步调整 MCP | 说明 | 优先级 |
+|-------------|---------------------|------|--------|
+| **新增功能** | 可选 | 如果想让 AI 助手使用新功能，需要添加对应的 MCP 工具 | P2 |
+| **修改现有 API 接口** | 建议 | 如果 API 参数或返回格式有重大变化，建议更新 MCP 工具 | P2 |
+| **修改数据库 schema** | 可选 | 如果不影响 API 接口，可以不同步 | P3 |
+| **重构业务逻辑** | 可选 | 只要 API 接口保持兼容，可以不同步 | P3 |
+| **修复 bug** | 不需要 | 修复核心代码的 bug 不影响 MCP 工具 | P3 |
+| **性能优化** | 不需要 | 性能优化不影响 MCP 工具的功能 | P3 |
+| **UI/UX 优化** | 不需要 | UI 优化不影响 MCP 工具的功能 | P3 |
+
+#### 17.3.2 同步调整的最佳实践
+
+当您进行项目调整时，可以遵循以下原则：
+
+**原则 1：API 接口保持向后兼容**
+- 尽量保持 API 接口的稳定性，这样 MCP 工具不需要频繁更新
+- 如果必须修改 API，考虑同时保留旧接口一段时间（过渡期）
+
+**原则 2：渐进式更新**
+```
+步骤 1：开发核心业务逻辑（API、组件、状态管理等）
+步骤 2：测试核心功能，确保正常运行
+步骤 3：（可选）创建对应的 MCP 工具，让 AI 助手可以使用新功能
+```
+
+**原则 3：版本控制**
+- MCP 工具可以独立版本化，不与核心代码强绑定
+- 在 WebMCP 工具代码中添加版本注释，便于追踪变更
+
+#### 17.3.3 API 变更时的处理策略
+
+| API 变更类型 | 处理方式 |
+|------------|---------|
+| **新增字段** | MCP 工具可以保持不变，自动忽略新字段 |
+| **删除字段** | 需要更新 MCP 工具，移除对已删除字段的引用 |
+| **修改字段类型** | 需要更新 MCP 工具，确保类型兼容性 |
+| **修改参数** | 需要更新 MCP 工具的输入 schema |
+| **新增接口** | 可选：添加对应的 MCP 工具 |
+| **删除接口** | 需要：移除对应的 MCP 工具或改为模拟实现 |
+
+---
+
+### 17.4 实际开发建议
+
+#### 17.4.1 开发新功能时
+
+```typescript
+// ✅ 推荐流程
+// 1. 先开发核心业务逻辑
+// 2. 测试核心功能，确保正常运行
+// 3. （可选）创建对应的 MCP 工具，让 AI 助手可以使用新功能
+
+// 示例：新增订单批量导出功能
+// 步骤 1：开发 API
+// src/app/api/orders/batch-export/route.ts
+export async function POST(request: NextRequest) {
+  // 实现批量导出逻辑
+}
+
+// 步骤 2：测试 API
+// 确保 API 正常工作
+
+// 步骤 3：（可选）添加 MCP 工具
+// src/webmcp/tools/order-tools.ts
+server.registerTool(
+  'batch_export_orders',
+  {
+    title: '批量导出订单',
+    description: '批量导出订单数据',
+    inputSchema: { /* ... */ }
+  },
+  async (params: any) => {
+    // 调用新开发的 API
+  }
+)
+```
+
+#### 17.4.2 修改现有功能时
+
+```typescript
+// ✅ 推荐流程
+// 步骤 1：修改核心业务逻辑，保持 API 向后兼容
+// 步骤 2：测试核心功能，确保正常运行
+// 步骤 3：（可选）如果 API 有重大变化，更新对应的 MCP 工具
+
+// 示例：修改订单查询 API
+// 步骤 1：修改 API，保持向后兼容
+// src/app/api/orders/route.ts
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams
+  const page = searchParams.get('page') || '1'
+  const pageSize = searchParams.get('pageSize') || '20'
+  // 新增支持的参数
+  const sortBy = searchParams.get('sortBy') || 'createdAt'
+  
+  // 保持原有逻辑不变，新增功能作为可选
+  // ...
+}
+
+// 步骤 2：测试 API
+// 确保旧参数仍然正常工作
+
+// 步骤 3：（可选）更新 MCP 工具
+// src/webmcp/tools/order-tools.ts
+// 如果新功能对 AI 助手有用，可以更新工具的 inputSchema
+```
+
+#### 17.4.3 开发检查清单
+
+每次提交代码前，对照以下清单：
+
+- [ ] 核心业务逻辑测试通过
+- [ ] TypeScript 类型检查通过（`npx tsc --noEmit`）
+- [ ] 构建通过（`npm run build`）
+- [ ] WebMCP 功能正常（可选验证）
+- [ ] 如有 API 重大变更，考虑是否需要更新 MCP 工具
+
+---
+
+### 17.5 WebMCP 工具开发规范
+
+#### 17.5.1 目录结构
+
+```
+src/webmcp/
+├── index.ts              # 导出模块
+├── mcp-server.ts         # MCP Server 创建和管理
+├── webmcp-client.ts      # WebMCP Client 连接管理
+├── WebMcpInitializer.tsx # React 客户端初始化组件
+└── tools/
+    ├── visa-tools.ts     # 签证相关 MCP 工具
+    ├── permission-tools.ts # 权限管理 MCP 工具
+    ├── order-tools.ts    # 订单管理 MCP 工具
+    ├── user-tools.ts     # 用户管理 MCP 工具
+    ├── document-tools.ts # 文档管理 MCP 工具
+    ├── chat-tools.ts     # 聊天管理 MCP 工具
+    ├── notification-tools.ts # 通知管理 MCP 工具
+    ├── document-requirement-tools.ts # 资料需求管理工具
+    └── ai-tools.ts       # AI 工具
+```
+
+#### 17.5.2 工具开发模板
+
+```typescript
+// src/webmcp/tools/my-tools.ts
+import { getMcpServer } from '../mcp-server'
+import { useAuthStore } from '@shared/stores/auth-store'
+
+export const registerMyTools = async () => {
+  if (typeof window === 'undefined') return
+
+  const server = getMcpServer()
+  if (!server) return
+
+  const { z } = await import('@opentiny/next-sdk')
+
+  server.registerTool(
+    'my_tool_name',
+    {
+      title: '工具标题',
+      description: '工具描述',
+      inputSchema: {
+        param1: z.string().describe('参数1描述'),
+        param2: z.number().describe('参数2描述')
+      }
+    },
+    async (params: any) => {
+      try {
+        // 1. 获取用户信息
+        const authStore = useAuthStore.getState()
+        const role = authStore.user?.role
+
+        if (!role) {
+          return {
+            content: [{ type: 'text', text: '用户未登录' }]
+          }
+        }
+
+        // 2. 权限检查
+        const { hasPermission } = await import('@shared/lib/rbac')
+        if (!hasPermission(role, 'my_resource', 'my_action')) {
+          return {
+            content: [{ type: 'text', text: '权限不足' }]
+          }
+        }
+
+        // 3. 工具实现逻辑
+        // 调用现有的 API 或业务逻辑
+        return {
+          content: [{ type: 'text', text: '结果' }]
+        }
+      } catch (error) {
+        console.error('工具执行失败:', error)
+        return {
+          content: [{ type: 'text', text: '执行失败' }]
+        }
+      }
+    }
+  )
+}
+```
+
+#### 17.5.3 工具注册流程
+
+1. 在 `src/webmcp/tools/` 目录下创建新的工具文件
+2. 在工具文件中使用 `server.registerTool()` 注册工具
+3. 在 `src/webmcp/tools/` 目录下的对应文件中导出注册函数
+4. 在 `src/webmcp/index.ts` 中导出注册函数
+5. 在 `src/webmcp/WebMcpInitializer.tsx` 中调用注册函数
+
+#### 17.5.4 权限检查规范
+
+所有 MCP 工具必须包含权限检查：
+
+```typescript
+// ✅ 正确：包含权限检查
+async (params: any) => {
+  const authStore = useAuthStore.getState()
+  const role = authStore.user?.role
+
+  if (!role) {
+    return { content: [{ type: 'text', text: '用户未登录' }] }
+  }
+
+  const { hasPermission } = await import('@shared/lib/rbac')
+  if (!hasPermission(role, 'resource', 'action')) {
+    return { content: [{ type: 'text', text: '权限不足' }] }
+  }
+
+  // 工具逻辑
+}
+
+// ❌ 错误：缺少权限检查
+async (params: any) => {
+  // 直接执行，没有权限检查
+}
+```
+
+#### 17.5.5 错误处理规范
+
+所有 MCP 工具必须包含完整的错误处理：
+
+```typescript
+// ✅ 正确：包含错误处理
+async (params: any) => {
+  try {
+    // 工具逻辑
+    return { content: [{ type: 'text', text: '成功' }] }
+  } catch (error) {
+    console.error('工具执行失败:', error)
+    return {
+      content: [{ type: 'text', text: '执行失败：' + (error as Error).message }]
+    }
+  }
+}
+
+// ❌ 错误：缺少错误处理
+async (params: any) => {
+  // 没有 try-catch，错误会直接抛出
+}
+```
+
+---
+
+### 17.6 总结
+
+| 问题 | 答案 |
+|------|------|
+| **WebMCP 集成是否影响后期项目及代码的增删改？** | ❌ 不会，WebMCP 是独立模块，松耦合集成 |
+| **项目调整时是否需要同步调整 MCP？** | ⚠️ 建议同步，但不是必须的，取决于具体调整 |
+| **MCP 工具可以独立开发吗？** | ✅ 可以，完全独立开发、测试、部署 |
+| **可以禁用 WebMCP 吗？** | ✅ 可以，不影响核心功能运行 |
+
+WebMCP 集成采用了**插件化架构**，是对现有系统的**增强而非替代**。您可以完全按照原有的开发流程进行项目开发，MCP 工具只是让 AI 助手能够更好地与您的系统交互。
 
 ---
 
